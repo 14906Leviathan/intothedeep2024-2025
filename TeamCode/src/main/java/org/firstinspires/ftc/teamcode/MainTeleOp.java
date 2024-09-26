@@ -13,7 +13,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
+import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
+import org.firstinspires.ftc.teamcode.Hardware.TeleopMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
@@ -38,8 +40,13 @@ public class MainTeleOp extends LinearOpMode {
     private Params params;
     private double armPosition = 0;
     private ArmSubsystem arm;
+    private IntakeSubsystem intake;
     private boolean g1_dpadDownCooldown = false;
     private boolean g1_dpadUpCooldown = false;
+    private TeleopMode teleopMode;
+    private double intakePosition = params.INTAKE_MAX_POS; //inches
+    private boolean aCooldown = false;
+    private boolean firstRun = false;
 
     /**
      * This initializes the drive motors as well as the Follower and motion Vectors.
@@ -48,19 +55,15 @@ public class MainTeleOp extends LinearOpMode {
     public void runOpMode() {
         follower = new Follower(hardwareMap);
         robot = new HWProfile();
-        robot.init(hardwareMap, false);
+        robot.init(hardwareMap, true);
         params = new Params();
         arm = new ArmSubsystem(robot, this, params);
+        intake = new IntakeSubsystem(robot, this, params);
 
-        leftFront = hardwareMap.get(DcMotorEx.class, leftFrontMotorName);
-        leftRear = hardwareMap.get(DcMotorEx.class, leftRearMotorName);
-        rightRear = hardwareMap.get(DcMotorEx.class, rightRearMotorName);
-        rightFront = hardwareMap.get(DcMotorEx.class, rightFrontMotorName);
-
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFront = robot.motorLF;
+        leftRear = robot.motorLR;
+        rightRear = robot.motorRR;
+        rightFront = robot.motorRF;
 
         follower.startTeleopDrive();
         arm.reset();
@@ -68,22 +71,84 @@ public class MainTeleOp extends LinearOpMode {
         waitForStart();
 
         while(opModeIsActive()) {
+
+            if(firstRun) {
+//                teleopMode = TeleopMode.IDLE;
+//                arm.setTeleopMode(teleopMode);
+//                arm.idle();
+            }
+
             follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
             follower.update();
 
-            if (gamepad1.dpad_up && !g1_dpadUpCooldown) {
-                armPosition += 90;
-                g1_dpadUpCooldown = true;
-            } else if (gamepad1.dpad_down && !g1_dpadDownCooldown) {
-                armPosition -= 90;
-                g1_dpadDownCooldown = true;
+            /* *******************INTAKE******************* */
+
+//            if (gamepad1.a && !aCooldown) {
+//                aCooldown = true;
+//
+//                teleopMode = TeleopMode.INTAKE;
+//                arm.setTeleopMode(teleopMode);
+//                intakePosition = params.INTAKE_MAX_POS;
+//            } else if (!gamepad1.a) {
+//                aCooldown = false;
+//            }
+//
+//            if (teleopMode == TeleopMode.INTAKE) {
+//                arm.setIntakePosition(intakePosition);
+//
+//                if (gamepad1.right_trigger > .1) {
+//                    intakePosition += 1;
+//                } else if (gamepad1.left_trigger > .1) {
+//                    intakePosition -= 1;
+//                }
+//
+//                if (gamepad1.a) {
+//                    arm.setArmPower(.3);
+//                    arm.setArmPosition(45);
+//                } else if (gamepad1.b) {
+//                    arm.setArmPower(.3);
+//                    arm.setArmPosition(15);
+//                }
+//            }
+
+            /* *******************BUCKET SCORE******************* */
+
+//            if(gamepad1.b) {
+//                teleopMode = TeleopMode.BUCKET_SCORE;
+//                arm.setTeleopMode(teleopMode);
+//                arm.setBucket(2);
+//            }
+
+            /* *******************INTAKE******************* */
+
+            if(teleopMode == TeleopMode.INTAKE) {
+                if(gamepad1.right_bumper) {
+                    intake.intake();
+                } else if(gamepad1.left_bumper) {
+                    intake.outtake();
+                } else {
+                    intake.hold();
+                }
             }
 
-            if(!gamepad1.dpad_up) g1_dpadUpCooldown = false;
-            if(!gamepad1.dpad_down) g1_dpadDownCooldown = false;
+            arm.setArmPower(.3);
 
-            arm.setArmPosition(armPosition);
-            armPosition = MathFunctions.clamp(armPosition, params.ARM_MIN_POS, params.ARM_MAX_POS);
+            if(gamepad1.a) {
+                arm.setArmPosition(15);
+            }
+
+            if(gamepad1.b) {
+                arm.setArmPosition(5);
+            }
+
+            intakePosition = MathFunctions.clamp(intakePosition, params.INTAKE_MIN_POS, params.INTAKE_MAX_POS);
+
+            telemetry.addData("arm position: ", arm.getArmPosition());
+            telemetry.addData("arm pid power: ", arm.out);
+            telemetry.addData("intake position: ", arm.getIntakePosition());
+            telemetry.update();
         }
+
+        arm.setArmPower(0);
     }
 }
