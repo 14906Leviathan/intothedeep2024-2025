@@ -1,20 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftFrontMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftRearMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightFrontMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightRearMotorName;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
-import org.firstinspires.ftc.teamcode.Hardware.TeleopMode;
-import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 
 /**
  * This is the TeleOpEnhancements OpMode. It is an example usage of the TeleOp enhancements that
@@ -70,13 +60,18 @@ public class BrokenBot extends LinearOpMode {
                 robot.armEncoder.close();
                 robot.armEncoder.resetDeviceConfigurationForOpMode();
             }
+            if(gamepad1.right_bumper) {
+                robot.slidesMotor.setPower(1);
+                robot.slidesMotor.setTargetPosition(42*params.SLIDES_TICKS_PER_INCH);
+            }
 
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
             telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());
             telemetry.addData("motorRR", robot.motorRR.getCurrentPosition());
             telemetry.addData("motorRF", robot.motorRF.getCurrentPosition());
             telemetry.addData("slides motor pos", robot.slidesMotor.getCurrentPosition());
-            telemetry.addData("arm encoder", robot.armEncoder.getVoltage());
+            telemetry.addData("arm abs encoder", robot.armEncoder.getVoltage());
+            telemetry.addData("arm encoder", ((double) robot.armMotor.getCurrentPosition()) / params.ARM_TICK_PER_DEG);
             telemetry.addData("slides extension", robot.slidesMotor.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH);
             telemetry.update();
         }

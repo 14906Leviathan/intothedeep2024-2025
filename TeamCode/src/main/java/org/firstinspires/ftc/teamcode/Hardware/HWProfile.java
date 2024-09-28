@@ -91,8 +91,8 @@ public class HWProfile {
         armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         armMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setTargetPosition(0);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         armMotor.setPower(0);
 
         armEncoder = hwMap.get(AnalogInput.class, "armEncoder");
