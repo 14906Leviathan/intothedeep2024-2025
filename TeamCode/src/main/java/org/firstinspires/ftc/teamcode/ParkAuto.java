@@ -53,7 +53,7 @@ public class ParkAuto extends LinearOpMode {
 
         parkPath = new Path(new BezierLine(
                 new Point(8.991, 83.674, Point.CARTESIAN),
-                new Point(10.151, -100, Point.CARTESIAN)
+                new Point(10.151, 10, Point.CARTESIAN)
         ));
 
         parkPath.setConstantHeadingInterpolation(Math.toRadians(0));
@@ -61,14 +61,12 @@ public class ParkAuto extends LinearOpMode {
         waitForStart();
         autoTime.reset();
 
-        sleep(10000);
-
         while (opModeIsActive()) {
 
 
             follower.update();
             follower.followPath(parkPath);
-            if (!follower.isBusy() || autoTime.time(TimeUnit.SECONDS) > 5) {
+            if (!follower.isBusy()) {
                 requestOpModeStop();
             }
             follower.telemetryDebug(telemetry);

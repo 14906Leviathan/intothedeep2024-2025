@@ -8,7 +8,7 @@ public class Params {
     public static double ARM_BUCKET2_SCORE_DEG = 110; //143
     public static double ARM_BUCKET1_SCORE_DEG = 67; //143
     public static double ARM_TOUCH_POLE = 60; //143
-    public static double ARM_SPECIMEN_POLE_2 = 75; //143
+    public static double ARM_SPECIMEN_POLE_2 = 73; //143
     public static double ARM_SPECIMEN_INTAKE = 43; //143
     public static final int ARM_MAX_POS = 120;
     public static final int ARM_MIN_POS = 0;

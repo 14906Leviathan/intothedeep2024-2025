@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -10,7 +9,7 @@ import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
-import org.firstinspires.ftc.teamcode.Hardware.TeleopMode;
+import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
@@ -68,9 +67,6 @@ public class MainTeleOp extends LinearOpMode {
         while(opModeIsActive()) {
 
             if(firstRun) {
-//                teleopMode = TeleopMode.IDLE;
-//                arm.setTeleopMode(teleopMode);
-//                arm.idle();
                 teleopMode = TeleopMode.IDLE;
                 arm.setTeleopMode(teleopMode);
                 arm.update();
@@ -221,6 +217,7 @@ public class MainTeleOp extends LinearOpMode {
 //            }
 
             arm.update();
+            intake.update();
 
             intakePosition = MathFunctions.clamp(intakePosition, params.INTAKE_MIN_POS, params.INTAKE_MAX_POS);
 

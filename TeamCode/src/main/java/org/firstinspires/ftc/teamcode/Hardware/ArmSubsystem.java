@@ -4,10 +4,12 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.Abstracts.Subsystem;
+import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
 @Config
-public class ArmSubsystem {
+public class ArmSubsystem extends Subsystem {
 
     private HWProfile robot;
     public LinearOpMode opMode;
@@ -33,10 +35,6 @@ public class ArmSubsystem {
     private int armTransistionStage = 0;
     public boolean intakeSpecimen = false;
     public boolean intakeUpSpecimen = false;
-
-    public  static void main(String[] args) {
-
-    }
 
     public void setTeleopMode(TeleopMode mode) {
         currentMode = mode;
@@ -137,7 +135,7 @@ public class ArmSubsystem {
             if(!intakeSpecimen) {
                 setTargetSlidesPosition(slidesPos);
                 opMode.telemetry.addData("slidesPosArmClass: ", slidesPos);
-                double armDeg = map(slidesPos, 3, 36, 15, 23);
+                double armDeg = map(slidesPos, 3, 36, 17, 25);
                 if (armDeg < 0) armDeg = 0;
 
                 if (!intakeGrab) armDeg += params.ARM_INTAKE_MODE_UP_DEG;
