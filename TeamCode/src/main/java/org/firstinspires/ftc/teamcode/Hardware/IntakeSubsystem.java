@@ -2,10 +2,6 @@ package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
 @Config
 public class IntakeSubsystem {
@@ -22,18 +18,31 @@ public class IntakeSubsystem {
     }   // close RRMechOps constructor Method
 
     public void intake() {
-        robot.intakeServo.setPosition(params.INTAKE_SPEED);
+        robot.intakeServo1.setPower(params.INTAKE_SPEED);
+        robot.intakeServo2.setPower(params.INTAKE_SPEED);
+
+        robot.intakeServo1.setDirection(params.INTAKE1_DIRECTION);
+        robot.intakeServo2.setDirection(params.INTAKE2_DIRECTION);
     }
 
     public void outtake() {
-        robot.intakeServo.setPosition(params.OUTTAKE_SPEED);
+        robot.intakeServo1.setPower(params.OUTTAKE_SPEED);
+        robot.intakeServo2.setPower(params.OUTTAKE_SPEED);
+
+        robot.intakeServo1.setDirection(params.OUTAKE1_DIRECTION);
+        robot.intakeServo2.setDirection(params.OUTAKE2_DIRECTION);
     }
 
     public void hold() {
-        robot.intakeServo.setPosition(params.INTAKE_HOLD_SPEED);
+        robot.intakeServo1.setPower(params.INTAKE_HOLD_SPEED);
+        robot.intakeServo2.setPower(params.INTAKE_HOLD_SPEED);
+
+        robot.intakeServo1.setDirection(params.INTAKE1_DIRECTION);
+        robot.intakeServo2.setDirection(params.INTAKE2_DIRECTION);
     }
 
     public void idle() {
-        robot.intakeServo.setPosition(params.INTAKE_IDLE_SPEED);
+        robot.intakeServo1.setPower(params.INTAKE_IDLE_SPEED);
+        robot.intakeServo2.setPower(params.INTAKE_IDLE_SPEED);
     }
 }

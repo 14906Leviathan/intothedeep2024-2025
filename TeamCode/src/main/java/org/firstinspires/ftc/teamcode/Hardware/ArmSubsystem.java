@@ -30,6 +30,9 @@ public class ArmSubsystem {
     private boolean waitSlidesTransition = false;
     private double armTargetPos = 0;
     private boolean armReachedPosition = false;
+    private int armTransistionStage = 0;
+    public boolean intakeSpecimen = false;
+    public boolean intakeUpSpecimen = false;
 
     public  static void main(String[] args) {
 
@@ -131,23 +134,42 @@ public class ArmSubsystem {
 
             slidesPos = Math.sqrt((params.SLIDE_GROUND_POS*params.SLIDE_GROUND_POS)+(slidesPos*slidesPos));
 
-            setTargetSlidesPosition(slidesPos);
-            opMode.telemetry.addData("slidesPosArmClass: ", slidesPos);
-            double armDeg = map(slidesPos, 3, 36, 15, 23);
-            if(armDeg < 0) armDeg = 0;
+            if(!intakeSpecimen) {
+                setTargetSlidesPosition(slidesPos);
+                opMode.telemetry.addData("slidesPosArmClass: ", slidesPos);
+                double armDeg = map(slidesPos, 3, 36, 15, 23);
+                if (armDeg < 0) armDeg = 0;
 
-            if(!intakeGrab) armDeg += params.ARM_INTAKE_MODE_UP_DEG;
+                if (!intakeGrab) armDeg += params.ARM_INTAKE_MODE_UP_DEG;
 
-            opMode.telemetry.addData("(DEBUG: From ArmSubsystem) armDeg:", armDeg);
+                opMode.telemetry.addData("(DEBUG: From ArmSubsystem) armDeg:", armDeg);
 
-            setArmTargetPosition(armDeg);
+                setArmTargetPosition(armDeg);
+            } else {
+                setTargetSlidesPosition(params.SLIDES_SPECIMEN_INTAKE);
+                if(!intakeUpSpecimen) {
+                    setArmTargetPosition(params.ARM_SPECIMEN_INTAKE);
+                } else {
+                    setArmTargetPosition(params.ARM_SPECIMEN_INTAKE + 20);
+                }
+            }
 
-            if(getArmPosition() > 35 && !armReachedPosition) {
+            if(teleopModeStart) waitSlidesTransition = true;
+            if(teleopModeStart) armReachedPosition = false;
+            if(teleopModeStart) armTransistionStage = 1;
+
+            if(armTransistionStage == 1) {
                 slidesRetract = true;
-                if(getSlidesPosition() - 5 >= params.SLIDES_TRANSITION_LEN) {
+                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
                     waitSlidesTransition = true;
                 } else {
-                    waitSlidesTransition = false;
+                    armTransistionStage = 2;
+                }
+            } else if(armTransistionStage == 2) {
+                slidesRetract = true;
+                waitSlidesTransition = false;
+                if(armAtPosition()) {
+                    armTransistionStage = 3;
                 }
             } else {
                 slidesRetract = false;
@@ -157,15 +179,26 @@ public class ArmSubsystem {
             setTargetSlidesPosition(params.SLIDES_MIN_POS);
             setArmTargetPosition(params.ARM_IDLE_DEG);
 
-            if(!armAtPosition()) {
+            if(teleopModeStart) waitSlidesTransition = true;
+            if(teleopModeStart) armReachedPosition = false;
+            if(teleopModeStart) armTransistionStage = 1;
+
+            if(armTransistionStage == 1) {
                 slidesRetract = true;
-                if(getSlidesPosition() - 5 >= params.SLIDES_TRANSITION_LEN) {
+                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
                     waitSlidesTransition = true;
                 } else {
-                    waitSlidesTransition = false;
+                    armTransistionStage = 2;
+                }
+            } else if(armTransistionStage == 2) {
+                slidesRetract = true;
+                waitSlidesTransition = false;
+                if(armAtPosition()) {
+                    armTransistionStage = 3;
                 }
             } else {
                 slidesRetract = false;
+                armReachedPosition = true;
             }
         } else if (currentMode == TeleopMode.BUCKET_SCORE) {
             if(bucketScore == 2) {
@@ -176,12 +209,22 @@ public class ArmSubsystem {
                 setArmTargetPosition(params.ARM_BUCKET1_SCORE_DEG);
             }
 
-            if(!armAtPosition() && !armReachedPosition) {
+            if(teleopModeStart) waitSlidesTransition = true;
+            if(teleopModeStart) armReachedPosition = false;
+            if(teleopModeStart) armTransistionStage = 1;
+
+            if(armTransistionStage == 1) {
                 slidesRetract = true;
-                if(getSlidesPosition() - 5 >= params.SLIDES_TRANSITION_LEN) {
+                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
                     waitSlidesTransition = true;
                 } else {
-                    waitSlidesTransition = false;
+                    armTransistionStage = 2;
+                }
+            } else if(armTransistionStage == 2) {
+                slidesRetract = true;
+                waitSlidesTransition = false;
+                if(armAtPosition()) {
+                    armTransistionStage = 3;
                 }
             } else {
                 slidesRetract = false;
@@ -191,12 +234,47 @@ public class ArmSubsystem {
             setTargetSlidesPosition(params.SLIDES_TOUCH_POLE);
             setArmTargetPosition(params.ARM_TOUCH_POLE);
 
-            if(!armAtPosition() && !armReachedPosition) {
+            if(teleopModeStart) waitSlidesTransition = true;
+            if(teleopModeStart) armReachedPosition = false;
+            if(teleopModeStart) armTransistionStage = 1;
+
+            if(armTransistionStage == 1) {
                 slidesRetract = true;
-                if(getSlidesPosition() - 5 >= params.SLIDES_TRANSITION_LEN) {
+                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
                     waitSlidesTransition = true;
                 } else {
-                    waitSlidesTransition = false;
+                    armTransistionStage = 2;
+                }
+            } else if(armTransistionStage == 2) {
+                slidesRetract = true;
+                waitSlidesTransition = false;
+                if(armAtPosition()) {
+                    armTransistionStage = 3;
+                }
+            } else {
+                slidesRetract = false;
+                armReachedPosition = true;
+            }
+        } else if (currentMode == TeleopMode.SPECIMEN_SCORE) {
+            setTargetSlidesPosition(params.SLIDES_SPECIMEN_POLE_2);
+            setArmTargetPosition(params.ARM_SPECIMEN_POLE_2);
+
+            if(teleopModeStart) waitSlidesTransition = true;
+            if(teleopModeStart) armReachedPosition = false;
+            if(teleopModeStart) armTransistionStage = 1;
+
+            if(armTransistionStage == 1) {
+                slidesRetract = true;
+                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
+                    waitSlidesTransition = true;
+                } else {
+                    armTransistionStage = 2;
+                }
+            } else if(armTransistionStage == 2) {
+                slidesRetract = true;
+                waitSlidesTransition = false;
+                if(armAtPosition()) {
+                    armTransistionStage = 3;
                 }
             } else {
                 slidesRetract = false;
@@ -214,6 +292,8 @@ public class ArmSubsystem {
 
         out = armPID.calculate(getArmPosition());
         robot.armMotor.setVelocity(out);
+
+        opMode.telemetry.addData("armReachedPosition", armReachedPosition);
 
         teleopModeStart = false;
 

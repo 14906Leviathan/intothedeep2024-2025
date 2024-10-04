@@ -89,17 +89,35 @@ public class MainTeleOp extends LinearOpMode {
 
             arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
 
+            if(gamepad1.dpad_right) {
+                teleopMode = TeleopMode.INTAKE;
+                arm.setTeleopMode(teleopMode);
+                arm.intakeSpecimen = true;
+            }
+
+            if (teleopMode == TeleopMode.INTAKE && arm.intakeSpecimen) {
+                intake.intake();
+
+                if(gamepad1.right_bumper) {
+                    arm.intakeUpSpecimen = true;
+                } else {
+                    arm.intakeUpSpecimen = false;
+                }
+            }
+
+
             if (gamepad1.a && !aCooldown) {
                 aCooldown = true;
 
                 teleopMode = TeleopMode.INTAKE;
+                arm.intakeSpecimen = false;
                 arm.setTeleopMode(teleopMode);
-                intakePosition = params.INTAKE_MAX_POS;
+                intakePosition = params.INTAKE_DEF_POS;
             } else if (!gamepad1.a) {
                 aCooldown = false;
             }
 
-            if (teleopMode == TeleopMode.INTAKE) {
+            if (teleopMode == TeleopMode.INTAKE && !arm.intakeSpecimen) {
                 arm.setIntakePosition(intakePosition);
 
                 if (gamepad1.right_trigger > .1) {
@@ -113,7 +131,7 @@ public class MainTeleOp extends LinearOpMode {
                     arm.intakeGrab();
                 } else if(gamepad1.left_bumper) {
                     intake.outtake();
-                    arm.intakeGrab();
+                    arm.intakeUp();
                 } else {
                     intake.hold();
                     arm.intakeUp();
@@ -125,6 +143,8 @@ public class MainTeleOp extends LinearOpMode {
                     slowMode = false;
                 }
             }
+
+            if(teleopMode != TeleopMode.INTAKE) slowMode = false;
 
             /* *******************BUCKET SCORE******************* */
 
@@ -171,6 +191,21 @@ public class MainTeleOp extends LinearOpMode {
             if(gamepad1.dpad_up) {
                 teleopMode = TeleopMode.TOUCH_POLE;
                 arm.setTeleopMode(teleopMode);
+            }
+
+            /* *******************SPECIMEN SCORE******************* */
+
+            if(gamepad1.dpad_left) {
+                teleopMode = TeleopMode.SPECIMEN_SCORE;
+                arm.setTeleopMode(teleopMode);
+            }
+
+            if(teleopMode == TeleopMode.SPECIMEN_SCORE) {
+                if(gamepad1.left_bumper) {
+                    intake.outtake();
+                } else {
+                    intake.intake();
+                }
             }
 
             /* *******************RESET IMU******************* */

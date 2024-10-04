@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Hardware;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -15,7 +16,8 @@ public class HWProfile {
     public IMU imu;
     public DcMotorEx slidesMotor = null;
     public DcMotorEx armMotor = null;
-    public Servo intakeServo = null;
+    public CRServo intakeServo1 = null;
+    public CRServo intakeServo2 = null;
     public DcMotorEx motorLF = null;
     public DcMotorEx motorLR = null;
     public DcMotorEx motorRF = null;
@@ -97,7 +99,8 @@ public class HWProfile {
 
         armEncoder = hwMap.get(AnalogInput.class, "armEncoder");
 
-        intakeServo = hwMap.get(Servo.class, "intakeServo");
+        intakeServo1 = hwMap.get(CRServo.class, "intakeServo1");
+        intakeServo2 = hwMap.get(CRServo.class, "intakeServo2");
 
     }
 }  // end of HWProfile Class
