@@ -5,24 +5,33 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
+import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
+import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
+import org.firstinspires.ftc.teamcode.Hardware.Auto;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
 import org.firstinspires.ftc.teamcode.Paths.BlueLeft.*;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathBuilder;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 
 @Config
-@Autonomous (name = "Park Auto", group = "Autonomous", preselectTeleOp = "Main TeleOp")
-public class BlueLeftAuto extends LinearOpMode {
-    private boolean forward = true;
+@Autonomous (name = "Left Auto", group = "Autonomous", preselectTeleOp = "Main TeleOp")
+public class LeftAuto extends LinearOpMode {
     private Follower follower;
     private ElapsedTime autoTime = new ElapsedTime();
-    private ToBucketPath toBucketPath;
-    private BucketScorePath bucketScorePath;
-    private ToFirstYellowPath toFirstYellowPath;
+    private PathChain toBucketPath = new ToBucketPath().getPath().build();
+    private BucketScorePath bucketScorePath = new BucketScorePath();
+    private ToFirstYellowPath toFirstYellowPath = new ToFirstYellowPath();
+    private BackupPath backupPath = new BackupPath();
     private int autoState = 1;
     private HWProfile robot;
     private Params params;
@@ -31,7 +40,11 @@ public class BlueLeftAuto extends LinearOpMode {
     private TeleopMode currentMode = TeleopMode.IDLE;
     private long armWaitSleep = 2500;
     private long outtakeSleep = 2500;
+    private long waitForHalt = 2500;
     private long intakeSleep = 3500;
+    private boolean autoStart = true;
+    private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
+    private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
     private Thread armHandlerThread = new Thread(() -> {
        while (opModeIsActive()) {
            arm.update();
@@ -40,9 +53,16 @@ public class BlueLeftAuto extends LinearOpMode {
            telemetry.addData("X:", follower.getPose().getX());
            telemetry.addData("Y:", follower.getPose().getY());
            telemetry.addData("heading:", Math.toDegrees(follower.getTotalHeading()));
+           telemetry.addData("auto state:", autoState);
            telemetry.update();
        }
     });
+    private final boolean debug = false;
+    private boolean pathStarted = true;
+    private PathChain currentPath;
+    private int lastAutoState = 0;
+    private Auto auto;
+    private AutoLocation autoLocation = AutoLocation.LEFT_SIMPLE;
 
     @Override
     public void runOpMode() {
@@ -60,17 +80,48 @@ public class BlueLeftAuto extends LinearOpMode {
         currentMode = TeleopMode.IDLE;
         arm.setTeleopMode(currentMode);
 
+        intake.setGrabAngle(grabAngle);
+        intake.setGrabStyle(grabStyle);
+        intake.intake();
+
+        auto = new Auto(follower);
+        auto.buildPaths(autoLocation);
+
         waitForStart();
 
         while (opModeIsActive()) {
             if(!armHandlerThread.isAlive()) armHandlerThread.start();
 
+            arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
+
+            if(debug) {
+                auto.update();
+
+                if(autoStart) {
+                    autoStart = false;
+
+                    auto.runPath(auto.toBucketPath);
+                }
+
+                continue;
+            }
+
+            auto.update();
+
+            if(auto.isBusy()) {
+                auto.update();
+                continue;
+            }
+
             switch(autoState) {
                 case 1:
-                    follower.followPath(toBucketPath.getPath().build());
+                    if(!follower.isBusy()) {
+                        autoState = 2;
 
-                    autoState = 2;
+                        auto.runPath(auto.toBucketPath);
+                    }
                 break;
+                /*
                 case 2:
                     if(!follower.isBusy()) {
                         currentMode = TeleopMode.BUCKET_SCORE;
@@ -84,47 +135,15 @@ public class BlueLeftAuto extends LinearOpMode {
                 break;
                 case 3:
                     if(!follower.isBusy()) {
-                        currentMode = TeleopMode.INTAKE;
+                        sleep(waitForHalt);
                         intake.outtake();
                         sleep(outtakeSleep);
-                        arm.setTeleopMode(currentMode);
-                        arm.setIntakePosition(params.INTAKE_MIN_POS);
-                        sleep(armWaitSleep);
-                        autoState = 4;
-                        follower.followPath(toFirstYellowPath.getPath().build());
+                        follower.followPath(backupPath.getPath().build());
                     }
                 break;
-                case 4:
-                    if(!follower.isBusy()) {
-                        arm.setIntakePosition(params.INTAKE_MAX_POS);
-                        intake.intake();
-                        sleep(intakeSleep);
-                        currentMode = TeleopMode.IDLE;
-                        arm.setTeleopMode(currentMode);
-
-                        follower.followPath(toBucketPath.getPath().build());
-                        autoState = 5;
-                    }
-                break;
-                case 5:
-                    if(!follower.isBusy()){
-                        currentMode = TeleopMode.BUCKET_SCORE;
-                        arm.setTeleopMode(currentMode);
-                        arm.setBucket(2);
-                        sleep(armWaitSleep);
-                        follower.followPath(bucketScorePath.getPath().build());
-
-                        autoState = 6;
-                    }
-                break;
-                case 6:
-                    if(!follower.isBusy()) {
-                        intake.outtake();
-                        sleep(outtakeSleep);
-                    }
+                */
             }
 
-            follower.update();
             arm.update();
         }
     }

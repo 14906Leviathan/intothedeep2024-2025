@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.Hardware;
 
+import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -12,6 +13,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
 public class HWProfile {
     public IMU imu;
     public DcMotorEx slidesMotor = null;
@@ -23,6 +26,8 @@ public class HWProfile {
     public DcMotorEx motorRF = null;
     public DcMotorEx motorRR = null;
     public AnalogInput armEncoder = null;
+    public SimpleServo clawServo = null;
+    public SimpleServo clawPivotServo = null;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -102,5 +107,10 @@ public class HWProfile {
         intakeServo1 = hwMap.get(CRServo.class, "intakeServo1");
         intakeServo2 = hwMap.get(CRServo.class, "intakeServo2");
 
+        clawServo = new SimpleServo(hwMap, "clawServo", 0, 180, AngleUnit.DEGREES);
+        clawServo.setInverted(false);
+
+        clawPivotServo = new SimpleServo(hwMap, "clawServoPivot", 0, 270, AngleUnit.DEGREES);
+        clawPivotServo.setInverted(false);
     }
 }  // end of HWProfile Class

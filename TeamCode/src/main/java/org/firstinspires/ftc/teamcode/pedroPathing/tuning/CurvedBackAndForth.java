@@ -4,10 +4,16 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
+import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
+import org.firstinspires.ftc.teamcode.Hardware.Params;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierCurve;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
@@ -27,7 +33,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
  */
 @Config
 @Autonomous (name = "Curved Back And Forth", group = "Autonomous Pathing Tuning")
-public class CurvedBackAndForth extends OpMode {
+public class CurvedBackAndForth extends LinearOpMode {
     private Telemetry telemetryA;
 
     public static double DISTANCE = 20;
@@ -38,17 +44,24 @@ public class CurvedBackAndForth extends OpMode {
 
     private Path forwards;
     private Path backwards;
+    private Params params = new Params();
+    private ArmSubsystem arm;
+    private HWProfile robot = new HWProfile();
 
     /**
      * This initializes the Follower and creates the forward and backward Paths. Additionally, this
      * initializes the FTC Dashboard telemetry.
      */
     @Override
-    public void init() {
+    public void runOpMode() {
+        robot.init(hardwareMap, false);
+        arm = new ArmSubsystem(robot, this, params);
+        arm.setTeleopMode(TeleopMode.IDLE);
+
         follower = new Follower(hardwareMap);
 
-        forwards = new Path(new BezierCurve(new Point(0,0, Point.CARTESIAN), new Point(Math.abs(DISTANCE),0, Point.CARTESIAN), new Point(Math.abs(DISTANCE),DISTANCE, Point.CARTESIAN)));
-        backwards = new Path(new BezierCurve(new Point(Math.abs(DISTANCE),DISTANCE, Point.CARTESIAN), new Point(Math.abs(DISTANCE),0, Point.CARTESIAN), new Point(0,0, Point.CARTESIAN)));
+        forwards = new Path(new BezierCurve(new Point(0, 0, Point.CARTESIAN), new Point(Math.abs(DISTANCE), 0, Point.CARTESIAN), new Point(Math.abs(DISTANCE), DISTANCE, Point.CARTESIAN)));
+        backwards = new Path(new BezierCurve(new Point(Math.abs(DISTANCE), DISTANCE, Point.CARTESIAN), new Point(Math.abs(DISTANCE), 0, Point.CARTESIAN), new Point(0, 0, Point.CARTESIAN)));
 
         backwards.setReversed(true);
 
@@ -56,30 +69,32 @@ public class CurvedBackAndForth extends OpMode {
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetryA.addLine("This will run the robot in a curve going " + DISTANCE + " inches"
-                            + " to the left and the same number of inches forward. The robot will go"
-                            + "forward and backward continuously along the path. Make sure you have"
-                            + "enough room.");
+                + " to the left and the same number of inches forward. The robot will go"
+                + "forward and backward continuously along the path. Make sure you have"
+                + "enough room.");
         telemetryA.update();
-    }
 
-    /**
-     * This runs the OpMode, updating the Follower as well as printing out the debug statements to
-     * the Telemetry, as well as the FTC Dashboard.
-     */
-    @Override
-    public void loop() {
-        follower.update();
-        if (!follower.isBusy()) {
-            if (forward) {
-                forward = false;
-                follower.followPath(backwards);
-            } else {
-                forward = true;
-                follower.followPath(forwards);
+        follower.resetIMU();
+        follower.setPose(new Pose(0,0));
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            arm.update();
+
+            follower.update();
+            if (!follower.isBusy()) {
+                if (forward) {
+                    forward = false;
+                    follower.followPath(backwards);
+                } else {
+                    forward = true;
+                    follower.followPath(forwards);
+                }
             }
-        }
 
-        telemetryA.addData("going forward", forward);
-        follower.telemetryDebug(telemetryA);
+            telemetryA.addData("going forward", forward);
+            follower.telemetryDebug(telemetryA);
+        }
     }
 }

@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
 
@@ -19,6 +21,8 @@ import org.firstinspires.ftc.teamcode.Hardware.Params;
 public class BrokenBot extends LinearOpMode {
     private HWProfile robot;
     private Params params;
+    private ArmSubsystem arm;
+    private TeleopMode currentMode;
 
     /**
      * This initializes the drive motors as well as the Follower and motion Vectors.
@@ -28,6 +32,7 @@ public class BrokenBot extends LinearOpMode {
         robot = new HWProfile();
         robot.init(hardwareMap, true);
         params = new Params();
+        arm = new ArmSubsystem(robot, this, params);
 
         waitForStart();
 
@@ -57,13 +62,22 @@ public class BrokenBot extends LinearOpMode {
             }
 
             if(gamepad1.a) {
-                robot.armEncoder.close();
-                robot.armEncoder.resetDeviceConfigurationForOpMode();
+                currentMode = TeleopMode.DEBUG;
+                arm.setTeleopMode(currentMode);
+                arm.setArmTargetPosition(45);
+            } else if (gamepad1.b) {
+                currentMode = TeleopMode.DEBUG;
+                arm.setTeleopMode(currentMode);
+                arm.setArmTargetPosition(15);
             }
+
             if(gamepad1.right_bumper) {
-                robot.slidesMotor.setPower(1);
-                robot.slidesMotor.setTargetPosition(42*params.SLIDES_TICKS_PER_INCH);
+                robot.clawServo.turnToAngle(0);
+            } else if(gamepad1.left_bumper) {
+                robot.clawServo.turnToAngle(70);
             }
+
+            arm.update();
 
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
             telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());

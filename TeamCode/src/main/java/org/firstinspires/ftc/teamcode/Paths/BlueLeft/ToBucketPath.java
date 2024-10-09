@@ -26,10 +26,10 @@ public class ToBucketPath extends AutoPath {
                         // Line 1
                         new BezierLine(
                                 new Point(7.976, 83.819, Point.CARTESIAN),
-                                new Point(24.073, 118.912, Point.CARTESIAN)
+                                new Point(37.3, 97.8, Point.CARTESIAN)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(140));
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(120));
 
         return builder;
     }

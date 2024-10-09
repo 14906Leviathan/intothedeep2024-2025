@@ -28,10 +28,10 @@ public class BucketScorePath extends AutoPath {
             // Line 1
             new BezierLine(
               new Point(lastPath.getEndX(), lastPath.getEndY(), Point.CARTESIAN),
-              new Point(14.502, 130.079, Point.CARTESIAN)
+              new Point(19.1, 118.4, Point.CARTESIAN)
             )
           )
-          .setLinearHeadingInterpolation(Math.toRadians(lastPath.getEndHeading()), Math.toRadians(140));
+          .setPathEndHeadingConstraint(Math.toRadians(140));
 
         return builder;
     }

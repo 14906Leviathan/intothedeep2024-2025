@@ -5,6 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
+import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
+import org.firstinspires.ftc.teamcode.Enums.IntakeType;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
@@ -36,13 +39,19 @@ public class MainTeleOp extends LinearOpMode {
     private ArmSubsystem arm;
     private IntakeSubsystem intake;
     private boolean g1_dpadDownCooldown = false;
+    private boolean rBumperCooldown = false;
     private boolean g1_dpadUpCooldown = false;
     private TeleopMode teleopMode;
     private double intakePosition = params.INTAKE_MAX_POS; //inches
     private boolean aCooldown = false;
     private boolean firstRun = true;
+    private boolean LSB_cooldown = false;
+    private boolean RSB_cooldown = false;
     private boolean slowMode = false;
-
+    private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
+    private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
+    private double armPosSpecimen = 0;
+    private double slidesPosSpecimen = 0;
     /**
      * This initializes the drive motors as well as the Follower and motion Vectors.
      */
@@ -70,6 +79,12 @@ public class MainTeleOp extends LinearOpMode {
                 teleopMode = TeleopMode.IDLE;
                 arm.setTeleopMode(teleopMode);
                 arm.update();
+                if(params.INTAKE_TYPE == IntakeType.CLAW) {
+                    intake.setGrabStyle(GrabStyle.OUTSIDE_GRAB);
+                    intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
+                    intake.outtake();
+                    intake.update();
+                }
 
                 firstRun = false;
             }
@@ -92,12 +107,27 @@ public class MainTeleOp extends LinearOpMode {
             }
 
             if (teleopMode == TeleopMode.INTAKE && arm.intakeSpecimen) {
-                intake.intake();
+                grabAngle = GrabAngle.VERTICAL_GRAB;
+                grabStyle = GrabStyle.OUTSIDE_GRAB;
 
-                if(gamepad1.right_bumper) {
-                    arm.intakeUpSpecimen = true;
-                } else {
-                    arm.intakeUpSpecimen = false;
+                intake.setGrabStyle(grabStyle);
+                intake.setGrabAngle(grabAngle);
+
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
+                    intake.intake();
+                } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
+                    if(gamepad1.right_bumper && !rBumperCooldown) {
+                        intake.toggle();
+                        rBumperCooldown = true;
+                    }
+                }
+
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
+                    if (gamepad1.right_bumper) {
+                        arm.intakeUpSpecimen = true;
+                    } else {
+                        arm.intakeUpSpecimen = false;
+                    }
                 }
             }
 
@@ -109,28 +139,63 @@ public class MainTeleOp extends LinearOpMode {
                 arm.intakeSpecimen = false;
                 arm.setTeleopMode(teleopMode);
                 intakePosition = params.INTAKE_DEF_POS;
+                if(params.INTAKE_TYPE == IntakeType.CLAW) intake.outtake();
             } else if (!gamepad1.a) {
                 aCooldown = false;
             }
 
             if (teleopMode == TeleopMode.INTAKE && !arm.intakeSpecimen) {
-                arm.setIntakePosition(intakePosition);
-
                 if (gamepad1.right_trigger > .1) {
-                    intakePosition += 1;
+                    intakePosition += 3 * gamepad1.right_trigger;
                 } else if (gamepad1.left_trigger > .1) {
-                    intakePosition -= 1;
+                    intakePosition -= 3 * gamepad1.left_trigger;
                 }
 
-                if(gamepad1.right_bumper) {
-                    intake.intake();
-                    arm.intakeGrab();
-                } else if(gamepad1.left_bumper) {
-                    intake.outtake();
-                    arm.intakeUp();
-                } else {
-                    intake.hold();
-                    arm.intakeUp();
+                arm.setIntakePosition(intakePosition);
+
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
+                    if (gamepad1.right_bumper) {
+                        intake.intake();
+                        arm.intakeGrab();
+                    } else if (gamepad1.left_bumper) {
+                        intake.outtake();
+                        arm.intakeGrab();
+                    } else {
+                        intake.hold();
+                        arm.intakeUp();
+                    }
+                } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
+                    if(gamepad1.right_bumper && !rBumperCooldown) {
+                        rBumperCooldown = true;
+
+                        intake.toggle();
+                    }
+
+                    if(gamepad1.left_bumper) {
+                        arm.intakeGrab();
+                    } else {
+                        arm.intakeUp();
+                    }
+
+                    if(gamepad1.left_stick_button && !LSB_cooldown) {
+                        LSB_cooldown = true;
+
+                        if(intake.getGrabStyle() == GrabStyle.OUTSIDE_GRAB) {
+                            intake.setGrabStyle(GrabStyle.INSIDE_GRAB);
+                        } else if(intake.getGrabStyle() == GrabStyle.INSIDE_GRAB) {
+                            intake.setGrabStyle(GrabStyle.OUTSIDE_GRAB);
+                        }
+                    }
+
+                    if(gamepad1.right_stick_button && !RSB_cooldown) {
+                        RSB_cooldown = true;
+
+                        if(intake.getGrabAngle() == GrabAngle.VERTICAL_GRAB) {
+                            intake.setGrabAngle(GrabAngle.HORIZONTAL_GRAB);
+                        } else if(intake.getGrabAngle() == GrabAngle.HORIZONTAL_GRAB) {
+                            intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
+                        }
+                    }
                 }
 
                 if(arm.getIntakePosition() >= params.INTAKE_SLOWMODE_MIN_POS) {
@@ -156,6 +221,8 @@ public class MainTeleOp extends LinearOpMode {
             }
 
             if(teleopMode == TeleopMode.BUCKET_SCORE) {
+                grabAngle = grabAngle = GrabAngle.VERTICAL_GRAB;
+                intake.setGrabAngle(grabAngle);
                 if(gamepad1.right_bumper) {
                     intake.intake();
                 } else if(gamepad1.left_bumper) {
@@ -194,18 +261,50 @@ public class MainTeleOp extends LinearOpMode {
             if(gamepad1.dpad_left) {
                 teleopMode = TeleopMode.SPECIMEN_SCORE;
                 arm.setTeleopMode(teleopMode);
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
+                if(params.INTAKE_TYPE == IntakeType.CLAW) armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_CLAW;
+
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) slidesPosSpecimen = params.SLIDES_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
+                if(params.INTAKE_TYPE == IntakeType.CLAW) slidesPosSpecimen = params.SLIDES_SPECIMEN_POLE_2_MAX_CLAW;
             }
 
             if(teleopMode == TeleopMode.SPECIMEN_SCORE) {
-                if(gamepad1.left_bumper) {
-                    intake.outtake();
-                } else {
-                    intake.intake();
+                if(gamepad1.right_bumper && !rBumperCooldown && params.INTAKE_TYPE == IntakeType.CLAW) {
+                    rBumperCooldown = true;
+                    intake.toggle();
                 }
+
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
+                    if(gamepad1.left_bumper) {
+                        intake.idle();
+                    } else {
+                        intake.intake();
+                    }
+                }
+
+                if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
+                    if (gamepad1.right_trigger > .1) {
+                        armPosSpecimen += 2;
+                    } else if (gamepad1.left_trigger > .1) {
+                        armPosSpecimen -= 2;
+                    }
+                } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
+                    armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_CLAW;
+
+                    if (gamepad1.right_trigger > .1) {
+                        slidesPosSpecimen += 2;
+                    } else if (gamepad1.left_trigger > .1) {
+                        slidesPosSpecimen -= 2;
+                    }
+                }
+
+                armPosSpecimen = arm.setArmPositionSpecimen(armPosSpecimen);
+                slidesPosSpecimen = arm.setSlidesPositionSpecimen(slidesPosSpecimen);
             }
 
             /* *******************RESET IMU******************* */
             if(gamepad1.options) follower.resetIMU();
+            if(!gamepad1.right_bumper) rBumperCooldown = false;
 
 
 //            arm.setArmPower(.3);
@@ -215,6 +314,9 @@ public class MainTeleOp extends LinearOpMode {
 //            } else if(gamepad1.b) {
 //                arm.setArmTargetPosition(5);
 //            }
+
+            if(!gamepad1.left_stick_button) LSB_cooldown = false;
+            if(!gamepad1.right_stick_button) RSB_cooldown = false;
 
             arm.update();
             intake.update();
