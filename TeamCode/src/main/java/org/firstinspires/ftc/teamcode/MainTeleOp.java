@@ -167,7 +167,6 @@ public class MainTeleOp extends LinearOpMode {
                 } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
                     if(gamepad1.right_bumper && !rBumperCooldown) {
                         rBumperCooldown = true;
-
                         intake.toggle();
                     }
 
@@ -223,12 +222,17 @@ public class MainTeleOp extends LinearOpMode {
             if(teleopMode == TeleopMode.BUCKET_SCORE) {
                 grabAngle = grabAngle = GrabAngle.VERTICAL_GRAB;
                 intake.setGrabAngle(grabAngle);
-                if(gamepad1.right_bumper) {
-                    intake.intake();
-                } else if(gamepad1.left_bumper) {
-                    intake.outtake();
+
+                if(gamepad1.right_bumper && !rBumperCooldown) {
+                    rBumperCooldown = true;
+
+                    intake.toggle();
+                }
+
+                if(gamepad1.left_trigger > .1) {
+                    arm.retractSlidesOuttake();
                 } else {
-                    intake.hold();
+                    arm.extendSlidesOuttake();
                 }
             }
 

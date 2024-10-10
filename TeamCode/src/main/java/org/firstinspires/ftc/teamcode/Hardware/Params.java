@@ -10,6 +10,7 @@ public class Params {
     public static double ARM_BUCKET2_SCORE_DEG = 110; //143
     public static double ARM_BUCKET1_SCORE_DEG = 70; //143
     public static double ARM_TOUCH_POLE = 60; //143
+    public static double ARM_TOUCH_POLE_AUTO = 132; //143
     public static double ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 75; //143
     public static double ARM_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 60; //143
     public static double ARM_SPECIMEN_POLE_2_MAX_CLAW = 90; //143
@@ -27,6 +28,7 @@ public class Params {
     public static final double SLIDES_BUCKET_1_SCORE_LEN = 35;
     public static final double SLIDES_BUCKET_1_SCORE_LEN_CLAW = 37;
     public static final double SLIDES_TOUCH_POLE = 25;
+    public static final double SLIDES_TOUCH_POLE_AUTO = 0;
     public static final double SLIDES_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 25;
     public static final double SLIDES_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 25;
     public static final double SLIDES_SPECIMEN_POLE_2_MAX_CLAW = 15;
