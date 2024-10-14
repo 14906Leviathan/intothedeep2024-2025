@@ -14,7 +14,8 @@ public class Params {
     public static double ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 75; //143
     public static double ARM_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 60; //143
     public static double ARM_SPECIMEN_POLE_2_MAX_CLAW = 90; //143
-    public static double ARM_SPECIMEN_POLE_2_MIN_CLAW = ARM_SPECIMEN_POLE_2_MAX_CLAW; //143
+    public static double ARM_SPECIMEN_POLE_2_MAX_CLAW_DEFAULT = 70; //143
+    public static double ARM_SPECIMEN_POLE_2_MIN_CLAW = 60; //143
     public static double ARM_SPECIMEN_INTAKE_TWO_WHEEL = 43; //143
     public static double ARM_SPECIMEN_INTAKE_CLAW = 18.5; //143
     public static final int ARM_MAX_POS = 120;
@@ -31,12 +32,13 @@ public class Params {
     public static final double SLIDES_TOUCH_POLE_AUTO = 0;
     public static final double SLIDES_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 25;
     public static final double SLIDES_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 25;
-    public static final double SLIDES_SPECIMEN_POLE_2_MAX_CLAW = 15;
-    public static final double SLIDES_SPECIMEN_POLE_2_MIN_CLAW = 0;
+    public static final double SLIDES_SPECIMEN_POLE_2_MAX_CLAW = 37;
+    public static final double SLIDES_SPECIMEN_POLE_2_MIN_CLAW = 30;
     public static final int ARM_EXTENDED_DEG = 15;
     public static final int SLIDES_TICKS_PER_INCH = 1922/43;
     public static final double SLIDES_TRANSITION_LEN = 12;
     public static final double ARM_AT_POS_ERROR_DEG = 4;
+    public static final double SLIDES_AT_POS_ERROR_INCH = 2;
     public static final double SLIDES_MAX_POS = 42.5;
     public static final double SLIDES_SPECIMEN_INTAKE_TWO_WHEEL = 2;
     public static final double SLIDES_SPECIMEN_INTAKE_CLAW = 17;
@@ -60,6 +62,7 @@ public class Params {
     public static final double SLOWMODE_XY_MULT = .3;
     public static final double SLOWMODE_TURN_MULT = .3;
     public static final double SLIDE_MOTOR_POWER = .75;
+    public static final double SLIDE_MOTOR_POWER_OUTTAKE = .85;
     public static final IntakeType INTAKE_TYPE = IntakeType.CLAW;
     public static final double CLAW_VERTICAL_GRAB_ANGLE = 3;
     public static final double CLAW_VERTICAL_DROP_ANGLE = 70;
@@ -68,6 +71,11 @@ public class Params {
     public static final double PIVOT_VERTICAL_ANG = 0;
     public static final double PIVOT_HORIZONTAL_ANG = 90;
     public static final double ARM_ERROR_TOLERANCE = .5;
+    public static final double AUTO_MAX_SPEED = .75;
+    public static final double AUTO_INTAKE_SPEED = .35;
+    public static final double AUTO_PARK_SPEED = .35;
+    public static final double AUTO_OUTTAKE_SPEED = .5;
+    public static final double AUTO_INTAKE_Y1_POS = 20;
 
 
     /* Constructor */

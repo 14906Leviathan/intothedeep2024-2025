@@ -1,16 +1,16 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Auto;
 
-import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Abstracts.AutoProgram;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
-import org.firstinspires.ftc.teamcode.Hardware.Auto;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
@@ -18,9 +18,8 @@ import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 
-@Config
-@Autonomous (name = "Left Auto", group = "Autonomous", preselectTeleOp = "Main TeleOp")
-public class LeftAuto extends LinearOpMode {
+public class LeftSimple extends AutoProgram {
+    private LinearOpMode opMode;
     private Follower follower;
     private ElapsedTime autoTime = new ElapsedTime();
     private int autoState = 1;
@@ -36,19 +35,21 @@ public class LeftAuto extends LinearOpMode {
     private boolean autoStart = true;
     private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
     private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
-    private Auto auto;
+    private AutoManager autoManager;
+    private HardwareMap hardwareMap;
+    private Telemetry telemetry;
     private Thread armHandlerThread = new Thread(() -> {
-       while (opModeIsActive()) {
-           arm.update();
-           intake.update();
-           auto.update();
+        while (opMode.opModeIsActive()) {
+            arm.update();
+            intake.update();
+            autoManager.update();
 
-           telemetry.addData("X:", follower.getPose().getX());
-           telemetry.addData("Y:", follower.getPose().getY());
-           telemetry.addData("heading:", Math.toDegrees(follower.getTotalHeading()));
-           telemetry.addData("auto state:", autoState);
-           telemetry.update();
-       }
+            telemetry.addData("X:", follower.getPose().getX());
+            telemetry.addData("Y:", follower.getPose().getY());
+            telemetry.addData("heading:", Math.toDegrees(follower.getTotalHeading()));
+            telemetry.addData("autoManager state:", autoState);
+            telemetry.update();
+        }
     });
     private final boolean debug = false;
     private boolean pathStarted = true;
@@ -56,9 +57,21 @@ public class LeftAuto extends LinearOpMode {
     private int lastAutoState = 0;
     private AutoLocation autoLocation = AutoLocation.LEFT_SIMPLE;
     private int nextAutoState = 0;
+    private final String autoName = "Left Simple Autonomous";
 
-    @Override
-    public void runOpMode() {
+    public String getAutoName() {
+        return autoName;
+    }
+
+    public LeftSimple() {
+
+    }
+
+    public void init(LinearOpMode _opMode) {
+        opMode = _opMode;
+        telemetry = opMode.telemetry;
+        hardwareMap = opMode.hardwareMap;
+
         follower = new Follower(hardwareMap);
         follower.resetIMU();
         follower.setPose(new Pose(9, 83.5, Math.toRadians(0)));
@@ -67,8 +80,8 @@ public class LeftAuto extends LinearOpMode {
         robot = new HWProfile();
         robot.init(hardwareMap, false);
         params = new Params();
-        arm = new ArmSubsystem(robot, this, params);
-        intake = new IntakeSubsystem(robot, this, params);
+        arm = new ArmSubsystem(robot, opMode, params);
+        intake = new IntakeSubsystem(robot, opMode, params);
 
         currentMode = TeleopMode.IDLE;
         arm.setTeleopMode(currentMode);
@@ -80,92 +93,74 @@ public class LeftAuto extends LinearOpMode {
         intake.update();
         arm.update();
 
-        auto = new Auto(follower);
-        auto.buildPaths(autoLocation);
+        autoManager = new AutoManager(follower);
+        autoManager.buildPaths(autoLocation);
 
-        while (!opModeIsActive()) {
-            arm.update();
-        }
+        while (!opMode.opModeIsActive()) arm.update();
 
-        while (opModeIsActive()) {
+        startAuto();
+    }
+
+    public void startAuto() {
+        autoManager.setSpeed(params.AUTO_MAX_SPEED);
+
+        while (opMode.opModeIsActive()) {
             if(!armHandlerThread.isAlive()) armHandlerThread.start();
 
             arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
-
-            /*
-            if(debug) {
-                auto.update();
-
-                if(autoStart) {
-                    autoStart = false;
-
-                    auto.runPath(auto.toBucketPath);
-                }
-
-                continue;
-            }
-
-             */
-
-            auto.disablePathing(debug);
-
-
-//            if(auto.isBusy()) {
-//                auto.update();
-//                continue;
-//            }
+            autoManager.disablePathing(debug);
 
             switch(autoState) {
                 case 1:
-                    if(!auto.isBusy()) {
-                        auto.runPath(auto.toBucketPath);
+                    if(!autoManager.isBusy()) {
+                        autoManager.runPath(autoManager.toBucketPath);
 
                         autoState = 2;
                     }
-                break;
+                    break;
                 case 2:
-                    if(!auto.isBusy()) {
+                    if(!autoManager.isBusy()) {
                         currentMode = TeleopMode.BUCKET_SCORE;
                         arm.setTeleopMode(currentMode);
-                        sleep(armWaitSleep);
-                        auto.runPath(auto.bucketScorePath);
+                        opMode.sleep(armWaitSleep);
+                        autoManager.runPath(autoManager.bucketScorePath);
                         autoState = 3;
                     }
-                break;
+                    break;
                 case 3:
-                    if(!auto.isBusy()) {
-//                        auto.holdCurrentPoint();
-                        sleep(waitForHalt);
+                    if(!autoManager.isBusy()) {
+//                        autoManager.holdCurrentPoint();
+                        opMode.sleep(waitForHalt);
                         intake.outtake();
-                        sleep(outtakeSleep);
+                        opMode.sleep(outtakeSleep);
 
-                        auto.runPath(auto.backupPath);
-                        auto.setSpeed(.75);
+                        autoManager.runPath(autoManager.backupPath);
+                        autoManager.setSpeed(params.AUTO_MAX_SPEED);
                         autoState = 4;
                     } else {
-                        auto.setSpeed(.35);
+                        autoManager.setSpeed(params.AUTO_OUTTAKE_SPEED);
                     }
-                break;
+                    break;
                 case 4:
-                    if(!auto.isBusy()) {
+                    if(!autoManager.isBusy()) {
                         currentMode = TeleopMode.TOUCH_POLE_AUTO;
                         arm.setTeleopMode(currentMode);
-                        sleep(armWaitSleep);
-                        auto.runPath(auto.park);
+                        opMode.sleep(armWaitSleep);
+                        autoManager.runPath(autoManager.park);
                         autoState = 5;
                     }
-                break;
+                    break;
                 case 5:
-                    if(!auto.isBusy()) {
+                    if(!autoManager.isBusy()) {
                         currentMode = TeleopMode.TOUCH_POLE_AUTO;
                         arm.setTeleopMode(currentMode);
                         autoState = -1;
                     } else {
                         if(follower.getPose().getX() > 45) {
-                            auto.setSpeed(.35);
+                            autoManager.setSpeed(params.AUTO_PARK_SPEED);
                         }
                     }
-                break;
+                    break;
                 /*
                 case 2:
                     if(!follower.isBusy()) {
@@ -191,5 +186,6 @@ public class LeftAuto extends LinearOpMode {
 
             arm.update();
         }
+
     }
 }

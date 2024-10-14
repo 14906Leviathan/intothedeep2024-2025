@@ -98,8 +98,6 @@ public class MainTeleOp extends LinearOpMode {
 
             /* *******************INTAKE******************* */
 
-            arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
-
             if(gamepad1.dpad_right) {
                 teleopMode = TeleopMode.INTAKE;
                 arm.setTeleopMode(teleopMode);
@@ -234,6 +232,8 @@ public class MainTeleOp extends LinearOpMode {
                 } else {
                     arm.extendSlidesOuttake();
                 }
+
+                arm.setArmTipBucketScore(gamepad1.right_trigger > .1);
             }
 
             /* *******************IDLE******************* */
@@ -266,13 +266,23 @@ public class MainTeleOp extends LinearOpMode {
                 teleopMode = TeleopMode.SPECIMEN_SCORE;
                 arm.setTeleopMode(teleopMode);
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
-                if(params.INTAKE_TYPE == IntakeType.CLAW) armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_CLAW;
+                if(params.INTAKE_TYPE == IntakeType.CLAW) armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_CLAW_DEFAULT;
 
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) slidesPosSpecimen = params.SLIDES_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
                 if(params.INTAKE_TYPE == IntakeType.CLAW) slidesPosSpecimen = params.SLIDES_SPECIMEN_POLE_2_MAX_CLAW;
             }
 
             if(teleopMode == TeleopMode.SPECIMEN_SCORE) {
+                if(gamepad1.right_stick_button && !RSB_cooldown) {
+                    RSB_cooldown = true;
+
+                    if(intake.getGrabAngle() == GrabAngle.VERTICAL_GRAB) {
+                        intake.setGrabAngle(GrabAngle.HORIZONTAL_GRAB);
+                    } else if(intake.getGrabAngle() == GrabAngle.HORIZONTAL_GRAB) {
+                        intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
+                    }
+                }
+
                 if(gamepad1.right_bumper && !rBumperCooldown && params.INTAKE_TYPE == IntakeType.CLAW) {
                     rBumperCooldown = true;
                     intake.toggle();
@@ -293,12 +303,12 @@ public class MainTeleOp extends LinearOpMode {
                         armPosSpecimen -= 2;
                     }
                 } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
-                    armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_CLAW;
+//                    armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_CLAW;
 
                     if (gamepad1.right_trigger > .1) {
-                        slidesPosSpecimen += 2;
+                        armPosSpecimen += 2;
                     } else if (gamepad1.left_trigger > .1) {
-                        slidesPosSpecimen -= 2;
+                        armPosSpecimen -= 2;
                     }
                 }
 

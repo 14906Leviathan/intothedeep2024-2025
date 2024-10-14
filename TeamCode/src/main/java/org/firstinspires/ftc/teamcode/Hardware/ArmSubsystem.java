@@ -23,7 +23,7 @@ public class ArmSubsystem extends Subsystem {
      */
     public static double Kp = 70;
     public static double Kp_Intake = 150;
-    public static double Ki = .1;
+    public static double Ki = .5;
     public static double Kd = .1;
     public static double Kf = 0.005;
     private double out = 0;
@@ -46,12 +46,17 @@ public class ArmSubsystem extends Subsystem {
     private double slidesPosSpecimen = params.SLIDES_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
     private TeleopMode lastTeleopMode = TeleopMode.IDLE;
     private boolean outtakeSlidesRetracted = false;
+    private boolean armTipBucketScore = false;
 
     public void setTeleopMode(TeleopMode mode) {
         if(lastTeleopMode != mode) lastTeleopMode = currentMode;
         currentMode = mode;
         teleopModeStart = true;
         armReachedPosition = false;
+    }
+
+    public void setArmTipBucketScore(boolean set) {
+        armTipBucketScore = set;
     }
 
     /*
@@ -157,6 +162,12 @@ public class ArmSubsystem extends Subsystem {
         return (armPos + params.ARM_AT_POS_ERROR_DEG > armTargetPos && armPos - params.ARM_AT_POS_ERROR_DEG < armTargetPos);
     }
 
+    public boolean slidesAtPosition() {
+        double slidesPos = getSlidesPosition();
+
+        return (slidesPos + params.SLIDES_AT_POS_ERROR_INCH > slidesTargetPos && slidesPos - params.SLIDES_AT_POS_ERROR_INCH < slidesTargetPos);
+    }
+
     public void setBucket(int bucket) {
         bucketScore = bucket;
     }
@@ -171,6 +182,7 @@ public class ArmSubsystem extends Subsystem {
 
     public void update() {
         if(currentMode == TeleopMode.INTAKE) {
+            setSlidesPower(params.SLIDE_MOTOR_POWER);
             double slidesPos = MathFunctions.clamp(intakePos, params.INTAKE_MIN_POS, params.INTAKE_MAX_POS);
 
             slidesPos = Math.sqrt((params.SLIDE_GROUND_POS*params.SLIDE_GROUND_POS)+(slidesPos*slidesPos));
@@ -227,6 +239,7 @@ public class ArmSubsystem extends Subsystem {
         } else if (currentMode == TeleopMode.IDLE) {
             setTargetSlidesPosition(params.SLIDES_MIN_POS);
             setArmTargetPosition(params.ARM_IDLE_DEG);
+            setSlidesPower(params.SLIDE_MOTOR_POWER);
 
             if(teleopModeStart) waitSlidesTransition = true;
             if(teleopModeStart) armReachedPosition = false;
@@ -256,6 +269,8 @@ public class ArmSubsystem extends Subsystem {
                 armTransistionStage = 3;
             }
         } else if (currentMode == TeleopMode.BUCKET_SCORE) {
+            setSlidesPower(params.SLIDE_MOTOR_POWER_OUTTAKE);
+
             if(bucketScore == 2) {
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
                     if(outtakeSlidesRetracted) {
@@ -268,9 +283,19 @@ public class ArmSubsystem extends Subsystem {
                     if(outtakeSlidesRetracted) {
                         setTargetSlidesPosition(params.SLIDES_MIN_POS);
                     } else {
-                        setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
+                        if(armTipBucketScore) {
+                            setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW - 5);
+                        } else {
+                            setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
+
+                        }
                     }
-                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
+                    if(armTipBucketScore) {
+                        setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG - 5);
+                    } else {
+                        setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
+
+                    }
                 }
             } else if(bucketScore == 1) {
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
@@ -290,26 +315,35 @@ public class ArmSubsystem extends Subsystem {
                 }
             }
 
-            if(teleopModeStart) waitSlidesTransition = true;
-            if(teleopModeStart) armReachedPosition = false;
-            if(teleopModeStart) armTransistionStage = 1;
+            if(getArmPosition() < 90) {
+                if (teleopModeStart) waitSlidesTransition = true;
+                if (teleopModeStart) armReachedPosition = false;
+                if (teleopModeStart) armTransistionStage = 1;
 
-            if(armTransistionStage == 1) {
-                slidesRetract = true;
-                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                    waitSlidesTransition = true;
+
+                if (armTransistionStage == 1) {
+                    slidesRetract = true;
+                    if (getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
+                        waitSlidesTransition = true;
+                    } else {
+                        armTransistionStage = 2;
+                    }
+                } else if (armTransistionStage == 2) {
+                    slidesRetract = true;
+                    waitSlidesTransition = false;
+                    if (armAtPosition()) {
+                        armTransistionStage = 3;
+                    }
                 } else {
-                    armTransistionStage = 2;
-                }
-            } else if(armTransistionStage == 2) {
-                slidesRetract = true;
-                waitSlidesTransition = false;
-                if(armAtPosition()) {
-                    armTransistionStage = 3;
+                    slidesRetract = false;
+                    armReachedPosition = true;
                 }
             } else {
+                if (teleopModeStart) waitSlidesTransition = false;
+                if (teleopModeStart) armReachedPosition = true;
+                if (teleopModeStart) armTransistionStage = 3;
+
                 slidesRetract = false;
-                armReachedPosition = true;
             }
         } else if (currentMode == TeleopMode.TOUCH_POLE) {
             setTargetSlidesPosition(params.SLIDES_TOUCH_POLE);
@@ -412,11 +446,13 @@ public class ArmSubsystem extends Subsystem {
 
         if(!slidesRetract && currentMode == TeleopMode.INTAKE) {
             armPID.setP(Kp);
+            armPID.setI(1);
         } else {
             armPID.setP(Kp);
+            armPID.setI(Ki);
         }
 
-//        armPID.setTolerance(params.ARM_ERROR_TOLERANCE);
+        armPID.setTolerance(.1);
         out = armPID.calculate(getArmPosition());
         robot.armMotor.setVelocity(out);
 
