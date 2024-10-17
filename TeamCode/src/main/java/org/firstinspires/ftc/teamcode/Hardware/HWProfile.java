@@ -28,6 +28,7 @@ public class HWProfile {
     public AnalogInput armEncoder = null;
     public SimpleServo clawServo = null;
     public SimpleServo clawPivotServo = null;
+    public SimpleServo poleToucher = null;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -112,5 +113,8 @@ public class HWProfile {
 
         clawPivotServo = new SimpleServo(hwMap, "clawServoPivot", 0, 270, AngleUnit.DEGREES);
         clawPivotServo.setInverted(false);
+
+        poleToucher = new SimpleServo(hwMap, "poleToucher", 0, 180, AngleUnit.DEGREES);
+        poleToucher.setInverted(true);
     }
 }  // end of HWProfile Class

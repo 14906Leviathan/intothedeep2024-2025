@@ -85,6 +85,7 @@ public class LeftSimple extends AutoProgram {
 
         currentMode = TeleopMode.IDLE;
         arm.setTeleopMode(currentMode);
+        arm.poleToucherIn();
 
         intake.setGrabAngle(grabAngle);
         intake.setGrabStyle(grabStyle);
@@ -105,6 +106,8 @@ public class LeftSimple extends AutoProgram {
         autoManager.setSpeed(params.AUTO_MAX_SPEED);
 
         while (opMode.opModeIsActive()) {
+            arm.poleToucherOut();
+
             if(!armHandlerThread.isAlive()) armHandlerThread.start();
 
             arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
@@ -143,7 +146,7 @@ public class LeftSimple extends AutoProgram {
                     break;
                 case 4:
                     if(!autoManager.isBusy()) {
-                        currentMode = TeleopMode.TOUCH_POLE_AUTO;
+                        currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
                         opMode.sleep(armWaitSleep);
                         autoManager.runPath(autoManager.park);
@@ -152,7 +155,7 @@ public class LeftSimple extends AutoProgram {
                     break;
                 case 5:
                     if(!autoManager.isBusy()) {
-                        currentMode = TeleopMode.TOUCH_POLE_AUTO;
+                        currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
                         autoState = -1;
                     } else {

@@ -18,8 +18,8 @@ public class AutoManager {
     public Path intakeYellow3;
     private Follower follower;
     private boolean pathingDisabled = false;
-    private Point leftParkLocation = new Point(64, 78.5, Point.CARTESIAN);
-    private Point leftScoreLocation = new Point(21, 108, Point.CARTESIAN);
+    private Point leftParkLocation = new Point(64, 89, Point.CARTESIAN);
+    private Point leftScoreLocation = new Point(20, 110, Point.CARTESIAN);
 
     public AutoManager(Follower _follower) {
         follower = _follower;
@@ -84,12 +84,12 @@ public class AutoManager {
             park = new Path(
                     new BezierCurve(
                             backupPath.getLastControlPoint(),
-                            new Point(68, 80, Point.CARTESIAN),
+                            new Point(85, 125, Point.CARTESIAN),
                             leftParkLocation
                     )
             );
 
-            park.setConstantHeadingInterpolation(Math.toRadians(90));
+            park.setConstantHeadingInterpolation(Math.toRadians(0));
         } else if(autoLocation == AutoLocation.LEFT_SCORE_GOLD) {
             toBucketPath = new Path(
                     new BezierLine(
@@ -123,7 +123,7 @@ public class AutoManager {
             intakeYellow1 = new Path(
                     new BezierLine(
                             backupPath.getLastControlPoint(),
-                            new Point(23, 102, Point.CARTESIAN)
+                            new Point(25, 110, Point.CARTESIAN)
                     )
             );
 
@@ -132,12 +132,12 @@ public class AutoManager {
             park = new Path(
                     new BezierCurve(
                             backupPath.getLastControlPoint(),
-                            new Point(68, 80, Point.CARTESIAN),
+                            new Point(85, 125, Point.CARTESIAN),
                             leftParkLocation
                     )
             );
 
-            park.setConstantHeadingInterpolation(Math.toRadians(90));
+            park.setConstantHeadingInterpolation(Math.toRadians(0));
         }
 
 

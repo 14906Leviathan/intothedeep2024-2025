@@ -67,14 +67,16 @@ public class Params {
     public static final double CLAW_VERTICAL_GRAB_ANGLE = 3;
     public static final double CLAW_VERTICAL_DROP_ANGLE = 70;
     public static final double CLAW_INSIDE_GRAB_ANGLE = 30;
+    public static final double POLE_TOUCHER_IN = 0;
+    public static final double POLE_TOUCHER_OUT = 90;
     public static final double CLAW_INSIDE_DROP_ANGLE = 5;
     public static final double PIVOT_VERTICAL_ANG = 0;
     public static final double PIVOT_HORIZONTAL_ANG = 90;
     public static final double ARM_ERROR_TOLERANCE = .5;
     public static final double AUTO_MAX_SPEED = .75;
-    public static final double AUTO_INTAKE_SPEED = .35;
-    public static final double AUTO_PARK_SPEED = .35;
-    public static final double AUTO_OUTTAKE_SPEED = .5;
+    public static final double AUTO_INTAKE_SPEED = .4;
+    public static final double AUTO_PARK_SPEED = .6;
+    public static final double AUTO_OUTTAKE_SPEED = .6;
     public static final double AUTO_INTAKE_Y1_POS = 20;
 
 

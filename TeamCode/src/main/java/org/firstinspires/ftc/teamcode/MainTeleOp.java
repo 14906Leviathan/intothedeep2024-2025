@@ -75,6 +75,8 @@ public class MainTeleOp extends LinearOpMode {
 
         while(opModeIsActive()) {
 
+            arm.poleToucherOut();
+
             if(firstRun) {
                 teleopMode = TeleopMode.IDLE;
                 arm.setTeleopMode(teleopMode);

@@ -86,6 +86,7 @@ public class LeftIntake extends AutoProgram {
 
         currentMode = TeleopMode.IDLE;
         arm.setTeleopMode(currentMode);
+        arm.poleToucherIn();
 
         intake.setGrabAngle(grabAngle);
         intake.setGrabStyle(grabStyle);
@@ -106,6 +107,8 @@ public class LeftIntake extends AutoProgram {
         autoManager.setSpeed(params.AUTO_MAX_SPEED);
 
         while (opMode.opModeIsActive()) {
+            arm.poleToucherOut();
+
             if(!armHandlerThread.isAlive()) armHandlerThread.start();
 
             arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
@@ -207,9 +210,10 @@ public class LeftIntake extends AutoProgram {
 
                 case 20:
                     if(!autoManager.isBusy()) {
-                        currentMode = TeleopMode.TOUCH_POLE_AUTO;
+                        currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
                         opMode.sleep(armWaitSleep);
+                        autoManager.setSpeed(params.AUTO_PARK_SPEED);
                         autoManager.runPath(autoManager.park);
                         autoState = 21;
                     }
@@ -219,11 +223,12 @@ public class LeftIntake extends AutoProgram {
                         currentMode = TeleopMode.TOUCH_POLE_AUTO;
                         arm.setTeleopMode(currentMode);
                         autoState = -1;
-                    } else {
+                    }/* else {
                         if(follower.getPose().getX() > 45) {
                             autoManager.setSpeed(params.AUTO_PARK_SPEED);
                         }
                     }
+                    */
                     break;
                 /*
                 case 2:

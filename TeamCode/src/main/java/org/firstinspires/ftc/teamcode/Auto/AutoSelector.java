@@ -17,7 +17,7 @@ public class AutoSelector extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        while (!autoIsSelected) {
+        while (!autoIsSelected && !opModeIsActive() && !isStopRequested()) {
             if(gamepad1.dpad_left) {
                 autoIndex--;
             } else if(gamepad1.dpad_right) {

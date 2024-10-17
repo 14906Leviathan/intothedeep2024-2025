@@ -68,6 +68,14 @@ public class ArmSubsystem extends Subsystem {
         params = myParams;
     }   // close RRMechOps constructor Method
 
+    public void poleToucherIn() {
+        robot.poleToucher.turnToAngle(params.POLE_TOUCHER_IN);
+    }
+
+    public void poleToucherOut() {
+        robot.poleToucher.turnToAngle(params.POLE_TOUCHER_OUT);
+    }
+
     public double getArmPosition() {
         return (robot.armEncoder.getVoltage() - params.ARM_ZERO) * params.ARM_ABS_TICK_PER_DEG;
     }
