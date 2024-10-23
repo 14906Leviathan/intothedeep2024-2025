@@ -119,7 +119,6 @@ public class ArmSubsystem extends Subsystem {
     private void setSlidesPosition(double len) {
         len = MathFunctions.clamp(len, params.SLIDES_MIN_POS, params.SLIDES_MAX_POS);
 
-        robot.slidesMotor.setPower(slidesPower);
         if(slidesRetract || waitSlidesTransition) {
             len = params.SLIDES_TRANSITION_LEN * params.SLIDES_TICKS_PER_INCH;
         } else {
@@ -127,6 +126,7 @@ public class ArmSubsystem extends Subsystem {
         }
 
         robot.slidesMotor.setTargetPosition((int) len);
+        robot.slidesMotor.setPower(slidesPower);
     }
 
     public void setIntakePosition(double len) {
@@ -448,6 +448,9 @@ public class ArmSubsystem extends Subsystem {
 
                 slidesRetract = false;
             }
+        } else if(currentMode == TeleopMode.AUTO_SLIDES_IN) {
+            setSlidesPosition(0);
+            setSlidesPower(1);
         }
 
         setArmPosition();

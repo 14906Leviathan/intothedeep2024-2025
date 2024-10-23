@@ -28,12 +28,12 @@ public class LeftIntake extends AutoProgram {
     private ArmSubsystem arm;
     private IntakeSubsystem intake;
     private TeleopMode currentMode = TeleopMode.IDLE;
-    private long armWaitSleep = 2500;
-    private long outtakeSleep = 1000;
+    private long armWaitSleep = 1000;
+    private long outtakeSleep = 700;
     private long waitForHalt = 500;
-    private long intakeSleep = 1000;
-    private long waitIntakeDown = 1000;
-    private long waitToGrab = 500;
+    private long intakeSleep = 750;
+    private long waitIntakeDown = 500;
+    private long waitToGrab = 400;
     private boolean autoStart = true;
     private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
     private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
@@ -75,7 +75,7 @@ public class LeftIntake extends AutoProgram {
 
         follower = new Follower(hardwareMap);
         follower.resetIMU();
-        follower.setPose(new Pose(9, 83.5, Math.toRadians(0)));
+        follower.setPose(new Pose(9, 106, Math.toRadians(0)));
         telemetry.update();
 
         robot = new HWProfile();
@@ -104,7 +104,7 @@ public class LeftIntake extends AutoProgram {
     }
 
     public void startAuto() {
-        autoManager.setSpeed(params.AUTO_MAX_SPEED);
+        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
         while (opMode.opModeIsActive()) {
             arm.poleToucherOut();
@@ -143,7 +143,7 @@ public class LeftIntake extends AutoProgram {
                         opMode.sleep(outtakeSleep);
 
                         autoManager.runPath(autoManager.backupPath);
-                        autoManager.setSpeed(params.AUTO_MAX_SPEED);
+                        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
                         autoState = 4;
                     } else {
                         autoManager.setSpeed(params.AUTO_OUTTAKE_SPEED);
@@ -191,31 +191,85 @@ public class LeftIntake extends AutoProgram {
                     break;
                 case 7:
                     if(!autoManager.isBusy()) {
-                        autoManager.setSpeed(params.AUTO_MAX_SPEED);
+                        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
                         opMode.sleep(waitForHalt);
                         intake.outtake();
                         opMode.sleep(outtakeSleep);
                         autoManager.runPath(autoManager.backupPath);
 
-                        autoState = 8;
+                        autoState = 9;
                     }
                 case 8:
+                    if(!autoManager.isBusy()) {
+//                        autoManager.holdCurrentPoint();
+                        opMode.sleep(waitForHalt);
+                        intake.outtake();
+                        opMode.sleep(outtakeSleep);
+
+                        autoManager.runPath(autoManager.backupPath);
+                        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
+                        autoState = 9;
+                    } else {
+                        autoManager.setSpeed(params.AUTO_OUTTAKE_SPEED);
+                    }
+                    break;
+                case 9:
                     if(!autoManager.isBusy()) {
                         currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
                         autoManager.setSpeed(params.AUTO_INTAKE_SPEED);
-//                        autoManager.runPath(autoManager.intakeYellow1);
-                        autoState = 9;
+                        autoManager.runPath(autoManager.intakeYellow2);
+                        autoState = 10;
                     }
-
-                case 20:
+                    break;
+                case 10:
                     if(!autoManager.isBusy()) {
+                        currentMode = TeleopMode.INTAKE;
+                        arm.setTeleopMode(currentMode);
+                        arm.setIntakePosition(params.AUTO_INTAKE_Y1_POS);
+
+                        while (!arm.slidesAtPosition()) continue;
+                        opMode.sleep(waitToGrab);
+
+                        arm.intakeGrab();
+                        opMode.sleep(waitIntakeDown);
+                        intake.intake();
+
+                        opMode.sleep(350);
+
                         currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
-                        opMode.sleep(armWaitSleep);
-                        autoManager.setSpeed(params.AUTO_PARK_SPEED);
-                        autoManager.runPath(autoManager.park);
-                        autoState = 21;
+
+                        autoManager.runPath(autoManager.toBucketPath);
+                        autoState = 11;
+                    }
+                case 11:
+                    if(!autoManager.isBusy()) {
+                        currentMode = TeleopMode.BUCKET_SCORE;
+                        arm.setTeleopMode(currentMode);
+                        arm.setBucket(2);
+                        autoManager.runPath(autoManager.bucketScorePath);
+                        autoManager.setSpeed(params.AUTO_OUTTAKE_SPEED);
+                        autoState = 12;
+                    }
+                    break;
+                case 12:
+                    if(!autoManager.isBusy()) {
+                        intake.outtake();
+                        opMode.sleep(outtakeSleep);
+                        autoManager.runPath(autoManager.backupPath);
+                        autoState = 13;
+                    }
+
+                case 13:
+                    if(!autoManager.isBusy()) {
+                        currentMode = TeleopMode.AUTO_SLIDES_IN;
+                        arm.setTeleopMode(currentMode);
+                    } else {
+                        if(follower.getPose().getY() <= 106 && !intake.closed) {
+                            currentMode = TeleopMode.AUTO_SLIDES_IN;
+                            arm.setTeleopMode(currentMode);
+                        }
                     }
                     break;
                 case 21:

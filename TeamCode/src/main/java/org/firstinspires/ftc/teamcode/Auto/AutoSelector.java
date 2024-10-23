@@ -14,15 +14,24 @@ public class AutoSelector extends LinearOpMode {
     private AutoProgram autoPrograms[] = {new LeftSimple(), new LeftIntake()};
     private int autoIndex = 0;
     private AutoProgram selectedAuto;
+    private boolean dpLeftCooldown = false;
+    private boolean dpRightCooldown = false;
 
     @Override
     public void runOpMode() {
         while (!autoIsSelected && !opModeIsActive() && !isStopRequested()) {
-            if(gamepad1.dpad_left) {
+            if(gamepad1.dpad_left && !dpLeftCooldown) {
+                dpLeftCooldown = true;
+
                 autoIndex--;
-            } else if(gamepad1.dpad_right) {
+            } else if(gamepad1.dpad_right && !dpRightCooldown) {
+                dpRightCooldown = true;
+
                 autoIndex++;
             }
+
+            if(!gamepad1.dpad_right) dpRightCooldown = false;
+            if(!gamepad1.dpad_left) dpLeftCooldown = false;
 
             if(autoIndex < 0) autoIndex = autoPrograms.length - 1;
             if(autoIndex > autoPrograms.length - 1) autoIndex = 0;
@@ -39,6 +48,6 @@ public class AutoSelector extends LinearOpMode {
             }
         }
 
-        selectedAuto.init(this);
+        if(!isStopRequested()) selectedAuto.init(this);
     }
 }

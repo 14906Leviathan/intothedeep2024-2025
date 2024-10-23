@@ -103,7 +103,7 @@ public class LeftSimple extends AutoProgram {
     }
 
     public void startAuto() {
-        autoManager.setSpeed(params.AUTO_MAX_SPEED);
+        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
         while (opMode.opModeIsActive()) {
             arm.poleToucherOut();
@@ -138,7 +138,7 @@ public class LeftSimple extends AutoProgram {
                         opMode.sleep(outtakeSleep);
 
                         autoManager.runPath(autoManager.backupPath);
-                        autoManager.setSpeed(params.AUTO_MAX_SPEED);
+                        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
                         autoState = 4;
                     } else {
                         autoManager.setSpeed(params.AUTO_OUTTAKE_SPEED);

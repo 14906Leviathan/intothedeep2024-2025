@@ -103,13 +103,13 @@ public class IntakeSubsystem extends Subsystem {
         } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
             if(currentIntakeMode == IntakeMode.INTAKE) {
                 if(grabStyle == GrabStyle.OUTSIDE_GRAB) {
-                    robot.clawServo.turnToAngle(params.CLAW_VERTICAL_GRAB_ANGLE);
+                    robot.clawServo.turnToAngle(params.CLAW_OUTSIDE_GRAB_ANGLE);
                 } else if(grabStyle == GrabStyle.INSIDE_GRAB) {
                     robot.clawServo.turnToAngle(params.CLAW_INSIDE_GRAB_ANGLE);
                 }
             } else if(currentIntakeMode == IntakeMode.OUTTAKE) {
                 if(grabStyle == GrabStyle.OUTSIDE_GRAB) {
-                    robot.clawServo.turnToAngle(params.CLAW_VERTICAL_DROP_ANGLE);
+                    robot.clawServo.turnToAngle(params.CLAW_OUTSIDE_DROP_ANGLE);
                 } else if(grabStyle == GrabStyle.INSIDE_GRAB) {
                     robot.clawServo.turnToAngle(params.CLAW_INSIDE_DROP_ANGLE);
                 }
