@@ -16,7 +16,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.PoseUpdater;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
@@ -53,7 +52,7 @@ public class StrafeVelocityTuner extends OpMode {
 
     private PoseUpdater poseUpdater;
 
-    public static double DISTANCE = 60;
+    public static double DISTANCE = 40;
     public static double RECORD_NUMBER = 10;
 
     private Telemetry telemetryA;
@@ -92,9 +91,6 @@ public class StrafeVelocityTuner extends OpMode {
         for (int i = 0; i < RECORD_NUMBER; i++) {
             velocities.add(0.0);
         }
-
-        poseUpdater.resetIMU();
-        poseUpdater.setPose(new Pose(0,0));
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetryA.addLine("The robot will run at 1 power until it reaches " + DISTANCE + " inches to the right.");
