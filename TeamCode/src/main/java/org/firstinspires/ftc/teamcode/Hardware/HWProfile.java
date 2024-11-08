@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.arcrobotics.ftclib.hardware.SimpleServo;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -14,6 +15,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
 
 public class HWProfile {
     public IMU imu;
@@ -21,14 +23,16 @@ public class HWProfile {
     public DcMotorEx armMotor = null;
     public CRServo intakeServo1 = null;
     public CRServo intakeServo2 = null;
-    public DcMotorEx motorLF = null;
-    public DcMotorEx motorLR = null;
-    public DcMotorEx motorRF = null;
-    public DcMotorEx motorRR = null;
+    public Motor motorLF = null;
+    public Motor motorLR = null;
+    public Motor motorRF = null;
+    public Motor motorRR = null;
     public AnalogInput armEncoder = null;
     public SimpleServo clawServo = null;
     public SimpleServo clawPivotServo = null;
     public SimpleServo poleToucher = null;
+    public IMU.Parameters imuParams;
+    public GoBildaPinpointDriver pinpoint = null;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -39,59 +43,73 @@ public class HWProfile {
     }
 
     /* Initialize standard Hardware interfaces */
-    public void init(HardwareMap ahwMap, boolean driveMotors) {
+    public void init(HardwareMap ahwMap, boolean driveMotors, boolean purePursuit) {
         // Save reference to Hardware map
         hwMap = ahwMap;
 
         RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
+                RevHubOrientationOnRobot.LogoFacingDirection.UP;
         RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.UP;
+                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
 
-        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+        imuParams = new IMU.Parameters(new RevHubOrientationOnRobot(
                 logoFacingDirection, usbFacingDirection));
 
         imu = hwMap.get(IMU.class, "imu");
-        imu.initialize(parameters);
+        imu.initialize(imuParams);
+        imu.resetYaw();
 
         if(driveMotors) {
             // Define and Initialize Motors
-            motorLF = hwMap.get(DcMotorEx.class, "motorLF");
-            motorLF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motorLF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorLF.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-            motorLF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            motorLF.setPower(0);
+//            motorLF = hwMap.get(DcMotorEx.class, "motorLF");
+//            motorLF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            motorLF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            motorLF.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
+//            motorLF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            motorLF.setPower(0);
+            motorLF = new Motor(hwMap, "motorLF");
+            motorLF.setInverted(purePursuit);
+            motorLF.setRunMode(Motor.RunMode.RawPower);
+            motorLF.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 
-            motorLR = hwMap.get(DcMotorEx.class, "motorLR");
-            motorLR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motorLR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorLR.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
-            motorLR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            motorLR.setPower(0);
+//            motorLR = hwMap.get(DcMotorEx.class, "motorLR");
+//            motorLR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            motorLR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            motorLR.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+//            motorLR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            motorLR.setPower(0);
+            motorLR = new Motor(hwMap, "motorLR");
+            motorLR.setInverted(false);
+            motorLR.setRunMode(Motor.RunMode.RawPower);
+            motorLR.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 
+//            motorRF = hwMap.get(DcMotorEx.class, "motorRF");
+//            motorRF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            motorRF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            motorRF.setDirection(DcMotor.Direction.FORWARD);
+//            motorRF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            motorRF.setPower(0);
+            motorRF = new Motor(hwMap, "motorRF");
+            motorRF.setInverted(false);
+            motorRF.setRunMode(Motor.RunMode.RawPower);
+            motorRF.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 
-            motorRF = hwMap.get(DcMotorEx.class, "motorRF");
-            motorRF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motorRF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorRF.setDirection(DcMotor.Direction.FORWARD);
-            motorRF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            motorRF.setPower(0);
-
-
-            motorRR = hwMap.get(DcMotorEx.class, "motorRR");
-            motorRR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            motorRR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorRR.setDirection(DcMotor.Direction.FORWARD);
-            motorRR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            motorRR.setPower(0);
+//            motorRR = hwMap.get(DcMotorEx.class, "motorRR");
+//            motorRR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            motorRR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            motorRR.setDirection(DcMotor.Direction.FORWARD);
+//            motorRR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            motorRR.setPower(0);
+            motorRR = new Motor(hwMap, "motorRR");
+            motorRR.setInverted(purePursuit);
+            motorRR.setRunMode(Motor.RunMode.RawPower);
+            motorRR.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         }
 
         slidesMotor = hwMap.get(DcMotorEx.class, "slidesMotor");
         slidesMotor.setDirection(DcMotorEx.Direction.FORWARD);
-        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        slidesMotor.setTargetPosition(0);
-        slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+//        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        slidesMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         slidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         slidesMotor.setPower(0);               // set motor power
 
@@ -116,5 +134,7 @@ public class HWProfile {
 
         poleToucher = new SimpleServo(hwMap, "poleToucher", 0, 180, AngleUnit.DEGREES);
         poleToucher.setInverted(true);
+
+//        pinpoint = hwMap.get(GoBildaPinpointDriver.class,"pinpoint");
     }
 }  // end of HWProfile Class

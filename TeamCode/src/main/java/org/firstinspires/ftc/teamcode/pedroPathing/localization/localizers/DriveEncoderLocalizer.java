@@ -1,10 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftFrontMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftRearMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightFrontMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightRearMotorName;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -15,6 +10,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.localization.Matrix;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
+import org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.NanoTimer;
 
 /**
@@ -64,10 +60,10 @@ public class DriveEncoderLocalizer extends Localizer {
     public DriveEncoderLocalizer(HardwareMap map, Pose setStartPose) {
         hardwareMap = map;
 
-        leftFront = new Encoder(hardwareMap.get(DcMotorEx.class, leftFrontMotorName));
-        leftRear = new Encoder(hardwareMap.get(DcMotorEx.class, leftRearMotorName));
-        rightRear = new Encoder(hardwareMap.get(DcMotorEx.class, rightRearMotorName));
-        rightFront = new Encoder(hardwareMap.get(DcMotorEx.class, rightFrontMotorName));
+        leftFront = new Encoder(hardwareMap.get(DcMotorEx.class, FollowerConstants.leftFrontMotorName));
+        leftRear = new Encoder(hardwareMap.get(DcMotorEx.class, FollowerConstants.leftRearMotorName));
+        rightRear = new Encoder(hardwareMap.get(DcMotorEx.class, FollowerConstants.rightRearMotorName));
+        rightFront = new Encoder(hardwareMap.get(DcMotorEx.class, FollowerConstants.rightFrontMotorName));
 
         // TODO: reverse any encoders necessary
         leftFront.setDirection(Encoder.REVERSE);

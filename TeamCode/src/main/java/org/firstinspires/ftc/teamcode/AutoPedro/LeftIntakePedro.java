@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 
-public class LeftIntake extends AutoProgram {
+public class LeftIntakePedro extends AutoProgram {
     private LinearOpMode opMode;
     private Follower follower;
     private ElapsedTime autoTime = new ElapsedTime();
@@ -37,7 +37,7 @@ public class LeftIntake extends AutoProgram {
     private boolean autoStart = true;
     private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
     private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
-    private AutoManager autoManager;
+    private AutoManagerPedro autoManager;
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
     private Thread armHandlerThread = new Thread(() -> {
@@ -57,7 +57,7 @@ public class LeftIntake extends AutoProgram {
     private boolean pathStarted = true;
     private PathChain currentPath;
     private int lastAutoState = 0;
-    private AutoLocation autoLocation = AutoLocation.LEFT_SCORE_GOLD;
+    private AutoLocation autoLocation = AutoLocation.LEFT_SCORE_TWO_GOLD;
     private int nextAutoState = 0;
     private final String autoName = "Left Intake Autonomous";
 
@@ -65,7 +65,7 @@ public class LeftIntake extends AutoProgram {
         return autoName;
     }
 
-    public LeftIntake() {
+    public LeftIntakePedro() {
     }
 
     public void init(LinearOpMode _opMode) {
@@ -79,7 +79,7 @@ public class LeftIntake extends AutoProgram {
         telemetry.update();
 
         robot = new HWProfile();
-        robot.init(hardwareMap, false);
+        robot.init(hardwareMap, false, false);
         params = new Params();
         arm = new ArmSubsystem(robot, opMode, params);
         intake = new IntakeSubsystem(robot, opMode, params);
@@ -95,7 +95,7 @@ public class LeftIntake extends AutoProgram {
         intake.update();
         arm.update();
 
-        autoManager = new AutoManager(follower);
+        autoManager = new AutoManagerPedro(follower);
         autoManager.buildPaths(autoLocation);
 
         while (!opMode.opModeIsActive()) arm.update();
@@ -162,12 +162,12 @@ public class LeftIntake extends AutoProgram {
                     if(!autoManager.isBusy()) {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
-                        arm.setIntakePosition(params.AUTO_INTAKE_Y1_POS);
+                        arm.setIntakePosition(params.TWO_AUTO_INTAKE_Y1_POS);
 
                         while (!arm.slidesAtPosition()) continue;
                         opMode.sleep(waitToGrab);
 
-                        arm.intakeGrab();
+                        arm.intakeDownMode();
                         opMode.sleep(waitIntakeDown);
                         intake.intake();
 
@@ -176,6 +176,7 @@ public class LeftIntake extends AutoProgram {
                         currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
 
+                        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
                         autoManager.runPath(autoManager.toBucketPath);
                         autoState = 6;
                     }
@@ -226,12 +227,12 @@ public class LeftIntake extends AutoProgram {
                     if(!autoManager.isBusy()) {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
-                        arm.setIntakePosition(params.AUTO_INTAKE_Y1_POS);
+                        arm.setIntakePosition(params.TWO_AUTO_INTAKE_Y1_POS);
 
                         while (!arm.slidesAtPosition()) continue;
                         opMode.sleep(waitToGrab);
 
-                        arm.intakeGrab();
+                        arm.intakeDownMode();
                         opMode.sleep(waitIntakeDown);
                         intake.intake();
 
@@ -240,6 +241,7 @@ public class LeftIntake extends AutoProgram {
                         currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
 
+                        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
                         autoManager.runPath(autoManager.toBucketPath);
                         autoState = 11;
                     }

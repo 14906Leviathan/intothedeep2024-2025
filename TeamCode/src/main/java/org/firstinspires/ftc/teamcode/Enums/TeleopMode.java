@@ -5,7 +5,7 @@ public enum TeleopMode {
     SPECIMEN_SCORE,
     BUCKET_SCORE,
     IDLE,
-    TOUCH_POLE,
+    CLIMB,
     TOUCH_POLE_AUTO,
     DEBUG,
     AUTO_SLIDES_IN

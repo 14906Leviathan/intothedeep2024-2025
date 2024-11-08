@@ -76,7 +76,7 @@ public class PathTest extends LinearOpMode {
 
 //        follower.followPath(forwards);
         robot = new HWProfile();
-        robot.init(hardwareMap, false);
+        robot.init(hardwareMap, false, false);
         arm = new ArmSubsystem(robot, this, new Params());
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());

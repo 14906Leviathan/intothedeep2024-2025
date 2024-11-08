@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 
-public class LeftSimple extends AutoProgram {
+public class LeftSimplePedro extends AutoProgram {
     private LinearOpMode opMode;
     private Follower follower;
     private ElapsedTime autoTime = new ElapsedTime();
@@ -35,7 +35,7 @@ public class LeftSimple extends AutoProgram {
     private boolean autoStart = true;
     private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
     private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
-    private AutoManager autoManager;
+    private AutoManagerPedro autoManager;
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
     private Thread armHandlerThread = new Thread(() -> {
@@ -63,7 +63,7 @@ public class LeftSimple extends AutoProgram {
         return autoName;
     }
 
-    public LeftSimple() {
+    public LeftSimplePedro() {
 
     }
 
@@ -78,7 +78,7 @@ public class LeftSimple extends AutoProgram {
         telemetry.update();
 
         robot = new HWProfile();
-        robot.init(hardwareMap, false);
+        robot.init(hardwareMap, false, false);
         params = new Params();
         arm = new ArmSubsystem(robot, opMode, params);
         intake = new IntakeSubsystem(robot, opMode, params);
@@ -94,7 +94,7 @@ public class LeftSimple extends AutoProgram {
         intake.update();
         arm.update();
 
-        autoManager = new AutoManager(follower);
+        autoManager = new AutoManagerPedro(follower);
         autoManager.buildPaths(autoLocation);
 
         while (!opMode.opModeIsActive()) arm.update();

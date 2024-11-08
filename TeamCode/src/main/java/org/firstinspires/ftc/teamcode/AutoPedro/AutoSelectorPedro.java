@@ -1,17 +1,18 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Abstracts.AutoProgram;
 
 @Config
-@Autonomous (name = "Autonomous Selector", group = "Autonomous", preselectTeleOp = "Main TeleOp")
-public class AutoSelector extends LinearOpMode {
+@Disabled
+@Autonomous (name = "Autonomous Selector Pedro", group = "Autonomous", preselectTeleOp = "Main TeleOp")
+public class AutoSelectorPedro extends LinearOpMode {
     private boolean autoIsSelected = false;
-    private AutoProgram autoPrograms[] = {new LeftSimple(), new LeftIntake()};
+    private AutoProgram autoPrograms[] = {new LeftSimplePedro(), new LeftIntakePedro()};
     private int autoIndex = 0;
     private AutoProgram selectedAuto;
     private boolean dpLeftCooldown = false;

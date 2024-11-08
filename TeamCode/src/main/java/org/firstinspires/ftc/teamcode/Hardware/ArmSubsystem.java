@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Hardware;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.Abstracts.Subsystem;
 import org.firstinspires.ftc.teamcode.Enums.IntakeType;
@@ -25,21 +26,26 @@ public class ArmSubsystem extends Subsystem {
     public static double Kp_Intake = 150;
     public static double Ki = .5;
     public static double Kd = .1;
+    public static double SlidesKp = 8;
+    public static double SlidesKi = 0;
+    public static double SlidesKd = 0.35;
     public static double Kf = 0.005;
     private double out = 0;
+    public double slidesOut = 0;
     private double oldTargetPos = 0;
     private double slidesPower = 0;
     private int bucketScore = 2;
     private PIDController armPID = new PIDController(Kp, Ki, Kd);
+    private PIDController slidesPID = new PIDController(SlidesKp, SlidesKi, SlidesKd);
     public boolean intakeGrab = false;
-    private boolean teleopModeStart = false;
+    public boolean teleopModeStart = false;
     private double intakePos = 0;
     private double slidesTargetPos = 0;
     private boolean slidesRetract = false;
     private boolean waitSlidesTransition = false;
     private double armTargetPos = 0;
     private boolean armReachedPosition = false;
-    private int armTransistionStage = 0;
+    public int armTransistionStage = 0;
     public boolean intakeSpecimen = false;
     public boolean intakeUpSpecimen = false;
     private double armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
@@ -47,12 +53,64 @@ public class ArmSubsystem extends Subsystem {
     private TeleopMode lastTeleopMode = TeleopMode.IDLE;
     private boolean outtakeSlidesRetracted = false;
     private boolean armTipBucketScore = false;
+    private double armPower = 1;
+    private boolean autoMode = false;
+    private double climbPos = 0;
+    private boolean autoLastSample = false;
+
+    public void setAutoLastSample(boolean autoLastSample) {
+        this.autoLastSample = autoLastSample;
+    }
+
+    private void animateTransition() {
+        if(teleopModeStart) waitSlidesTransition = true;
+        if(teleopModeStart) armReachedPosition = false;
+        if(teleopModeStart) armTransistionStage = 1;
+
+        if(armTransistionStage == 1) {
+            slidesRetract = true;
+            if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN + params.SLIDES_ERROR_TOLERANCE) {
+                waitSlidesTransition = true;
+            } else {
+                armTransistionStage = 2;
+            }
+        } else if(armTransistionStage == 2) {
+            slidesRetract = true;
+            waitSlidesTransition = false;
+            if(armAtPosition()) {
+                armTransistionStage = 3;
+            }
+        } else {
+            slidesRetract = false;
+            armReachedPosition = true;
+        }
+    }
+
+    private void skipTransition() {
+        waitSlidesTransition = false;
+        armReachedPosition = true;
+        armTransistionStage = 3;
+        slidesRetract = false;
+    }
+
+    public void setClimbPos(double newVal) {
+        climbPos = newVal;
+    }
+
+    public void setAutoMode(boolean newState) {
+        autoMode = newState;
+    }
 
     public void setTeleopMode(TeleopMode mode) {
         if(lastTeleopMode != mode) lastTeleopMode = currentMode;
         currentMode = mode;
         teleopModeStart = true;
-        armReachedPosition = false;
+
+        armTransistionStage = 1;
+    }
+
+    public void setArmPower(double newPower) {
+        armPower = newPower;
     }
 
     public void setArmTipBucketScore(boolean set) {
@@ -93,9 +151,16 @@ public class ArmSubsystem extends Subsystem {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
+    public void resetSlidesPosition() {
+//        robot.pinpoint.resetPosAndIMU();
+        robot.slidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.slidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
 
     public double getSlidesPosition() {
         return robot.slidesMotor.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH;
+//        return robot.pinpoint.getEncoderX() / params.SLIDES_TICKS_PER_INCH;
     }
 
     public void setSlidesPower(double newPower) {
@@ -125,15 +190,14 @@ public class ArmSubsystem extends Subsystem {
             len = len * params.SLIDES_TICKS_PER_INCH;
         }
 
-        robot.slidesMotor.setTargetPosition((int) len);
-        robot.slidesMotor.setPower(slidesPower);
+        slidesPID.setSetPoint((int) len);
     }
 
     public void setIntakePosition(double len) {
         intakePos = len;
     }
 
-    public void intakeGrab() {
+    public void intakeDownMode() {
         intakeGrab = true;
     }
 
@@ -160,20 +224,21 @@ public class ArmSubsystem extends Subsystem {
         return slidesPosSpecimen;
     }
 
-    public void intakeUp() {
+    public void intakeUpMode() {
         intakeGrab = false;
     }
 
     public boolean armAtPosition() {
         double armPos = getArmPosition();
 
-        return (armPos + params.ARM_AT_POS_ERROR_DEG > armTargetPos && armPos - params.ARM_AT_POS_ERROR_DEG < armTargetPos);
+        return (armPos + params.ARM_ERROR_TOLERANCE > armTargetPos && armPos - params.ARM_ERROR_TOLERANCE < armTargetPos);
+//        return armPID.atSetPoint();
     }
 
     public boolean slidesAtPosition() {
         double slidesPos = getSlidesPosition();
 
-        return (slidesPos + params.SLIDES_AT_POS_ERROR_INCH > slidesTargetPos && slidesPos - params.SLIDES_AT_POS_ERROR_INCH < slidesTargetPos);
+        return (slidesPos + params.SLIDES_ERROR_TOLERANCE > slidesTargetPos && slidesPos - params.SLIDES_ERROR_TOLERANCE < slidesTargetPos);
     }
 
     public void setBucket(int bucket) {
@@ -190,8 +255,11 @@ public class ArmSubsystem extends Subsystem {
 
     public void update() {
         if(currentMode == TeleopMode.INTAKE) {
-            setSlidesPower(params.SLIDE_MOTOR_POWER);
-            double slidesPos = MathFunctions.clamp(intakePos, params.INTAKE_MIN_POS, params.INTAKE_MAX_POS);
+//            setSlidesPower(params.SLIDE_MOTOR_POWER);
+            double slidesPos = 0;
+
+            if(!autoMode) slidesPos = MathFunctions.clamp(intakePos, params.INTAKE_MIN_POS, params.INTAKE_MAX_POS);
+            if(autoMode) slidesPos = MathFunctions.clamp(intakePos, 0, params.INTAKE_MAX_POS);
 
             slidesPos = Math.sqrt((params.SLIDE_GROUND_POS*params.SLIDE_GROUND_POS)+(slidesPos*slidesPos));
 
@@ -199,12 +267,25 @@ public class ArmSubsystem extends Subsystem {
                 setTargetSlidesPosition(slidesPos);
                 opMode.telemetry.addData("slidesPosArmClass: ", slidesPos);
                 double armDeg = 0;
-                if(params.INTAKE_TYPE == IntakeType.CLAW) armDeg = map(slidesPos, 3, 36, 17-4, 25-2);
+                if(params.INTAKE_TYPE == IntakeType.CLAW) {
+                    if(!autoMode) {
+                        armDeg = map(slidesPos, 3, 36, 17 - 4, 25 - 2);
+                    } else {
+                        armDeg = map(slidesPos, 3, 36, 17 - 7, 25 - 5);
+                    }
+                }
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) armDeg = map(slidesPos, 3, 36, 17, 25);
                 if (armDeg < 0) armDeg = 0;
 
                 if (!intakeGrab && params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) armDeg += params.ARM_INTAKE_MODE_UP_DEG;
-                if (!intakeGrab && params.INTAKE_TYPE == IntakeType.CLAW) armDeg += params.ARM_CLAW_MODE_UP_DEG;
+                if (!intakeGrab && params.INTAKE_TYPE == IntakeType.CLAW && !autoMode) armDeg += params.ARM_CLAW_MODE_UP_DEG;
+                if (!intakeGrab && params.INTAKE_TYPE == IntakeType.CLAW && autoMode) {
+                    if(!autoLastSample) {
+                        armDeg += params.ARM_CLAW_MODE_UP_DEG_AUTO;
+                    } else {
+                        armDeg += params.ARM_CLAW_MODE_UP_DEG_AUTO_LAST_SAMPLE;
+                    }
+                }
 
                 opMode.telemetry.addData("(DEBUG: From ArmSubsystem) armDeg:", armDeg);
 
@@ -219,65 +300,27 @@ public class ArmSubsystem extends Subsystem {
                     }
                 } else if(params.INTAKE_TYPE == IntakeType.CLAW) {
                     setTargetSlidesPosition(params.SLIDES_SPECIMEN_INTAKE_CLAW);
-                    setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW);
+                    if (!intakeUpSpecimen) {
+                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW);
+                    } else {
+                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW + 20);
+                    }
                 }
             }
 
-            if(teleopModeStart) waitSlidesTransition = true;
-            if(teleopModeStart) armReachedPosition = false;
-            if(teleopModeStart) armTransistionStage = 1;
-
-            if(armTransistionStage == 1) {
-                slidesRetract = true;
-                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                    waitSlidesTransition = true;
-                } else {
-                    armTransistionStage = 2;
-                }
-            } else if(armTransistionStage == 2) {
-                slidesRetract = true;
-                waitSlidesTransition = false;
-                if(armAtPosition()) {
-                    armTransistionStage = 3;
-                }
-            } else {
-                slidesRetract = false;
-                armReachedPosition = true;
-            }
+            animateTransition();
         } else if (currentMode == TeleopMode.IDLE) {
             setTargetSlidesPosition(params.SLIDES_MIN_POS);
             setArmTargetPosition(params.ARM_IDLE_DEG);
-            setSlidesPower(params.SLIDE_MOTOR_POWER);
-
-            if(teleopModeStart) waitSlidesTransition = true;
-            if(teleopModeStart) armReachedPosition = false;
-            if(teleopModeStart) armTransistionStage = 1;
+//            setSlidesPower(params.SLIDE_MOTOR_POWER);
 
             if(lastTeleopMode != TeleopMode.INTAKE) {
-                if (armTransistionStage == 1) {
-                    slidesRetract = true;
-                    if (getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                        waitSlidesTransition = true;
-                    } else {
-                        armTransistionStage = 2;
-                    }
-                } else if (armTransistionStage == 2) {
-                    slidesRetract = true;
-                    waitSlidesTransition = false;
-                    if (armAtPosition()) {
-                        armTransistionStage = 3;
-                    }
-                } else {
-                    slidesRetract = false;
-                    armReachedPosition = true;
-                }
+                animateTransition();
             } else {
-                armReachedPosition = true;
-                waitSlidesTransition = false;
-                armTransistionStage = 3;
+                skipTransition();
             }
         } else if (currentMode == TeleopMode.BUCKET_SCORE) {
-            setSlidesPower(params.SLIDE_MOTOR_POWER_OUTTAKE);
+//            setSlidesPower(params.SLIDE_MOTOR_POWER_OUTTAKE);
 
             if(bucketScore == 2) {
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
@@ -292,18 +335,12 @@ public class ArmSubsystem extends Subsystem {
                         setTargetSlidesPosition(params.SLIDES_MIN_POS);
                     } else {
                         if(armTipBucketScore) {
-                            setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW - 5);
+                            setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN);
                         } else {
                             setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
-
                         }
                     }
-                    if(armTipBucketScore) {
-                        setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG - 5);
-                    } else {
                         setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
-
-                    }
                 }
             } else if(bucketScore == 1) {
                 if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
@@ -323,61 +360,16 @@ public class ArmSubsystem extends Subsystem {
                 }
             }
 
-            if(getArmPosition() < 90) {
-                if (teleopModeStart) waitSlidesTransition = true;
-                if (teleopModeStart) armReachedPosition = false;
-                if (teleopModeStart) armTransistionStage = 1;
-
-
-                if (armTransistionStage == 1) {
-                    slidesRetract = true;
-                    if (getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                        waitSlidesTransition = true;
-                    } else {
-                        armTransistionStage = 2;
-                    }
-                } else if (armTransistionStage == 2) {
-                    slidesRetract = true;
-                    waitSlidesTransition = false;
-                    if (armAtPosition()) {
-                        armTransistionStage = 3;
-                    }
-                } else {
-                    slidesRetract = false;
-                    armReachedPosition = true;
-                }
+            if(getArmPosition() < 90 || !teleopModeStart) {
+                animateTransition();
             } else {
-                if (teleopModeStart) waitSlidesTransition = false;
-                if (teleopModeStart) armReachedPosition = true;
-                if (teleopModeStart) armTransistionStage = 3;
-
-                slidesRetract = false;
+                skipTransition();
             }
-        } else if (currentMode == TeleopMode.TOUCH_POLE) {
-            setTargetSlidesPosition(params.SLIDES_TOUCH_POLE);
-            setArmTargetPosition(params.ARM_TOUCH_POLE);
+        } else if (currentMode == TeleopMode.CLIMB) {
+            setTargetSlidesPosition(params.SLIDES_MIN_POS);
+            setArmTargetPosition(climbPos);
 
-            if(teleopModeStart) waitSlidesTransition = true;
-            if(teleopModeStart) armReachedPosition = false;
-            if(teleopModeStart) armTransistionStage = 1;
-
-            if(armTransistionStage == 1) {
-                slidesRetract = true;
-                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                    waitSlidesTransition = true;
-                } else {
-                    armTransistionStage = 2;
-                }
-            } else if(armTransistionStage == 2) {
-                slidesRetract = true;
-                waitSlidesTransition = false;
-                if(armAtPosition()) {
-                    armTransistionStage = 3;
-                }
-            } else {
-                slidesRetract = false;
-                armReachedPosition = true;
-            }
+            animateTransition();
         } else if (currentMode == TeleopMode.SPECIMEN_SCORE) {
             if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
                 if (teleopModeStart) armPosSpecimen = params.ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL;
@@ -390,27 +382,7 @@ public class ArmSubsystem extends Subsystem {
             setTargetSlidesPosition(slidesPosSpecimen);
             setArmTargetPosition(armPosSpecimen);
 
-            if(teleopModeStart) waitSlidesTransition = true;
-            if(teleopModeStart) armReachedPosition = false;
-            if(teleopModeStart) armTransistionStage = 1;
-
-            if(armTransistionStage == 1) {
-                slidesRetract = true;
-                if(getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                    waitSlidesTransition = true;
-                } else {
-                    armTransistionStage = 2;
-                }
-            } else if(armTransistionStage == 2) {
-                slidesRetract = true;
-                waitSlidesTransition = false;
-                if(armAtPosition()) {
-                    armTransistionStage = 3;
-                }
-            } else {
-                slidesRetract = false;
-                armReachedPosition = true;
-            }
+            animateTransition();
         } else if(currentMode == TeleopMode.DEBUG) {
             slidesRetract = false;
             waitSlidesTransition = false;
@@ -420,37 +392,18 @@ public class ArmSubsystem extends Subsystem {
             setArmTargetPosition(params.ARM_TOUCH_POLE_AUTO);
 
             if(lastTeleopMode != TeleopMode.IDLE) {
-                if(teleopModeStart) waitSlidesTransition = true;
-                if(teleopModeStart) armReachedPosition = false;
-                if(teleopModeStart) armTransistionStage = 1;
-
                 if (armTransistionStage == 1) {
-                    slidesRetract = true;
-                    if (getSlidesPosition() >= params.SLIDES_TRANSITION_LEN) {
-                        waitSlidesTransition = true;
-                    } else {
-                        armTransistionStage = 2;
-                    }
-                } else if (armTransistionStage == 2) {
-                    slidesRetract = true;
-                    waitSlidesTransition = false;
-                    if (armAtPosition()) {
-                        armTransistionStage = 3;
-                    }
-                } else {
-                    slidesRetract = false;
-                    armReachedPosition = true;
+                    animateTransition();
                 }
             } else {
-                if(teleopModeStart) waitSlidesTransition = false;
-                if(teleopModeStart) armReachedPosition = true;
-                if(teleopModeStart) armTransistionStage = 3;
-
-                slidesRetract = false;
+                skipTransition();
             }
         } else if(currentMode == TeleopMode.AUTO_SLIDES_IN) {
             setSlidesPosition(0);
             setSlidesPower(1);
+            setArmTargetPosition(123);
+
+            skipTransition();
         }
 
         setArmPosition();
@@ -463,9 +416,16 @@ public class ArmSubsystem extends Subsystem {
             armPID.setI(Ki);
         }
 
-        armPID.setTolerance(.1);
-        out = armPID.calculate(getArmPosition());
+//        robot.pinpoint.update();
+
+        armPID.setTolerance(params.ARM_ERROR_TOLERANCE);
+        slidesPID.setTolerance(params.SLIDES_ERROR_TOLERANCE);
+        slidesPID.setPID(SlidesKp, SlidesKi, SlidesKd);
+        out = armPID.calculate(getArmPosition()) * armPower;
+        slidesOut = slidesPID.calculate(robot.slidesMotor.getCurrentPosition()) * slidesPower;
+
         robot.armMotor.setVelocity(out);
+        robot.slidesMotor.setVelocity(slidesOut);
 
         opMode.telemetry.addData("armReachedPosition", armReachedPosition);
         opMode.telemetry.addData("arm pid out", out);

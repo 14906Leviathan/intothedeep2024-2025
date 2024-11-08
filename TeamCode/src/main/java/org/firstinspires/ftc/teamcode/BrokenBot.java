@@ -8,16 +8,7 @@ import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
 
-/**
- * This is the TeleOpEnhancements OpMode. It is an example usage of the TeleOp enhancements that
- * Pedro Pathing is capable of.
- *
- * @author Anyi Lin - 10158 Scott's Bots
- * @author Aaron Yang - 10158 Scott's Bots
- * @author Harrison Womack - 10158 Scott's Bots
- * @version 1.0, 3/21/2024
- */
-@TeleOp(name = "Broken Bot", group = "Test")
+@TeleOp(name = "4: Broken Bot", group = "4")
 public class BrokenBot extends LinearOpMode {
     private HWProfile robot;
     private Params params;
@@ -30,7 +21,7 @@ public class BrokenBot extends LinearOpMode {
     @Override
     public void runOpMode() {
         robot = new HWProfile();
-        robot.init(hardwareMap, true);
+        robot.init(hardwareMap, true, false);
         params = new Params();
         arm = new ArmSubsystem(robot, this, params);
 
@@ -38,27 +29,27 @@ public class BrokenBot extends LinearOpMode {
 
         while(opModeIsActive()) {
             if(gamepad1.dpad_up) {
-                robot.motorLF.setPower(1);
+                robot.motorLF.set(1);
             } else {
-                robot.motorLF.setPower(0);
+                robot.motorLF.set(0);
             }
 
             if(gamepad1.dpad_down) {
-                robot.motorRF.setPower(1);
+                robot.motorRF.set(1);
             } else {
-                robot.motorRF.setPower(0);
+                robot.motorRF.set(0);
             }
 
             if(gamepad1.dpad_left) {
-                robot.motorRR.setPower(1);
+                robot.motorRR.set(1);
             } else {
-                robot.motorRR.setPower(0);
+                robot.motorRR.set(0);
             }
 
             if(gamepad1.dpad_right) {
-                robot.motorLR.setPower(1);
+                robot.motorLR.set(1);
             } else {
-                robot.motorLR.setPower(0);
+                robot.motorLR.set(0);
             }
 
             if(gamepad1.a) {

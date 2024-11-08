@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.IntakeMode;
 import org.firstinspires.ftc.teamcode.Enums.IntakeType;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
 @Config
 public class IntakeSubsystem extends Subsystem {
@@ -20,6 +21,8 @@ public class IntakeSubsystem extends Subsystem {
     public GrabStyle grabStyle;
     public GrabAngle grabAngle;
     public boolean closed = false;
+    private boolean shortRange = false;
+    private double customAngle = 0;
 
     public IntakeSubsystem(HWProfile myRobot, LinearOpMode myOpMode, Params myParams){
         robot = myRobot;
@@ -32,10 +35,23 @@ public class IntakeSubsystem extends Subsystem {
         closed = true;
     }
 
+    public void setShortRange(boolean set) {
+        shortRange = set;
+    }
+
     public void setGrabStyle(GrabStyle _grabStyle) {
         grabStyle = _grabStyle;
     }
 
+    public void setCustomGrabAngle(double customAngle) {
+        customAngle = MathFunctions.clamp(customAngle, 0, 270);
+        this.customAngle = customAngle;
+    }
+
+    public double getCustomGrabAngle() {
+        customAngle = MathFunctions.clamp(customAngle, 0, 270);
+        return customAngle;
+    }
     public void setGrabAngle(GrabAngle _grabAngle) {
         grabAngle = _grabAngle;
     }
@@ -109,7 +125,11 @@ public class IntakeSubsystem extends Subsystem {
                 }
             } else if(currentIntakeMode == IntakeMode.OUTTAKE) {
                 if(grabStyle == GrabStyle.OUTSIDE_GRAB) {
-                    robot.clawServo.turnToAngle(params.CLAW_OUTSIDE_DROP_ANGLE);
+                    if(!shortRange) {
+                        robot.clawServo.turnToAngle(params.CLAW_OUTSIDE_DROP_ANGLE);
+                    } else {
+                        robot.clawServo.turnToAngle(params.CLAW_OUTSIDE_DROP_ANGLE_SHORT);
+                    }
                 } else if(grabStyle == GrabStyle.INSIDE_GRAB) {
                     robot.clawServo.turnToAngle(params.CLAW_INSIDE_DROP_ANGLE);
                 }
@@ -119,6 +139,8 @@ public class IntakeSubsystem extends Subsystem {
                 robot.clawPivotServo.turnToAngle(params.PIVOT_VERTICAL_ANG);
             } else if(grabAngle == GrabAngle.HORIZONTAL_GRAB) {
                 robot.clawPivotServo.turnToAngle(params.PIVOT_HORIZONTAL_ANG);
+            } else if(grabAngle == GrabAngle.CUSTOM) {
+                robot.clawPivotServo.turnToAngle(customAngle);
             }
         }
     }

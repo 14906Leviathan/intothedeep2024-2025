@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierPoint;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 
-public class AutoManager {
+public class AutoManagerPedro {
     public Path toBucketPath;
     public Path backupPath;
     public Path bucketScorePath;
@@ -21,7 +21,7 @@ public class AutoManager {
     private Point leftParkLocation = new Point(64, 89, Point.CARTESIAN);
     private Point leftScoreLocation = new Point(19, 109, Point.CARTESIAN);
 
-    public AutoManager(Follower _follower) {
+    public AutoManagerPedro(Follower _follower) {
         follower = _follower;
     }
 
@@ -90,7 +90,7 @@ public class AutoManager {
             );
 
             park.setConstantHeadingInterpolation(Math.toRadians(0));
-        } else if(autoLocation == AutoLocation.LEFT_SCORE_GOLD) {
+        } else if(autoLocation == AutoLocation.LEFT_SCORE_TWO_GOLD) {
             toBucketPath = new Path(
                     new BezierLine(
                             new Point(7.976, 106, Point.CARTESIAN),
