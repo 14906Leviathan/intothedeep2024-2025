@@ -28,8 +28,6 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
  */
 @Config
 @Autonomous (name = "Curved Back And Forth", group = "Autonomous Pathing Tuning")
-@Disabled
-
 public class CurvedBackAndForth extends OpMode {
     private Telemetry telemetryA;
 

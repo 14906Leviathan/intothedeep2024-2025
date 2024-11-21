@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedroPathing.tuning;
+package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -12,24 +12,13 @@ import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathBuilder;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 
-/**
- * This is the StraightBackAndForth autonomous OpMode. It runs the robot in a specified distance
- * straight forward. On reaching the end of the forward Path, the robot runs the backward Path the
- * same distance back to the start. Rinse and repeat! This is good for testing a variety of Vectors,
- * like the drive Vector, the translational Vector, and the heading Vector. Remember to test your
- * tunings on CurvedBackAndForth as well, since tunings that work well for straight lines might
- * have issues going in curves.
- *
- * @author Anyi Lin - 10158 Scott's Bots
- * @author Aaron Yang - 10158 Scott's Bots
- * @author Harrison Womack - 10158 Scott's Bots
- * @version 1.0, 3/12/2024
- */
 @Config
-@Autonomous (name = "Straight Back And Forth", group = "Autonomous Pathing Tuning")
-public class StraightBackAndForth extends OpMode {
+@Autonomous (name = "Path test", group = "Autonomous Pathing Tuning")
+public class PathTest extends OpMode {
     private Telemetry telemetryA;
 
     public static double DISTANCE = 40;
@@ -38,7 +27,7 @@ public class StraightBackAndForth extends OpMode {
 
     private Follower follower;
 
-    private Path forwards;
+    private PathBuilder forwards;
     private Path backwards;
 
     /**
@@ -48,19 +37,33 @@ public class StraightBackAndForth extends OpMode {
     @Override
     public void init() {
         follower = new Follower(hardwareMap);
+        follower.setStartingPose(new Pose(9, 106, Math.toRadians(0)));
+        follower.setMaxPower(.5);
 
-        forwards = new Path(new BezierLine(new Point(0,0, Point.CARTESIAN), new Point(DISTANCE,0, Point.CARTESIAN)));
-        forwards.setConstantHeadingInterpolation(0);
-        backwards = new Path(new BezierLine(new Point(DISTANCE,0, Point.CARTESIAN), new Point(0,0, Point.CARTESIAN)));
-        backwards.setConstantHeadingInterpolation(0);
+        forwards = new PathBuilder().addPath(new Path(
+                new BezierLine(
+                        new Point(9, 106, Point.CARTESIAN),
+                        new Point(25, 97.8, Point.CARTESIAN)
+                )
+        ));
+        forwards.setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45));
+        forwards.addParametricCallback(.99, () -> {
+            follower.setMaxPower(1);
+        });
+        backwards = new Path(
+                new BezierLine(
+                        new Point(25, 97.8, Point.CARTESIAN),
+                        new Point(9, 106, Point.CARTESIAN)
+                )
+        );
+        backwards.setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(0));
 
-
-        follower.followPath(forwards, true);
+        follower.followPath(forwards.build(), true);
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetryA.addLine("This will run the robot in a straight line going " + DISTANCE
-                            + " inches forward. The robot will go forward and backward continuously"
-                            + " along the path. Make sure you have enough room.");
+                + " inches forward. The robot will go forward and backward continuously"
+                + " along the path. Make sure you have enough room.");
         telemetryA.update();
     }
 
@@ -72,17 +75,20 @@ public class StraightBackAndForth extends OpMode {
     public void loop() {
         follower.update();
         if (!follower.isBusy()) {
+//            requestOpModeStop();
             if (forward) {
                 forward = false;
-                follower.followPath(backwards);
-//                follower.holdPoint(new Pose(-40, 0));
+//                follower.followPath(backwards);
             } else {
                 forward = true;
-                follower.followPath(forwards);
+//                follower.followPath(forwards, true);
             }
         }
 
-        telemetryA.addData("going forward", forward);
+//        telemetryA.addData("going forward", forward);
+        telemetryA.addData("x: ", follower.getPose().getX());
+        telemetryA.addData("y: ", follower.getPose().getY());
         follower.telemetryDebug(telemetryA);
     }
 }
+

@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Abstracts.AutoProgram;
+import org.firstinspires.ftc.teamcode.Enums.AutoCorrectionType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
@@ -63,7 +64,7 @@ public class LeftIntakeRR extends AutoProgram {
     private final boolean debug = false;
     private boolean pathStarted = true;
     private int lastAutoState = 0;
-    private AutoLocation autoLocation = AutoLocation.LEFT_SCORE_TWO_GOLD;
+    private AutoLocation autoLocation = AutoLocation.RR_LEFT_SCORE_TWO_GOLD;
     private int nextAutoState = 0;
     private final String autoName = "Left Intake Autonomous Old";
 
@@ -140,7 +141,7 @@ public class LeftIntakeRR extends AutoProgram {
 
         autoManager.updatePose(drive.pose);
         autoManager.buildPaths(autoLocation);
-        drive.extraCorrection = true;
+        drive.setCorrectionType(AutoCorrectionType.PRECISE);
         if(intakePosition == 1) {
             drive.updatePoseEstimate();
             currentPath = drive.actionBuilder(drive.pose)
@@ -152,7 +153,7 @@ public class LeftIntakeRR extends AutoProgram {
                     .strafeToLinearHeading(autoManager.intakeYellow2Path, autoManager.intakeYellow2PathHeading);
             autoManager.runPath(currentPath);
         }
-        drive.extraCorrection = false;
+        drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
 
         opMode.sleep(500);
         arm.intakeDownMode();

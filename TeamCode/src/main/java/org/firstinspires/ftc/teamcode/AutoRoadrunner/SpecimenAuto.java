@@ -1,10 +1,11 @@
 package org.firstinspires.ftc.teamcode.AutoRoadrunner;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.InstantAction;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -12,9 +13,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Abstracts.AutoProgram;
 import org.firstinspires.ftc.teamcode.Enums.AutoCorrectionType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
+import org.firstinspires.ftc.teamcode.Enums.AutoSpeed;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
@@ -29,7 +32,9 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-public class LeftIntakeThreeRR extends AutoProgram {
+import java.util.concurrent.TimeUnit;
+
+public class SpecimenAuto extends AutoProgram {
     private LinearOpMode opMode;
     private MecanumDrive drive;
     private ElapsedTime autoTime = new ElapsedTime();
@@ -56,6 +61,17 @@ public class LeftIntakeThreeRR extends AutoProgram {
     private Telemetry telemetry;
     private int threadCycle = 0;
     private boolean ltopmodewasstart = false;
+    private final boolean debug = false;
+    private boolean pathStarted = true;
+    private int lastAutoState = 0;
+    private AutoLocation autoLocation = AutoLocation.RR_SPECIMEN;
+    private int nextAutoState = 0;
+    private final String autoName = "Specimen Auto";
+    private TrajectoryActionBuilder currentPath;
+    private InstantAction updateAction;
+    private boolean sense = false;
+    private int specimenScoreCount = 0;
+    private final double specimenOffset = 3.5;
     private Thread armHandlerThread = new Thread(() -> {
         while (opMode.opModeIsActive()) {
             arm.update();
@@ -63,6 +79,8 @@ public class LeftIntakeThreeRR extends AutoProgram {
 
             if (arm.teleopModeStart) ltopmodewasstart = true;
 
+//            telemetry.addData("distance: ", robot.distanceOne.getDistance(DistanceUnit.INCH));
+            telemetry.addData("stop requested: ", opMode.isStopRequested());
             telemetry.addData("arm transistion stage:", arm.armTransistionStage);
             telemetry.addData("teleopModeStartWorked:", ltopmodewasstart);
             telemetry.addData("slides transistion:", arm.armTransistionStage);
@@ -80,22 +98,13 @@ public class LeftIntakeThreeRR extends AutoProgram {
         intake.update();
         params.AUTO_END_HEADING = Math.toDegrees(drive.pose.heading.toDouble());
     });
-    private final boolean debug = false;
-    private boolean pathStarted = true;
-    private int lastAutoState = 0;
-    private AutoLocation autoLocation = AutoLocation.RR_LEFT_SCORE_THREE_GOLD;
-    private int nextAutoState = 0;
-    private final String autoName = "Left Intake Autonomous New";
-    private TrajectoryActionBuilder currentPath;
-    private InstantAction updateAction;
-    private boolean sense = false;
 
 
     public String getAutoName() {
         return autoName;
     }
 
-    public LeftIntakeThreeRR() {
+    public SpecimenAuto() {
 
     }
 
@@ -127,7 +136,7 @@ public class LeftIntakeThreeRR extends AutoProgram {
         arm.resetSlidesPosition();
 
         autoManager = new AutoManager(opMode);
-        drive = new MecanumDrive(hardwareMap, autoManager.leftIntakeThreeStartPosition, false);
+        drive = new MecanumDrive(hardwareMap, autoManager.specimenAutoStart, false);
 
         drive.updatePoseEstimate();
 
@@ -203,208 +212,146 @@ public class LeftIntakeThreeRR extends AutoProgram {
         startAuto();
     }
 
-    public void intakePath(double intakePosition, boolean quickArm) {
-        arm.setArmPower(params.ARM_POWER_DEFAULT);
-        arm.setSlidesPower(1);
-//        autoManager.updatePose(drive.pose);
-//        autoManager.buildPaths(autoLocation);
-//        autoManager.backupPath = autoManager.backupPath
-//                .afterTime(.35, new InstantAction(() -> {
-//                    if(quickArm) {
-//                        grabAngle = GrabAngle.HORIZONTAL_GRAB;
-//                        intake.setGrabAngle(grabAngle);
-//
-//                        currentMode = TeleopMode.INTAKE;
-//                        arm.setTeleopMode(currentMode);
-//                        arm.setIntakePosition(params.THREE_AUTO_INTAKE_Y1_POS);
-//                        arm.intakeUpMode();
-//                    }
-//                }))
-//                .strafeToLinearHeading(new Vector2d(20, 0), Math.toRadians(45));
-//        autoManager.runPath(autoManager.backupPath);
-
-        autoManager.updatePose(drive.pose);
-        autoManager.buildPaths(autoLocation);
-        if (intakePosition == 1) {
-            drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
-            intake.setShortRange(false);
-
-            drive.updatePoseEstimate();
-            currentPath = drive.actionBuilder(drive.pose)
-                    .afterTime(.75, new InstantAction(() -> {
-                        if (quickArm) {
-                            grabAngle = GrabAngle.HORIZONTAL_GRAB;
-                            intake.setGrabAngle(grabAngle);
-
-                            currentMode = TeleopMode.INTAKE;
-                            arm.setTeleopMode(currentMode);
-                            arm.setIntakePosition(params.THREE_AUTO_INTAKE_Y1_POS);
-                            arm.intakeUpMode();
-                        }
-                    }))
-                    .strafeToLinearHeading(new Vector2d(33, -5.5), Math.toRadians(90))
-                    .afterTime(0, new InstantAction(() -> {
-                        drive.setCorrectionType(AutoCorrectionType.PRECISE);
-                    }))
-                    .strafeToLinearHeading(new Vector2d(38.5, -5.35), Math.toRadians(90));
-            autoManager.runPath(currentPath);
-
-            drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
-
-            if (sense) {
-                AutoHomeAction autoHomeAction = new AutoHomeAction(drive, camera, detectionPipe, opMode);
-                boolean homed = false;
-
-                while (!homed && opMode.opModeIsActive()) {
-                    homed = !autoHomeAction.run(new TelemetryPacket());
-                }
-            }
-        } else if (intakePosition == 2) {
-            intake.setShortRange(false);
-            drive.updatePoseEstimate();
-
-            currentPath = drive.actionBuilder(drive.pose)
-                    .afterTime(.75, new InstantAction(() -> {
-                        if (quickArm) {
-                            grabAngle = GrabAngle.HORIZONTAL_GRAB;
-                            intake.setGrabAngle(grabAngle);
-
-                            currentMode = TeleopMode.INTAKE;
-                            arm.setTeleopMode(currentMode);
-                            arm.setIntakePosition(params.THREE_AUTO_INTAKE_Y1_POS);
-                            arm.intakeUpMode();
-                        }
-                    }))
-                    .strafeToLinearHeading(autoManager.intakeYellow2StrafeTo, autoManager.intakeYellow2StrafeToHeading)
-                    .afterTime(0, new InstantAction(() -> {
-                        drive.setCorrectionType(AutoCorrectionType.PRECISE);
-                    }))
-                    .strafeToLinearHeading(autoManager.intakeYellow2Path, autoManager.intakeYellow2PathHeading);
-            autoManager.runPath(currentPath);
-
-            if (sense) {
-                AutoHomeAction autoHomeAction = new AutoHomeAction(drive, camera, detectionPipe, opMode);
-                boolean homed = false;
-
-                while (!homed && opMode.opModeIsActive()) {
-                    homed = !autoHomeAction.run(new TelemetryPacket());
-                }
-            }
-
-            drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
-
-        } else if (intakePosition == 3) {
-            intake.setShortRange(false);
-            intake.outtake();
-            intake.update();
-
-            arm.setAutoLastSample(true);
-            arm.update();
-
-            drive.updatePoseEstimate();
-            currentPath = drive.actionBuilder(drive.pose)
-                    .afterTime(.35, new InstantAction(() -> {
-                        if (quickArm) {
-                            grabAngle = GrabAngle.HORIZONTAL_GRAB;
-                            intake.setGrabAngle(grabAngle);
-
-                            currentMode = TeleopMode.INTAKE;
-                            arm.setTeleopMode(currentMode);
-                            arm.setIntakePosition(params.THREE_AUTO_INTAKE_Y1_POS);
-                            arm.intakeUpMode();
-                        }
-                    }))
-                    .strafeToLinearHeading(autoManager.intakeYellow3StrafeTo, autoManager.intakeYellow3StrafeToHeading)
-                    .afterTime(0, new InstantAction(() -> {
-                        drive.setCorrectionType(AutoCorrectionType.PRECISE);
-                    }))
-                    .strafeToLinearHeading(autoManager.intakeYellow3Path, autoManager.intakeYellow3PathHeading);
-            autoManager.runPath(currentPath);
-
-            if (sense) {
-//                AutoHomeAction autoHomeAction = new AutoHomeAction(drive, camera, detectionPipe, opMode);
-//                boolean homed = false;
-//
-//                while (!homed && opMode.opModeIsActive()) {
-//                    homed = !autoHomeAction.run(new TelemetryPacket());
-//                }
-            }
-            drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
-        }
-
-        if (!quickArm) {
-            grabAngle = GrabAngle.HORIZONTAL_GRAB;
-            intake.setGrabAngle(grabAngle);
-
-            currentMode = TeleopMode.INTAKE;
-            arm.setTeleopMode(currentMode);
-            arm.setIntakePosition(params.THREE_AUTO_INTAKE_Y1_POS);
-            arm.intakeUpMode();
-//        arm.setArmPower(params.ARM_POWER_SLOW_AUTO);
-            arm.update();
-            waitForArm();
-        }
+    public void intakePath(boolean afterPush) {
         drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
+        drive.setAutoSpeed(AutoSpeed.STANDARD);
 
-        opMode.sleep(100);
-        arm.intakeDownMode();
-        if(intakePosition != 3) {
-            opMode.sleep(waitForArmIntakeDown);
+        if (afterPush) {
+            Actions.runBlocking(drive.actionBuilder(drive.pose)
+                    .strafeToLinearHeading(autoManager.specimenIntakePath1, autoManager.specimenIntakePath1Heading)
+                    .build()
+            );
         } else {
-            opMode.sleep(waitForArmIntakeDown + 350);
+            Actions.runBlocking(drive.actionBuilder(drive.pose)
+                    .strafeToLinearHeading(autoManager.specimenIntakeNoPushPath, autoManager.specimenIntakeNoPushPathHeading)
+                    .strafeToLinearHeading(autoManager.specimenIntakePath1, autoManager.specimenIntakePath1Heading)
+                    .build()
+            );
         }
-//        waitForArm();
+
+        currentMode = TeleopMode.INTAKE;
+        arm.setTeleopMode(currentMode);
+        arm.intakeSpecimen = true;
+        arm.intakeUpSpecimen = 0;
+        arm.update();
+
+        drive.setCorrectionType(AutoCorrectionType.PRECISE);
+        drive.setAutoSpeed(AutoSpeed.STANDARD);
+
+//        Actions.runBlocking(drive.actionBuilder(drive.pose)
+//                .afterTime(.5, new InstantAction(() -> {
+//                    relocalizeX();
+//                }))
+//                .strafeToLinearHeading(autoManager.specimenIntakePath2, autoManager.specimenIntakePath2Heading)
+//                .build()
+//        );
+
+        autoManager.setDrive(drive);
+        autoManager.homeToSpecimen(robot);
+
+        drive.setAutoSpeed(AutoSpeed.STANDARD);
+
+//        while (!opMode.isStopRequested()) continue;
+
+        arm.intakeUpSpecimen = 0;
+        safeWait(500);
         intake.intake();
-        opMode.sleep(waitForGrab);
+        safeWait(500);
+        arm.intakeUpSpecimen = 2;
+        safeWait(500);
 
-        if (quickArm) {
-            currentMode = TeleopMode.BUCKET_SCORE;
-            arm.setTeleopMode(currentMode);
-            arm.setBucket(2);
-            arm.update();
-            opMode.sleep(100);
-        } else {
-            currentMode = TeleopMode.IDLE;
-            arm.setTeleopMode(currentMode);
-            opMode.sleep(armWaitSleep);
-        }
+        currentMode = TeleopMode.IDLE;
+        arm.setTeleopMode(currentMode);
+        arm.update();
     }
 
-    public void bucketScore(boolean goToStandby, boolean quickArm) {
-        grabAngle = GrabAngle.VERTICAL_GRAB;
-        intake.setGrabAngle(grabAngle);
-
-        if (quickArm) {
-            currentMode = TeleopMode.BUCKET_SCORE;
+    public void specimenScore(boolean afterIntake) {
+        if (afterIntake) {
+            currentMode = TeleopMode.SPECIMEN_SCORE;
             arm.setTeleopMode(currentMode);
-            arm.setBucket(2);
             arm.update();
-            opMode.sleep(100);
         }
 
-        if (goToStandby) {
-            autoManager.updatePose(drive.pose);
-            autoManager.buildPaths(autoLocation);
-            autoManager.runPath(autoManager.toBucketPath);
+        arm.setArmPositionSpecimen(100);
+        arm.setSlidesPositionSpecimen(11);
+
+        if (!afterIntake) safeWait(750);
+
+        if (afterIntake) {
+            drive.setAutoSpeed(AutoSpeed.FAST);
+            drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
+
+            Actions.runBlocking(drive.actionBuilder(drive.pose)
+//                    .strafeToLinearHeading(autoManager.specimenToScore1, autoManager.specimenToScore1Heading)
+                            .strafeToLinearHeading(autoManager.specimenToScore2, autoManager.specimenToScore2Heading)
+                            .build()
+            );
         }
 
-        if (!quickArm) {
-            currentMode = TeleopMode.BUCKET_SCORE;
-            arm.setTeleopMode(currentMode);
-            arm.setBucket(2);
-            arm.update();
-            opMode.sleep(armWaitSleep);
-        }
+        drive.setAutoSpeed(AutoSpeed.STANDARD);
+        drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
 
-        autoManager.updatePose(drive.pose);
-        autoManager.buildPaths(autoLocation);
-        autoManager.runPath(autoManager.bucketScorePath);
+        autoManager.specimenScorePath = new Vector2d(autoManager.specimenScorePath.x, autoManager.specimenScorePath.y + (specimenScoreCount * specimenOffset));
 
-        arm.setArmTipBucketScore(true);
-        opMode.sleep(outtakeSleep);
+        Actions.runBlocking(drive.actionBuilder(drive.pose)
+                .afterTime(.25, new InstantAction(() -> {
+                    if (!afterIntake) {
+                        currentMode = TeleopMode.SPECIMEN_SCORE;
+                        arm.setTeleopMode(currentMode);
+                        arm.update();
+
+                        arm.setArmPositionSpecimen(100);
+                        arm.setSlidesPositionSpecimen(11);
+                    }
+                }))
+                .strafeToLinearHeading(autoManager.specimenScorePath, autoManager.specimenScorePathHeading)
+                .build()
+        );
+
+        arm.setArmPositionSpecimen(85);
+        arm.setSlidesPositionSpecimen(6);
+
+        safeWait(750);
         intake.outtake();
-        arm.setArmTipBucketScore(false);
-        opMode.sleep(500);
+        intake.update();
+
+        specimenScoreCount++;
+    }
+
+    public void pushSample(int sampleNum) {
+        drive.setCorrectionType(AutoCorrectionType.FAST);
+        drive.setAutoSpeed(AutoSpeed.FAST);
+
+        Actions.runBlocking(drive.actionBuilder(drive.pose)
+                .strafeToLinearHeading(autoManager.specimenPushMoveToHP1, autoManager.specimenPushMoveToHP1Heading)
+                .strafeToLinearHeading(autoManager.specimenPushMoveToHP2, autoManager.specimenPushMoveToHP2Heading)
+                .strafeToLinearHeading(autoManager.specimenPushMoveToHP3, autoManager.specimenPushMoveToHP3Heading)
+                .build()
+        );
+
+        currentMode = TeleopMode.IDLE;
+        arm.setTeleopMode(currentMode);
+        arm.update();
+
+        if (sampleNum == 1) {
+            Actions.runBlocking(drive.actionBuilder(drive.pose)
+                    .strafeToLinearHeading(autoManager.specimenPushFirstPath1, autoManager.specimenPushFirstPath1Heading)
+                    .stopAndAdd(new InstantAction(() -> {
+                        drive.setAutoSpeed(AutoSpeed.STANDARD);
+                    }))
+                    .strafeToLinearHeading(autoManager.specimenPushFirstPath2, autoManager.specimenPushFirstPath2Heading)
+                    .build()
+            );
+        } else if (sampleNum == 2) {
+            Actions.runBlocking(drive.actionBuilder(drive.pose)
+                    .strafeToLinearHeading(autoManager.specimenPushSecondPath1, autoManager.specimenPushSecondPath1Heading)
+                    .stopAndAdd(new InstantAction(() -> {
+                        drive.setAutoSpeed(AutoSpeed.STANDARD);
+                    }))
+                    .strafeToLinearHeading(autoManager.specimenPushSecondPath2, autoManager.specimenPushSecondPath2Heading)
+                    .build()
+            );
+        }
     }
 
     public void startAuto() {
@@ -431,13 +378,21 @@ public class LeftIntakeThreeRR extends AutoProgram {
 //        autoManager.buildPaths(autoLocation);
 //        autoManager.runPath(autoManager.toBucketPath);
 
-        bucketScore(false, false);
-        intakePath(1, true);
-        bucketScore(true, true);
-        intakePath(2, true);
-        bucketScore(true, true);
-        intakePath(3, true);
-        bucketScore(true, true);
+        drive.setAutoSpeed(AutoSpeed.FAST);
+        drive.setCorrectionType(AutoCorrectionType.TIME_BASED);
+
+//        Actions.runBlocking(drive.actionBuilder(drive.pose)
+//                .strafeToLinearHeading(autoManager.moveForwardPath, autoManager.moveForwardPathHeading)
+//                .build()
+//        );
+
+        specimenScore(false);
+        pushSample(1);
+//        intakePath(true);
+//        specimenScore(true);
+//        pushSample(2);
+//        intakePath(false);
+//        specimenScore(true);
 
 //        autoManager.updatePose(drive.pose);
 //        autoManager.buildPaths(autoLocation);
@@ -447,12 +402,31 @@ public class LeftIntakeThreeRR extends AutoProgram {
 //        arm.setTeleopMode(currentMode);
 
         params.AUTO_END_HEADING = Math.toDegrees(drive.pose.heading.toDouble());
-        opMode.sleep(10000);
+        safeWait(10000);
 
     }
 
     public void waitForArm() {
         while (!arm.armAtPosition() && !arm.slidesAtPosition()) drive.updatePoseEstimate();
         arm.update();
+    }
+
+    public void safeWait(int millis) {
+        ElapsedTime timer = new ElapsedTime();
+        timer.reset();
+
+        while (timer.time(TimeUnit.MILLISECONDS) < millis) {
+            arm.update();
+            intake.update();
+            drive.updatePoseEstimate();
+
+            if (opMode.isStopRequested()) break;
+        }
+    }
+
+    public void relocalizeX() {
+//        double distance = robot.distanceOne.getDistance(DistanceUnit.INCH);
+//
+//        drive.setPose(new Pose2d(new Vector2d(distance - params.DISTANCE_ONE_OFFSET, drive.pose.position.y), drive.pose.heading));
     }
 }

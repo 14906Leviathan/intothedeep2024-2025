@@ -5,14 +5,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Abstracts.AutoProgram;
-import org.firstinspires.ftc.teamcode.AutoPedro.LeftIntakePedro;
-import org.firstinspires.ftc.teamcode.AutoPedro.LeftSimplePedro;
 
 @Config
 @Autonomous (name = "0: Autonomous Selector", group = "0", preselectTeleOp = "0: Main TeleOp")
 public class AutoSelector extends LinearOpMode {
     private boolean autoIsSelected = false;
-    private AutoProgram autoPrograms[] = {new LeftIntakeThreeRR(), new LeftIntakeRR()};
+    private AutoProgram autoPrograms[] = {new LeftIntakeThreeRR(), new LeftIntakeRR(), new SpecimenAuto()};
     private int autoIndex = 0;
     private AutoProgram selectedAuto;
     private boolean dpLeftCooldown = false;
@@ -47,6 +45,9 @@ public class AutoSelector extends LinearOpMode {
             if(gamepad1.a) {
                 autoIsSelected = true;
             }
+
+            if(isStopRequested()) break;
+            if(!opModeInInit()) break;
         }
 
         if(!isStopRequested()) selectedAuto.init(this);

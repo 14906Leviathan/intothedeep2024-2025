@@ -84,11 +84,12 @@ public class Path {
      * @param endHeading The end of the linear heading interpolation.
      *                   This will be reached at the end of the Path if no end time is specified.
      */
-    public void setLinearHeadingInterpolation(double startHeading, double endHeading) {
+    public Path setLinearHeadingInterpolation(double startHeading, double endHeading) {
         linearInterpolationEndTime = 1;
         isTangentHeadingInterpolation = false;
         this.startHeading = startHeading;
         this.endHeading = endHeading;
+        return this;
     }
 
     /**
@@ -116,11 +117,13 @@ public class Path {
      *
      * @param setHeading the constant heading for the Path.
      */
-    public void setConstantHeadingInterpolation(double setHeading) {
+    public Path setConstantHeadingInterpolation(double setHeading) {
         linearInterpolationEndTime = 1;
         isTangentHeadingInterpolation = false;
         startHeading = setHeading;
         endHeading = setHeading;
+
+        return this;
     }
 
     /**
@@ -396,8 +399,10 @@ public class Path {
      *
      * @param set This sets the t-value end constraint.
      */
-    public void setPathEndTValueConstraint(double set) {
+    public Path setPathEndTValueConstraint(double set) {
         pathEndTValueConstraint = set;
+
+        return this;
     }
 
     /**
@@ -406,8 +411,10 @@ public class Path {
      *
      * @param set This sets the Path end timeout.
      */
-    public void setPathEndTimeoutConstraint(double set) {
+    public Path setPathEndTimeoutConstraint(double set) {
         pathEndTimeoutConstraint = set;
+
+        return this;
     }
 
     /**

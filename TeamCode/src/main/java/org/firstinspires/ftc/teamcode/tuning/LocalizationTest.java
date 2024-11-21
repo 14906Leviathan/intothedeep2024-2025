@@ -9,10 +9,13 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibrationIdentity;
+import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.TwoCamAprilTagDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.*;
@@ -22,10 +25,15 @@ import org.firstinspires.ftc.teamcode.Drawing;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.TankDrive;
 
+@TeleOp(name = "localization test")
 public class LocalizationTest extends LinearOpMode {
+    private HWProfile robot;
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+        robot = new HWProfile();
+        robot.init(hardwareMap, false, false);
 
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive.class)) {
             AprilTagProcessor aprilTag = AprilTagProcessor.easyCreateWithDefaults();
@@ -63,6 +71,7 @@ public class LocalizationTest extends LinearOpMode {
 
                 drive.updatePoseEstimate();
 
+//                telemetry.addData("distance one: ", robot.distanceOne.getDistance(DistanceUnit.INCH));
                 telemetry.addData("x", drive.pose.position.x);
                 telemetry.addData("y", drive.pose.position.y);
                 telemetry.addData("heading (deg)", Math.toDegrees(drive.pose.heading.toDouble()));

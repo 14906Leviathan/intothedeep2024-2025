@@ -285,7 +285,7 @@
 //
 //        autoManager.updatePose(drive.pose);
 //        autoManager.buildPaths(autoLocation);
-//        autoManager.runPath(autoManager.bucketScorePath);
+//        autoManager.runPath(autoManager.bucketScorePathFromIntake1);
 //
 //        arm.setArmTipBucketScore(true);
 //        opMode.sleep(outtakeSleep);

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.Abstracts.Subsystem;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
@@ -27,6 +28,17 @@ public class IntakeSubsystem extends Subsystem {
     public IntakeSubsystem(HWProfile myRobot, LinearOpMode myOpMode, Params myParams){
         robot = myRobot;
         opMode = myOpMode;
+        params = myParams;
+
+        grabStyle = GrabStyle.OUTSIDE_GRAB;
+        grabAngle = GrabAngle.VERTICAL_GRAB;
+        intake();
+        closed = true;
+    }
+
+    public IntakeSubsystem(HWProfile myRobot, OpMode myOpMode, Params myParams){
+        robot = myRobot;
+//        opMode = myOpMode;
         params = myParams;
 
         grabStyle = GrabStyle.OUTSIDE_GRAB;

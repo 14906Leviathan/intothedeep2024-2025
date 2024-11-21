@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.Enums.AutoCorrectionType;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.TankDrive;
 import org.firstinspires.ftc.teamcode.ThreeDeadWheelLocalizer;
@@ -31,7 +32,7 @@ public final class ManualFeedbackTuner extends LinearOpMode {
             }
             waitForStart();
 
-            drive.extraCorrection = true;
+            drive.setCorrectionType(AutoCorrectionType.PRECISE);
 
             while (opModeIsActive()) {
                 if(gamepad1.a) {

@@ -1,19 +1,19 @@
 package org.firstinspires.ftc.teamcode.pedroPathing.follower;
 
+import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.drivePIDFFeedForward;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.drivePIDFSwitch;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.forwardZeroPowerAcceleration;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.headingPIDFSwitch;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.drivePIDFFeedForward;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.headingPIDFFeedForward;
+import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.headingPIDFSwitch;
+import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.lateralZeroPowerAcceleration;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftFrontMotorName;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.leftRearMotorName;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightFrontMotorName;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.rightRearMotorName;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.translationalPIDFFeedForward;
-import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.lateralZeroPowerAcceleration;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.secondaryDrivePIDFFeedForward;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.secondaryHeadingPIDFFeedForward;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.secondaryTranslationalPIDFFeedForward;
+import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.translationalPIDFFeedForward;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.translationalPIDFSwitch;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.useSecondaryDrivePID;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.useSecondaryHeadingPID;
@@ -25,6 +25,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -135,6 +136,7 @@ public class Follower {
     private double[] driveErrors;
     private double rawDriveError;
     private double previousRawDriveError;
+    private VoltageSensor vSensor;
 
     public static boolean drawOnDashboard = true;
     public static boolean useTranslational = true;
@@ -170,6 +172,7 @@ public class Follower {
         // TODO: Make sure that this is the direction your motors need to be reversed in.
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
+        vSensor = hardwareMap.voltageSensor.iterator().next();
 
         motors = Arrays.asList(leftFront, leftRear, rightFront, rightRear);
 
@@ -366,6 +369,25 @@ public class Follower {
     }
 
     /**
+     * This holds a Point.
+     *
+     * @param point   the Point to stay at.
+     * @param heading the heading to face.
+     */
+    public void holdPoint(Point point, double heading) {
+        holdPoint(new BezierPoint(point), heading);
+    }
+
+    /**
+     * This holds a Point.
+     *
+     * @param pose the Point (as a Pose) to stay at.
+     */
+    public void holdPoint(Pose pose) {
+        holdPoint(new Point(pose), pose.getHeading());
+    }
+
+    /**
      * This follows a Path.
      * This also makes the Follower hold the last Point on the Path.
      *
@@ -426,15 +448,22 @@ public class Follower {
     }
 
     /**
-     * This calls an update to the PoseUpdater, which updates the robot's current position estimate.
-     * This also updates all the Follower's PIDFs, which updates the motor powers.
+     * Calls an update to the PoseUpdater, which updates the robot's current position estimate.
      */
-    public void update() {
+    public void updatePose() {
         poseUpdater.update();
 
         if (drawOnDashboard) {
             dashboardPoseTracker.update();
         }
+    }
+
+    /**
+     * This calls an update to the PoseUpdater, which updates the robot's current position estimate.
+     * This also updates all the Follower's PIDFs, which updates the motor powers.
+     */
+    public void update() {
+        updatePose();
 
         if (!teleopDrive) {
             if (currentPath != null) {
@@ -444,9 +473,10 @@ public class Follower {
                     drivePowers = driveVectorScaler.getDrivePowers(MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling), MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling), new Vector(), poseUpdater.getPose().getHeading());
 
                     limitDrivePowers();
+                    double voltage = vSensor.getVoltage();
 
                     for (int i = 0; i < motors.size(); i++) {
-                        motors.get(i).setPower(drivePowers[i]);
+                        motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
                     }
                 } else {
                     if (isBusy) {
@@ -458,8 +488,10 @@ public class Follower {
 
                         limitDrivePowers();
 
+                        double voltage = vSensor.getVoltage();
+
                         for (int i = 0; i < motors.size(); i++) {
-                            motors.get(i).setPower(drivePowers[i]);
+                            motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
                         }
                     }
                     if (currentPath.isAtParametricEnd()) {
@@ -515,7 +547,7 @@ public class Follower {
      *                     movement, this is the x-axis.
      * @param lateralDrive determines the lateral drive vector for the robot in teleop. In field centric
      *                     movement, this is the y-axis.
-     * @param heading determines the heading vector for the robot in teleop.
+     * @param heading      determines the heading vector for the robot in teleop.
      */
     public void setTeleOpMovementVectors(double forwardDrive, double lateralDrive, double heading) {
         setTeleOpMovementVectors(forwardDrive, lateralDrive, heading, true);
@@ -528,7 +560,7 @@ public class Follower {
      *                     movement, this is the x-axis.
      * @param lateralDrive determines the lateral drive vector for the robot in teleop. In field centric
      *                     movement, this is the y-axis.
-     * @param heading determines the heading vector for the robot in teleop.
+     * @param heading      determines the heading vector for the robot in teleop.
      * @param robotCentric sets if the movement will be field or robot centric
      */
     public void setTeleOpMovementVectors(double forwardDrive, double lateralDrive, double heading, boolean robotCentric) {
@@ -719,7 +751,7 @@ public class Follower {
         Vector velocityErrorVector = MathFunctions.addVectors(forwardVelocityError, lateralVelocityError);
 
         previousRawDriveError = rawDriveError;
-        rawDriveError =  velocityErrorVector.getMagnitude() * MathFunctions.getSign(MathFunctions.dotProduct(velocityErrorVector, currentPath.getClosestPointTangentVector()));
+        rawDriveError = velocityErrorVector.getMagnitude() * MathFunctions.getSign(MathFunctions.dotProduct(velocityErrorVector, currentPath.getClosestPointTangentVector()));
 
         double projection = 2 * driveErrors[1] - driveErrors[0];
 

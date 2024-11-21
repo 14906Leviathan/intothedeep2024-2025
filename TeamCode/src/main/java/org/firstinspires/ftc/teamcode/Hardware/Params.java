@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.Enums.IntakeType;
+import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 
 @Config
 public class Params {
@@ -12,14 +13,15 @@ public class Params {
     public static double ARM_CLIMB_UP_MAX_POS = 120; //143
     public static double ARM_CLIMB_UP_MIN_POS = 105; //143
     public static double ARM_CLIMB_DOWN_POS = 8; //143
-    public static double ARM_TOUCH_POLE_AUTO = 132; //143
+    public static double ARM_TOUCH_POLE_AUTO_DOWN = 62; //143
+    public static double ARM_TOUCH_POLE_AUTO_UP = 80; //143
     public static double ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 75; //143
     public static double ARM_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 60; //143
-    public static double ARM_SPECIMEN_POLE_2_MAX_CLAW = 100; //143
-    public static double ARM_SPECIMEN_POLE_2_MAX_CLAW_DEFAULT = 83; //143
+    public static double ARM_SPECIMEN_POLE_2_MAX_CLAW = 110; //143
+    public static double ARM_SPECIMEN_POLE_2_MAX_CLAW_DEFAULT = 100; //143
     public static double ARM_SPECIMEN_POLE_2_MIN_CLAW = 65; //143
     public static double ARM_SPECIMEN_INTAKE_TWO_WHEEL = 43; //143
-    public static double ARM_SPECIMEN_INTAKE_CLAW = 47; //143
+    public static double ARM_SPECIMEN_INTAKE_CLAW = 45; //143
     public static final int ARM_MAX_POS = 120;
     public static final int ARM_MIN_POS = 0;
     public static final double ARM_ZERO = .195;
@@ -27,24 +29,27 @@ public class Params {
     public static final double ARM_TICK_PER_DEG = 5_281/360;
     public static final double SLIDE_GROUND_POS = 13;
     public static final double SLIDES_BUCKET_2_SCORE_LEN = 34;
-    public static final double SLIDES_BUCKET_2_SCORE_LEN_CLAW = 41;
+    public static final double SLIDES_BUCKET_2_SCORE_LEN_CLAW = 42;
+    public static final double SLIDES_BUCKET_2_SCORE_LEN_CLAW_AUTO = 42.5;
     public static final double SLIDES_BUCKET_1_SCORE_LEN = 35;
     public static final double SLIDES_BUCKET_1_SCORE_LEN_CLAW = 37;
-    public static final double SLIDES_TOUCH_POLE_AUTO = 0;
+    public static final double SLIDES_TOUCH_POLE_AUTO = 15;
     public static final double SLIDES_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 25;
     public static final double SLIDES_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 25;
     public static final double SLIDES_SPECIMEN_POLE_2_MAX_CLAW = 30;
-    public static final double SLIDES_SPECIMEN_POLE_2_DEFAULT_CLAW = 20;
-    public static final double SLIDES_SPECIMEN_POLE_2_MIN_CLAW = 8;
+    public static final double SLIDES_SPECIMEN_POLE_2_DEFAULT_CLAW = 12;
+    public static final double SLIDES_SPECIMEN_POLE_2_MIN_CLAW = 4;
     public static final int ARM_EXTENDED_DEG = 15;
+    public static final double DISTANCE_ONE_OFFSET = 3;
     public static final int SLIDES_TICKS_PER_INCH = 1922/43;
     public static final double SLIDES_TRANSITION_LEN = 6;
+    public static final double SLIDES_TRANSITION_LEN_AUTO = 10;
     public static final double SLIDES_MAX_POS = 42.5;
     public static final double SLIDES_SPECIMEN_INTAKE_TWO_WHEEL = 2;
     public static final double SLIDES_SPECIMEN_INTAKE_CLAW = 11;
     public static final double SLIDES_MIN_POS = 0;
     public static final double SLIDES_OUTTAKE_RETRACT_MODE_LEN = 35;
-    public static final double INTAKE_MAX_POS = 34;
+    public static final double INTAKE_MAX_POS = 32;
     public static final double INTAKE_DEF_POS = 15;
     public static final double INTAKE_MIN_POS = 2;
     public static final double ARM_IDLE_DEG = 25;
@@ -62,8 +67,8 @@ public class Params {
     public static final double INTAKE_IDLE_SPEED = 0;
     public static final double OUTTAKE_SPEED = 1;
     public static final double INTAKE_SLOWMODE_MIN_POS = 2;
-    public static final double SLOWMODE_XY_MULT = .75;
-    public static final double SLOWMODE_TURN_MULT = .75;
+    public static final double SLOWMODE_XY_MULT = .5;
+    public static final double SLOWMODE_TURN_MULT = .5;
     public static final double SLIDE_MOTOR_POWER = .75;
     public static final double SLIDE_MOTOR_POWER_SLOW_AUTO = .5;
     public static final double ARM_POWER_SLOW_AUTO = .75;
@@ -78,16 +83,19 @@ public class Params {
     public static final double POLE_TOUCHER_IN = 0;
     public static final double POLE_TOUCHER_OUT = 90;
     public static final double PIVOT_VERTICAL_ANG = 90;
-    public static final double PIVOT_HORIZONTAL_ANG = 0;
+    public static final double PIVOT_HORIZONTAL_ANG = 195;
     public static final double ARM_ERROR_TOLERANCE = 4;
     public static final double SLIDES_ERROR_TOLERANCE = 7;
-    public static final double AUTO_DEFAULT_SPEED = .75;
+    public static final double AUTO_DEFAULT_SPEED = .9;
     public static final double AUTO_INTAKE_SPEED = .45;
     public static final double AUTO_PARK_SPEED = .75;
     public static final double AUTO_OUTTAKE_SPEED = .6;
     public static final double TWO_AUTO_INTAKE_Y1_POS = 18;
     public static final double THREE_AUTO_INTAKE_Y1_POS = 5;
+    public static final double PEDRO_AUTO_INTAKE_Y1_POS = 0;
     public static double AUTO_END_HEADING = 0;
+    public static TeleopMode TELEOP_START_MODE = TeleopMode.IDLE;
+    public static double AUTO_SCORE = 0;
 
 
     /* Constructor */

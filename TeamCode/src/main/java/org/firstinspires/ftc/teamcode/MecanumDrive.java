@@ -41,14 +41,14 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.Enums.AutoCorrectionType;
+import org.firstinspires.ftc.teamcode.Enums.AutoSpeed;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
-import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.lang.Math;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -76,8 +76,11 @@ public class MecanumDrive {
 
         // path profile parameters (in inches)
         public double maxWheelVel = 100;
-        public double minProfileAccel = -30;
-        public double maxProfileAccel = 50;
+        public double maxWheelVelSlow = 10;
+        public double minProfileAccel = -30; //-30
+        public double minProfileAccelFast = -45; //-30
+        public double maxProfileAccel = 50; //50
+        public double maxProfileAccelSlow = 30; //50
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
@@ -89,6 +92,7 @@ public class MecanumDrive {
         public double headingGain = 4; // shared with turn
 
         public double axialVelGain = 2.4;
+//        public double axialVelGain = 2.4;
         public double lateralVelGain = 1.4;
         public double headingVelGain = 1; // shared with turn
 
@@ -107,13 +111,45 @@ public class MecanumDrive {
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
-    public final VelConstraint defaultVelConstraint =
+    public VelConstraint defaultVelConstraint =
             new MinVelConstraint(Arrays.asList(
                     kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
                     new AngularVelConstraint(PARAMS.maxAngVel)
             ));
-    public final AccelConstraint defaultAccelConstraint =
+    public AccelConstraint defaultAccelConstraint =
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
+
+    private AutoSpeed autoSpeed = AutoSpeed.STANDARD;
+
+    public void setAutoSpeed(AutoSpeed autoSpeed) {
+        this.autoSpeed = autoSpeed;
+
+        if(this.autoSpeed == AutoSpeed.FAST) {
+            defaultVelConstraint =
+                    new MinVelConstraint(Arrays.asList(
+                            kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                            new AngularVelConstraint(PARAMS.maxAngVel)
+                    ));
+            defaultAccelConstraint =
+                    new ProfileAccelConstraint(PARAMS.minProfileAccelFast, PARAMS.maxProfileAccel);
+        } else if(this.autoSpeed == AutoSpeed.STANDARD) {
+            defaultVelConstraint =
+                    new MinVelConstraint(Arrays.asList(
+                            kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                            new AngularVelConstraint(PARAMS.maxAngVel)
+                    ));
+            defaultAccelConstraint =
+                    new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
+        } else if(this.autoSpeed == AutoSpeed.SLOW) {
+            defaultVelConstraint =
+                    new MinVelConstraint(Arrays.asList(
+                            kinematics.new WheelVelConstraint(PARAMS.maxWheelVelSlow),
+                            new AngularVelConstraint(PARAMS.maxAngVel)
+                    ));
+            defaultAccelConstraint =
+                    new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccelSlow);
+        }
+    }
 
     public DcMotorEx leftFront, leftBack, rightBack, rightFront;
 
@@ -124,7 +160,17 @@ public class MecanumDrive {
     public final Localizer localizer;
     public Pose2d pose;
 
-    public boolean extraCorrection = false;
+    private AutoCorrectionType correctionType = AutoCorrectionType.TIME_BASED;
+    public boolean pathRunning = false;
+    public boolean cancelPath = false;
+
+    public void setCorrectionType(AutoCorrectionType correctionType) {
+        this.correctionType = correctionType;
+    }
+
+    public AutoCorrectionType getCorrectionType() {
+        return  this.correctionType;
+    }
 
     final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -320,8 +366,11 @@ public class MecanumDrive {
                 t = Actions.now() - beginTs;
             }
 
+            pathRunning = true;
+
 //            Pose2dDual<Time> txWorldTarget = new Pose2dDual<>(new DualNum<>(new double[10]), new DualNum<>(new double[10]), new DualNum<>(new double[(int) Math.toRadians(90)]));
             Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
+            Pose2dDual<Time> finalTxWorldTarget = timeTrajectory.get(timeTrajectory.duration - .5);
 
             p.put("txWorldTarget", txWorldTarget.value());
 
@@ -332,13 +381,27 @@ public class MecanumDrive {
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
             Pose2d error = txWorldTarget.value().minusExp(pose);
+            Pose2d toEndError = finalTxWorldTarget.value().minusExp(pose);
 
             if (updateAction != null) {
                 updateAction.run(p);
             }
 
-            if (extraCorrection) {
-                if ((t >= timeTrajectory.duration && error.position.norm() < .5
+            if(cancelPath) {
+                cancelPath = false;
+                leftFront.setPower(0);
+                leftBack.setPower(0);
+                rightBack.setPower(0);
+                rightFront.setPower(0);
+                xError = error.position.x;
+                yError = error.position.y;
+
+                pathRunning = false;
+                return false;
+            }
+
+            if (correctionType == AutoCorrectionType.PRECISE) {
+                if ((t >= timeTrajectory.duration && error.position.norm() <= .5
                         && robotVelRobot.linearVel.norm() < 0.5)
                         || t >= timeTrajectory.duration + .5) {
                     leftFront.setPower(0);
@@ -348,9 +411,10 @@ public class MecanumDrive {
                     xError = error.position.x;
                     yError = error.position.y;
 
+                    pathRunning = false;
                     return false;
                 }
-            } else {
+            } else if(correctionType == AutoCorrectionType.TIME_BASED) {
                 if (t >= timeTrajectory.duration) {
                     leftFront.setPower(0);
                     leftBack.setPower(0);
@@ -359,6 +423,19 @@ public class MecanumDrive {
                     xError = error.position.x;
                     yError = error.position.y;
 
+                    pathRunning = false;
+                    return false;
+                }
+            } else if(correctionType == AutoCorrectionType.FAST) {
+                if (toEndError.position.norm() <= 5.5 || t >= timeTrajectory.duration) {
+                    leftFront.setPower(0);
+                    leftBack.setPower(0);
+                    rightBack.setPower(0);
+                    rightFront.setPower(0);
+                    xError = error.position.x;
+                    yError = error.position.y;
+
+                    pathRunning = false;
                     return false;
                 }
             }

@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.Enums;
 
 public enum AutoLocation {
-    LEFT_SIMPLE,
-    LEFT_SCORE_TWO_GOLD,
-    LEFT_SCORE_THREE_GOLD,
-    LEFT_MOVE_BLUE,
-    LEFT_COMBINATION
+    RR_LEFT_SIMPLE,
+    RR_LEFT_SCORE_TWO_GOLD,
+    RR_LEFT_SCORE_THREE_GOLD,
+    RR_LEFT_MOVE_BLUE,
+    RR_LEFT_COMBINATION,
+    RR_SPECIMEN,
+    PEDRO_LEFT_4_0_V1,
+    PEDRO_LEFT_3_1_V1
 }
