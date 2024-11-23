@@ -8,6 +8,9 @@ import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 
 @Config
 public class Params {
+    public static double ARM_SCORE_SPECIMEN = 65;
+    public static double SLIDES_SCORE_SPECIMEN = 6;
+    public static double SLIDES_ENSURE_SCORE_SPECIMEN = 6;
     public static double ARM_BUCKET2_SCORE_DEG = 110; //143
     public static double ARM_BUCKET1_SCORE_DEG = 70; //143
     public static double ARM_CLIMB_UP_MAX_POS = 120; //143
@@ -84,8 +87,12 @@ public class Params {
     public static final double POLE_TOUCHER_OUT = 90;
     public static final double PIVOT_VERTICAL_ANG = 90;
     public static final double PIVOT_HORIZONTAL_ANG = 195;
-    public static final double ARM_ERROR_TOLERANCE = 4;
+    public static final double ARM_ERROR_TOLERANCE = 9;
+    public static final double ARM_ERROR_TOLERANCE_AUTO = 4;
+    public static final double ARM_AUTO_SPECIMEN_INTAKE = 16;
+    public static final double SLIDES_AUTO_SPECIMEN_INTAKE = 12;
     public static final double SLIDES_ERROR_TOLERANCE = 7;
+    public static final double SLIDES_ERROR_TOLERANCE_AUTO = 4;
     public static final double AUTO_DEFAULT_SPEED = .9;
     public static final double AUTO_INTAKE_SPEED = .45;
     public static final double AUTO_PARK_SPEED = .75;

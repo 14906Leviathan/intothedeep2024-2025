@@ -28,7 +28,7 @@ public class ArmSubsystem extends Subsystem {
     public static double Kp = 70;
     public static double Kp_Intake = 150;
     public static double Ki = .5;
-    public static double Kd = .1;
+    public static double Kd = .01;
     public static double SlidesKp = 8;
     public static double SlidesKi = 0;
     public static double SlidesKd = 0.35;
@@ -42,7 +42,7 @@ public class ArmSubsystem extends Subsystem {
     private int bucketScore = 2;
     private PIDController armPID = new PIDController(Kp, Ki, Kd);
     private PIDController slidesPID = new PIDController(SlidesKp, SlidesKi, SlidesKd);
-    public boolean intakeGrab = false;
+    private boolean intakeDownMode = false;
     public boolean teleopModeStart = false;
     private double intakePos = 0;
     private double slidesTargetPos = 0;
@@ -205,6 +205,10 @@ public class ArmSubsystem extends Subsystem {
         setSlidesPosition(slidesTargetPos);
     }
 
+    public double getSlidesTargetPos() {
+        return slidesTargetPos;
+    }
+
     public void retractSlidesOuttake() {
         outtakeSlidesRetracted = true;
     }
@@ -234,7 +238,7 @@ public class ArmSubsystem extends Subsystem {
     }
 
     public void intakeDownMode() {
-        intakeGrab = true;
+        intakeDownMode = true;
     }
 
     public double setArmPositionSpecimen(double pos) {
@@ -261,20 +265,27 @@ public class ArmSubsystem extends Subsystem {
     }
 
     public void intakeUpMode() {
-        intakeGrab = false;
+        intakeDownMode = false;
     }
 
     public boolean armAtPosition() {
         double armPos = getArmPosition();
 
-        return (armPos + params.ARM_ERROR_TOLERANCE > armTargetPos && armPos - params.ARM_ERROR_TOLERANCE < armTargetPos);
+        double errorTolerance = params.ARM_ERROR_TOLERANCE;
+
+        if(autoMode) errorTolerance = params.ARM_ERROR_TOLERANCE_AUTO;
+
+        return (armPos + errorTolerance > armTargetPos && armPos - errorTolerance < armTargetPos);
 //        return armPID.atSetPoint();
     }
 
     public boolean slidesAtPosition() {
         double slidesPos = getSlidesPosition();
 
-        return (slidesPos + params.SLIDES_ERROR_TOLERANCE > slidesTargetPos && slidesPos - params.SLIDES_ERROR_TOLERANCE < slidesTargetPos);
+        double errorTolerance = params.SLIDES_ERROR_TOLERANCE;
+        if(autoMode) errorTolerance = params.SLIDES_ERROR_TOLERANCE_AUTO;
+
+        return (slidesPos + errorTolerance > slidesTargetPos && slidesPos - errorTolerance < slidesTargetPos);
     }
 
     public void setBucket(int bucket) {
@@ -326,11 +337,11 @@ public class ArmSubsystem extends Subsystem {
                     armDeg = map(slidesPos, 3, 36, 17, 25);
                 if (armDeg < 0) armDeg = 0;
 
-                if (!intakeGrab && params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE)
+                if (!intakeDownMode && params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE)
                     armDeg += params.ARM_INTAKE_MODE_UP_DEG;
-                if (!intakeGrab && params.INTAKE_TYPE == IntakeType.CLAW && !autoMode)
+                if (!intakeDownMode && params.INTAKE_TYPE == IntakeType.CLAW && !autoMode)
                     armDeg += params.ARM_CLAW_MODE_UP_DEG;
-                if (!intakeGrab && params.INTAKE_TYPE == IntakeType.CLAW && autoMode) {
+                if (!intakeDownMode && params.INTAKE_TYPE == IntakeType.CLAW && autoMode) {
                     if (!autoLastSample) {
                         armDeg += params.ARM_CLAW_MODE_UP_DEG_AUTO;
                     } else {
@@ -341,24 +352,33 @@ public class ArmSubsystem extends Subsystem {
 
                 setArmTargetPosition(armDeg);
             } else {
-                if (teleopModeStart) setIntakePosition(params.SLIDES_SPECIMEN_INTAKE_CLAW);
+                if(!autoMode) {
+                    if (teleopModeStart) setIntakePosition(params.SLIDES_SPECIMEN_INTAKE_CLAW);
 
-                if (params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
-                    setTargetSlidesPosition(params.SLIDES_SPECIMEN_INTAKE_TWO_WHEEL);
-                    if (intakeUpSpecimen == 0) {
-                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_TWO_WHEEL);
-                    } else {
-                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_TWO_WHEEL + 20);
-                    }
-                } else if (params.INTAKE_TYPE == IntakeType.CLAW) {
+                    if (params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
+                        setTargetSlidesPosition(params.SLIDES_SPECIMEN_INTAKE_TWO_WHEEL);
+                        if (intakeUpSpecimen == 0) {
+                            setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_TWO_WHEEL);
+                        } else {
+                            setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_TWO_WHEEL + 20);
+                        }
+                    } else if (params.INTAKE_TYPE == IntakeType.CLAW) {
 //                    setTargetSlidesPosition(params.SLIDES_SPECIMEN_INTAKE_CLAW);
-                    if (intakeUpSpecimen == 0) {
-                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW);
-                    } else if (intakeUpSpecimen == 1) {
-                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW + 5);
-                    } else if (intakeUpSpecimen == 2) {
-                        setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW + 25);
+                        if (intakeUpSpecimen == 0) {
+                            setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW);
+                        } else if (intakeUpSpecimen == 1) {
+                            setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW + 5);
+                        } else if (intakeUpSpecimen == 2) {
+                            setArmTargetPosition(params.ARM_SPECIMEN_INTAKE_CLAW + 25);
+                        }
                     }
+                } else {
+                    if(intakeDownMode) {
+                        setArmTargetPosition(params.ARM_AUTO_SPECIMEN_INTAKE);
+                    } else {
+                        setArmTargetPosition(params.ARM_AUTO_SPECIMEN_INTAKE + 10);
+                    }
+                    setTargetSlidesPosition(params.SLIDES_AUTO_SPECIMEN_INTAKE);
                 }
             }
 
@@ -504,5 +524,9 @@ public class ArmSubsystem extends Subsystem {
 
     public TeleopMode getTeleopMode() {
         return currentMode;
+    }
+
+    public boolean getIntakeDownMode() {
+        return intakeDownMode;
     }
 }

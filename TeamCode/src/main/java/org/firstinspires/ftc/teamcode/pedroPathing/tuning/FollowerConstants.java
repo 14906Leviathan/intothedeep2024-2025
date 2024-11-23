@@ -38,9 +38,9 @@ public class FollowerConstants {
 
     // Translational PIDF coefficients (don't use integral)
     public static CustomPIDFCoefficients translationalPIDFCoefficients = new CustomPIDFCoefficients(
-            0.12, //.14
+            0.13, //.14
             0,
-            0,
+            0.01,
             0);
 
     // Translational Integral
@@ -104,7 +104,7 @@ public class FollowerConstants {
     // Decreasing this will cause the deceleration at the end of the Path to be slower, making the
     // robot slower but reducing risk of end-of-path overshoots or localization slippage.
     // This can be set individually for each Path, but this is the default.
-    public static double zeroPowerAccelerationMultiplier = 4;
+    public static double zeroPowerAccelerationMultiplier = 2.5;
 
 
     // When the robot is at the end of its current Path or PathChain and the velocity goes below
@@ -130,7 +130,7 @@ public class FollowerConstants {
     // When the Path is considered at its end parametrically, then the Follower has this many
     // milliseconds to further correct by default.
     // This can be custom set for each Path.
-    public static double pathEndTimeoutConstraint = 450;
+    public static double pathEndTimeoutConstraint = 100;
 
     // This is how many steps the BezierCurve class uses to approximate the length of a BezierCurve.
     public static int APPROXIMATION_STEPS = 1000;
@@ -156,7 +156,7 @@ public class FollowerConstants {
     // the translational, heading, and drive PIDs.
     public static boolean useSecondaryTranslationalPID = true;
     public static boolean useSecondaryHeadingPID = false;
-    public static boolean useSecondaryDrivePID = true;
+    public static boolean useSecondaryDrivePID = false;
 
 
     // the limit at which the translational PIDF switches between the main and secondary translational PIDFs,
@@ -165,9 +165,9 @@ public class FollowerConstants {
 
     // Secondary translational PIDF coefficients (don't use integral)
     public static CustomPIDFCoefficients secondaryTranslationalPIDFCoefficients = new CustomPIDFCoefficients(
-            0.28, //.15
+            0.33, //.15
             0,
-            0.004,
+            0.025,
             0);
 
     // Secondary translational Integral value
@@ -200,7 +200,7 @@ public class FollowerConstants {
 
     // Secondary drive PIDF coefficients
     public static CustomFilteredPIDFCoefficients secondaryDrivePIDFCoefficients = new CustomFilteredPIDFCoefficients(
-            0.0045,
+            0.0025,
             0,
             0.0000003,
             0.6,

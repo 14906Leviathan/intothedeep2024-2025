@@ -4,32 +4,23 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
-import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
 
 /**
- * This is the StraightBackAndForth autonomous OpMode. It runs the robot in a specified distance
- * straight forward. On reaching the end of the forward Path, the robot runs the backward Path the
- * same distance back to the start. Rinse and repeat! This is good for testing a variety of Vectors,
- * like the drive Vector, the translational Vector, and the heading Vector. Remember to test your
- * tunings on CurvedBackAndForth as well, since tunings that work well for straight lines might
- * have issues going in curves.
+ * This is the ErrorTuner autonomous OpMode.
  *
- * @author Anyi Lin - 10158 Scott's Bots
- * @author Aaron Yang - 10158 Scott's Bots
- * @author Harrison Womack - 10158 Scott's Bots
- * @version 1.0, 3/12/2024
+ * @author Austin Bacher - 14906 Leviathan Robotics
+ * @version 1.0, 11/21/2024
  */
 @Config
-@Autonomous (name = "Straight Back And Forth", group = "Autonomous Pathing Tuning")
-public class StraightBackAndForth extends OpMode {
+@Autonomous (name = "Error Tuner", group = "Autonomous Pathing Tuning")
+public class ErrorTuner extends OpMode {
     private Telemetry telemetryA;
 
     public static double DISTANCE = 40;
@@ -40,6 +31,7 @@ public class StraightBackAndForth extends OpMode {
 
     private Path forwards;
     private Path backwards;
+    private boolean runNextPath = false;
 
     /**
      * This initializes the Follower and creates the forward and backward Paths. Additionally, this
@@ -50,12 +42,11 @@ public class StraightBackAndForth extends OpMode {
         follower = new Follower(hardwareMap);
 
         forwards = new Path(new BezierLine(new Point(0,0, Point.CARTESIAN), new Point(DISTANCE,0, Point.CARTESIAN)));
-        forwards.setConstantHeadingInterpolation(0);
+        forwards.setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45));
         backwards = new Path(new BezierLine(new Point(DISTANCE,0, Point.CARTESIAN), new Point(0,0, Point.CARTESIAN)));
         backwards.setConstantHeadingInterpolation(0);
 
-
-        follower.followPath(forwards);
+        follower.followPath(forwards, true);
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetryA.addLine("This will run the robot in a straight line going " + DISTANCE
@@ -71,18 +62,31 @@ public class StraightBackAndForth extends OpMode {
     @Override
     public void loop() {
         follower.update();
-        if (!follower.isBusy()) {
+
+        if(gamepad1.a) runNextPath = true;
+        if(runNextPath && follower.isBusy()) runNextPath = false;
+
+        if (!follower.isBusy() && runNextPath) {
             if (forward) {
                 forward = false;
-                follower.followPath(backwards);
-//                follower.holdPoint(new Pose(-40, 0));
+                follower.followPath(backwards, true);
             } else {
                 forward = true;
-                follower.followPath(forwards);
+                follower.followPath(forwards, true);
             }
         }
 
-        telemetryA.addData("going forward", forward);
-        follower.telemetryDebug(telemetryA);
+        Path currentPath = follower.getCurrentPath();
+        double xError = follower.getPose().getX() - currentPath.getLastControlPoint().getX();
+        double yError = follower.getPose().getY() - currentPath.getLastControlPoint().getY();
+        double headingError = follower.getPose().getHeading() - currentPath.getHeadingGoal(1);
+
+        telemetryA.addData("run next path", runNextPath);
+        telemetryA.addData("x error", xError);
+        telemetryA.addData("y error", yError);
+        telemetryA.addData("heading error (degrees)", Math.toDegrees(headingError));
+        telemetryA.addData("heading error (radians)", headingError);
+        telemetryA.update();
+//        follower.telemetryDebug(telemetryA);
     }
 }

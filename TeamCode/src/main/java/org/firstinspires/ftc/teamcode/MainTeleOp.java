@@ -624,7 +624,7 @@ public class MainTeleOp extends LinearOpMode {
                 mTelemetry.addData("slides target pos: ", robot.slidesMotor.getTargetPosition());
                 mTelemetry.addData("slides pos: ", arm.getSlidesPosition());
                 mTelemetry.addData("arm intake pos: ", arm.getIntakePosition());
-                mTelemetry.addData("arm intake grab: ", arm.intakeGrab);
+                mTelemetry.addData("arm intake grab: ", arm.getIntakeDownMode());
                 mTelemetry.addData("arm at position: ", arm.armAtPosition());
                 mTelemetry.addData("slides at position: ", arm.slidesAtPosition());
                 mTelemetry.addData("arm target position: ", arm.getArmTargetPosition());
