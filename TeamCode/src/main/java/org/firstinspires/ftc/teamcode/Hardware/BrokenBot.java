@@ -1,15 +1,11 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
-import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
-import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
-import org.firstinspires.ftc.teamcode.Hardware.Params;
 
 @TeleOp(name = "4: Broken Bot", group = "4")
 public class BrokenBot extends LinearOpMode {

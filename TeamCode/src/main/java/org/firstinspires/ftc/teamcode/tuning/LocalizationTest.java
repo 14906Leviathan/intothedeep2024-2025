@@ -12,18 +12,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
-import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibrationIdentity;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
-import org.firstinspires.ftc.teamcode.TwoCamAprilTagDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.*;
 
-import org.firstinspires.ftc.teamcode.AprilTagDrive;
-import org.firstinspires.ftc.teamcode.Drawing;
-import org.firstinspires.ftc.teamcode.MecanumDrive;
-import org.firstinspires.ftc.teamcode.TankDrive;
+import org.firstinspires.ftc.teamcode.Misc.AprilTagDrive;
+import org.firstinspires.ftc.teamcode.Misc.Drawing;
+import org.firstinspires.ftc.teamcode.AutoRoadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Misc.TankDrive;
 
 @TeleOp(name = "localization test")
 public class LocalizationTest extends LinearOpMode {

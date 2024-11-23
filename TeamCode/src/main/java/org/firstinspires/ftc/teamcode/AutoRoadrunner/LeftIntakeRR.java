@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
-import org.firstinspires.ftc.teamcode.MecanumDrive;
 
 public class LeftIntakeRR extends AutoProgram {
     private LinearOpMode opMode;

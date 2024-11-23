@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.AutoRoadrunner;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.InstantAction;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -13,7 +12,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Abstracts.AutoProgram;
 import org.firstinspires.ftc.teamcode.Enums.AutoCorrectionType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
@@ -25,8 +23,7 @@ import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
-import org.firstinspires.ftc.teamcode.MecanumDrive;
-import org.firstinspires.ftc.teamcode.SampleDetectionPipelinePNP;
+import org.firstinspires.ftc.teamcode.OpenCV.SampleDetectionPipelinePNP;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;

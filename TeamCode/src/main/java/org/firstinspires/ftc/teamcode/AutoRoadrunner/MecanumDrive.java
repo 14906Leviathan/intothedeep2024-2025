@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.AutoRoadrunner;
 
 import androidx.annotation.NonNull;
 
@@ -43,6 +43,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.Enums.AutoCorrectionType;
 import org.firstinspires.ftc.teamcode.Enums.AutoSpeed;
+import org.firstinspires.ftc.teamcode.Misc.Drawing;
+import org.firstinspires.ftc.teamcode.Misc.Localizer;
+import org.firstinspires.ftc.teamcode.Misc.TwoDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumLocalizerInputsMessage;
@@ -172,7 +175,7 @@ public class MecanumDrive {
         return  this.correctionType;
     }
 
-    final LinkedList<Pose2d> poseHistory = new LinkedList<>();
+    public final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private InstantAction updateAction;
 
