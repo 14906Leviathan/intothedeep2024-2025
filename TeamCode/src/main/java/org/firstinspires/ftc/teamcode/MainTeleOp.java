@@ -143,7 +143,7 @@ public class MainTeleOp extends LinearOpMode {
                 arm.setAnimationType(AnimationType.NONE);
                 arm.update();
 
-                if(teleopMode == TeleopMode.TOUCH_POLE_AUTO) {
+                if (teleopMode == TeleopMode.TOUCH_POLE_AUTO) {
                     arm.setParkArmUp(true);
                 }
 
@@ -197,6 +197,7 @@ public class MainTeleOp extends LinearOpMode {
 
                 intake.setGrabStyle(grabStyle);
                 intake.setGrabAngle(grabAngle);
+                intake.setShortRange(true);
 
                 if (params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
                     intake.intake();
@@ -205,6 +206,13 @@ public class MainTeleOp extends LinearOpMode {
                         intake.toggle();
                         rBumperCooldown = true;
                     }
+                }
+
+                if (gamepad1.left_bumper) {
+                    arm.intakeDownMode();
+                } else {
+//                    arm.intakeUpMode();
+                    arm.intakeDownMode();
                 }
 
 
@@ -225,6 +233,8 @@ public class MainTeleOp extends LinearOpMode {
                         arm.intakeUpSpecimen = 0;
                     }
                 }
+            } else {
+                intake.setShortRange(false);
             }
 
 
@@ -306,6 +316,7 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad1.y) {
                 teleopMode = TeleopMode.BUCKET_SCORE;
                 arm.setTeleopMode(teleopMode);
+//                arm.setAnimationType(AnimationType.FAST);
                 arm.setBucket(2);
             }
             if (gamepad1.b) {
@@ -499,6 +510,13 @@ public class MainTeleOp extends LinearOpMode {
 
             arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
             arm.setArmPower(params.ARM_POWER_DEFAULT);
+
+            if (teleopMode == TeleopMode.INTAKE && arm.getIntakeDownMode()) {
+//                arm.setArmPower(1.5);
+            } else {
+                arm.setArmPower(params.ARM_POWER_DEFAULT);
+            }
+
             arm.update();
             intake.update();
 
@@ -506,17 +524,17 @@ public class MainTeleOp extends LinearOpMode {
 
             /* *******************NOTIFICATIONS******************* */
 
-            if(timer.time(TimeUnit.SECONDS) >= (120 - 30) && !endgameNotified) {
+            if (timer.time(TimeUnit.SECONDS) >= (120 - 30) && !endgameNotified) {
                 endgameNotified = true;
                 gamepad1.rumbleBlips(1);
             }
 
-            if(timer.time(TimeUnit.SECONDS) >= (120 - 8) && !climbNotified) {
+            if (timer.time(TimeUnit.SECONDS) >= (120 - 8) && !climbNotified) {
                 climbNotified = true;
                 gamepad1.rumble(750);
             }
 
-            if(timer.time(TimeUnit.SECONDS) >= 120 && !gameOverNotified) {
+            if (timer.time(TimeUnit.SECONDS) >= 120 && !gameOverNotified) {
                 gameOverNotified = true;
                 gamepad1.rumbleBlips(2);
             }
@@ -537,56 +555,56 @@ public class MainTeleOp extends LinearOpMode {
             if (!gamepad2.a) g2ACooldown = false;
 
             //Sample
-            if(gamepad2.dpad_up && !g2DpadUpCooldown) {
+            if (gamepad2.dpad_up && !g2DpadUpCooldown) {
                 g2DpadUpCooldown = true;
                 HBSampleCount++;
             }
-            if(!gamepad2.dpad_up) g2DpadUpCooldown = false;
+            if (!gamepad2.dpad_up) g2DpadUpCooldown = false;
 
-            if(gamepad2.dpad_down && !g2DpadDownCooldown) {
+            if (gamepad2.dpad_down && !g2DpadDownCooldown) {
                 g2DpadDownCooldown = true;
                 HBSampleCount--;
             }
-            if(!gamepad2.dpad_down) g2DpadDownCooldown = false;
+            if (!gamepad2.dpad_down) g2DpadDownCooldown = false;
 
 
-            if(gamepad2.right_bumper && !g2RBCooldown) {
+            if (gamepad2.right_bumper && !g2RBCooldown) {
                 g2RBCooldown = true;
                 LBSampleCount++;
             }
-            if(!gamepad2.right_bumper) g2RBCooldown = false;
+            if (!gamepad2.right_bumper) g2RBCooldown = false;
 
-            if(gamepad2.left_bumper && !g2LBCooldown) {
+            if (gamepad2.left_bumper && !g2LBCooldown) {
                 g2LBCooldown = true;
                 LBSampleCount--;
             }
-            if(!gamepad2.left_bumper) g2LBCooldown = false;
+            if (!gamepad2.left_bumper) g2LBCooldown = false;
 
             //Specimen
-            if(gamepad2.dpad_right && !g2DpadRightCooldown) {
+            if (gamepad2.dpad_right && !g2DpadRightCooldown) {
                 g2DpadRightCooldown = true;
                 HighSpecCount++;
             }
-            if(!gamepad2.dpad_right) g2DpadRightCooldown = false;
+            if (!gamepad2.dpad_right) g2DpadRightCooldown = false;
 
-            if(gamepad2.dpad_left && !g2DpadLeftCooldown) {
+            if (gamepad2.dpad_left && !g2DpadLeftCooldown) {
                 g2DpadLeftCooldown = true;
                 HighSpecCount--;
             }
-            if(!gamepad2.dpad_left) g2DpadLeftCooldown = false;
+            if (!gamepad2.dpad_left) g2DpadLeftCooldown = false;
 
             //Climb
-            if(gamepad2.right_trigger > .1 && !g2DpadRT) {
+            if (gamepad2.right_trigger > .1 && !g2DpadRT) {
                 g2DpadRT = true;
                 climbs++;
             }
-            if(gamepad2.right_trigger < .1) g2DpadRT = false;
+            if (gamepad2.right_trigger < .1) g2DpadRT = false;
 
-            if(gamepad2.left_trigger > .1 && !g2DpadLT) {
+            if (gamepad2.left_trigger > .1 && !g2DpadLT) {
                 g2DpadLT = true;
                 climbs--;
             }
-            if(gamepad2.left_trigger < .1) g2DpadLT = false;
+            if (gamepad2.left_trigger < .1) g2DpadLT = false;
 
             climbs = MathFunctions.clamp(climbs, 0, 2);
 
@@ -595,20 +613,20 @@ public class MainTeleOp extends LinearOpMode {
             double timeMin = 1 - timer.time(TimeUnit.MINUTES);
             double timeSec = (60 - timerSec.time(TimeUnit.SECONDS));
 
-            if(timerSec.time(TimeUnit.SECONDS) >= 60) timerSec.reset();
+            if (timerSec.time(TimeUnit.SECONDS) >= 60) timerSec.reset();
 
-            if(params.AUTO_SCORE != 0) autoScore = params.AUTO_SCORE;
+            if (params.AUTO_SCORE != 0) autoScore = params.AUTO_SCORE;
 
             mTelemetry.addLine();
             mTelemetry.addLine();
-            mTelemetry.addData("score: ", 37 + (HBSampleCount*8) + (LBSampleCount*6) + (HighSpecCount*10) + (climbs*15));
+            mTelemetry.addData("score: ", 37 + (HBSampleCount * 8) + (LBSampleCount * 6) + (HighSpecCount * 10) + (climbs * 15));
             mTelemetry.addData("time: ", ((int) timeMin + ":" + (int) timeSec));
             mTelemetry.addData("high samples: ", HBSampleCount);
             mTelemetry.addData("high rung samples: ", HighSpecCount);
             mTelemetry.addData("climbs: ", climbs);
             mTelemetry.addData("loop time: ", loopTime.time(TimeUnit.MILLISECONDS));
 
-            if(telemetryDebug) {
+            if (telemetryDebug) {
                 mTelemetry.addData("auto pathing enabled: ", autoPathingEnabled);
                 mTelemetry.addData("robot x: ", drive.pose.position.x);
                 mTelemetry.addData("robot y: ", drive.pose.position.y);

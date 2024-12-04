@@ -44,15 +44,19 @@ public class SampleDetectionPipelinePNP extends OpenCvPipeline
     /*
      * Threshold values
      */
-    public int YELLOW_MASK_THRESHOLD = 100;
-    public int BLUE_MASK_THRESHOLD = 20000;
-    public int RED_MASK_THRESHOLD = 20000;
+    public static int YELLOW_MASK_THRESHOLD = 80;
+    public static int BLUE_MASK_THRESHOLD = 20000;
+    public static int RED_MASK_THRESHOLD = 20000;
+    public static int cropX = 290;
+    public static int cropY = 1;
+    public static int cropWidth = 200;
+    public static int cropHeight = 479;
 
     /*
      * The elements we use for noise reduction
      */
-    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3.5, 3.5));
-    Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3.5, 3.5));
+    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(25, 25));
+    Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(25, 25));
 
     /*
      * Colors
@@ -138,6 +142,9 @@ public class SampleDetectionPipelinePNP extends OpenCvPipeline
         // We'll be updating this with new data below
         internalStoneList.clear();
 
+//        input = input.submat(cropY, cropY + cropHeight, cropX, cropX + cropWidth);
+
+//        Core.rotate(input, input, Core.ROTATE_90_CLOCKWISE);
         /*
          * Run the image processing
          */

@@ -8,5 +8,7 @@ public enum AutoLocation {
     RR_LEFT_COMBINATION,
     RR_SPECIMEN,
     PEDRO_LEFT_4_0_V1,
-    PEDRO_LEFT_0_3_V1, PEDRO_LEFT_3_1_V1
+    PEDRO_LEFT_0_3_V1,
+    PEDRO_LEFT_3_1_V2,
+    PEDRO_LEFT_3_1_V1
 }

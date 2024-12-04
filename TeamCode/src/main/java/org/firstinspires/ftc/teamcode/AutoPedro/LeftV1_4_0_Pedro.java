@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
@@ -138,6 +137,13 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         arm.setArmPower(.7);
 
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
+        follower.updatePose();
+        follower.update();
+        autoManager.safeSleep(100);
+        follower.setPose(autoManager.start_4_0_V1);
+        autoManager.safeSleep(100);
+        params.AUTO_SCORE = 35;
+        params.AUTO_END_HEADING = -90;
 //        autoManager.runPath(autoManager.toBucketPath, false);
 
 //        currentMode = TeleopMode.BUCKET_SCORE;
@@ -171,46 +177,53 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
 
     public void park() {
         autoManager.setSpeed(1);
-        autoManager.runPath(autoManager.park);
-
-        currentMode = TeleopMode.TOUCH_POLE_AUTO;
-        arm.setTeleopMode(currentMode);
-        arm.setAnimationType(AnimationType.NONE);
+        params.TELEOP_START_MODE = TeleopMode.TOUCH_POLE_AUTO;
+        autoManager.runPath(autoManager.park, false);
+//        arm.update();
+//        autoManager.safeSleep(750);
+//        arm.setParkArmUp(false);
+//        autoManager.safeSleep(10000);
     }
 
     public void intake(int sampleNum) {
         arm.setIntakePosition(params.PEDRO_AUTO_INTAKE_Y1_POS);
-        arm.intakeUpMode();
-
-        double parameter = .6;
+//        arm.intakeUpMode();
+        if(sampleNum != 3) {
+            arm.intakeDownMode();
+        } else {
+            arm.intakeUpMode();
+        }
 
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
         if (sampleNum == 1) {
-            autoManager.runPath(autoManager.intakeYellow1);
+            autoManager.setSpeed(.65);
+            autoManager.runPath(autoManager.intakeYellow1, true);
+            autoManager.safeSleep(350);
 //            autoManager.holdPoint(autoManager.intakeYellow1.build().getPath(0).getLastControlPoint(), Math.toRadians(0), .5);
         } else if (sampleNum == 2) {
             autoManager.runPath(autoManager.intakeYellow2, true);
+            autoManager.safeSleep(350);
 //            autoManager.holdPoint(autoManager.intakeYellow2.build().getPath(0).getLastControlPoint(), Math.toRadians(0), .5);
         } else if (sampleNum == 3) {
             autoManager.setSpeed(.7);
-
+            arm.setAutoLastSample(true);
             intake.setGrabAngle(GrabAngle.CUSTOM);
-            intake.setCustomGrabAngle(120);
+            intake.setCustomGrabAngle(135);
             autoManager.runPath(autoManager.intakeYellow3, true);
-
-            autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
+            autoManager.safeSleep(750);
+//            autoManager.safeSleep(50000);
 //            autoManager.holdPoint(autoManager.intakeYellow3.build().getPath(0).getLastControlPoint(), .875, .5);
         }
-        autoManager.safeSleep(350);
-
-        arm.intakeDownMode();
-
+        //        autoManager.safeSleep(350);
 
         if(sampleNum == 3) {
-            autoManager.safeSleep(1250);
+            arm.intakeDownMode();
+            autoManager.safeSleep(350);
         } else {
-            autoManager.safeSleep(500);
+            autoManager.waitForSlides();
+            autoManager.safeSleep(250);
         }
+
         intake.intake();
         autoManager.safeSleep(250);
 
@@ -225,11 +238,14 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
             s3Yerror = follower.getPose().getY();
         }
 
+        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
+
         currentMode = TeleopMode.BUCKET_SCORE;
         arm.setTeleopMode(currentMode);
+//        arm.setAnimationType(AnimationType.FAST);
         arm.setBucket(2);
         arm.update();
-        autoManager.safeSleep(1250);
+        autoManager.safeSleep(850);
     }
 
     public void bucketScore(int sampleNum) {
@@ -262,6 +278,7 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         arm.setArmTipBucketScore(true);
         autoManager.safeSleep(200);
         intake.outtake();
+        autoManager.safeSleep(200);
         arm.setArmTipBucketScore(false);
         autoManager.safeSleep(450);
 

@@ -387,6 +387,16 @@ public class Follower {
         holdPoint(new Point(pose), pose.getHeading());
     }
 
+    public void updateHoldPoint(Pose pose) {
+        if (holdingPosition) {
+//            isBusy = false;
+//            followingPathChain = false;
+            currentPath = new Path(new BezierPoint(new Point(pose)));
+            currentPath.setConstantHeadingInterpolation(pose.getHeading());
+//            closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
+        }
+    }
+
     /**
      * This follows a Path.
      * This also makes the Follower hold the last Point on the Path.
@@ -738,27 +748,31 @@ public class Follower {
         double forwardVelocity = MathFunctions.dotProduct(forwardHeadingVector, velocity);
         double forwardDistanceToGoal = MathFunctions.dotProduct(forwardHeadingVector, distanceToGoalVector);
 
-        if(forwardDistanceToGoal <  0) {
-            if(forwardZeroPowerAcceleration > 0) forwardZeroPowerAcceleration *= -1;
+        double forwardZeroPowerLocal = forwardZeroPowerAcceleration;
+
+        if (forwardDistanceToGoal < 0) {
+            if (forwardZeroPowerLocal > 0) forwardZeroPowerLocal *= -1;
         } else if (forwardDistanceToGoal > 0) {
-            if(forwardZeroPowerAcceleration < 0) forwardZeroPowerAcceleration *= -1;
+            if (forwardZeroPowerLocal < 0) forwardZeroPowerLocal *= -1;
         }
 
-        double forwardVelocityGoal = MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * forwardZeroPowerAcceleration * forwardDistanceToGoal));
-        double forwardVelocityZeroPowerDecay = forwardVelocity - MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(forwardVelocity, 2) + 2 * forwardZeroPowerAcceleration * forwardDistanceToGoal));
+        double forwardVelocityGoal = MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * forwardZeroPowerLocal * forwardDistanceToGoal));
+        double forwardVelocityZeroPowerDecay = forwardVelocity - MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(forwardVelocity, 2) + 2 * forwardZeroPowerLocal * forwardDistanceToGoal));
 
         Vector lateralHeadingVector = new Vector(1.0, poseUpdater.getPose().getHeading() - Math.PI / 2);
         double lateralVelocity = MathFunctions.dotProduct(lateralHeadingVector, velocity);
         double lateralDistanceToGoal = MathFunctions.dotProduct(lateralHeadingVector, distanceToGoalVector);
 
-        if(lateralDistanceToGoal <  0) {
-            if(lateralZeroPowerAcceleration > 0) lateralZeroPowerAcceleration *= -1;
+        double lateralZeroPowerLocal = lateralZeroPowerAcceleration;
+
+        if (lateralDistanceToGoal < 0) {
+            if (lateralZeroPowerLocal > 0) lateralZeroPowerLocal *= -1;
         } else if (lateralDistanceToGoal > 0) {
-            if(lateralZeroPowerAcceleration < 0) lateralZeroPowerAcceleration *= -1;
+            if (lateralZeroPowerLocal < 0) lateralZeroPowerLocal *= -1;
         }
 
-        double lateralVelocityGoal = MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * lateralZeroPowerAcceleration * lateralDistanceToGoal));
-        double lateralVelocityZeroPowerDecay = lateralVelocity - MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(lateralVelocity, 2) + 2 * lateralZeroPowerAcceleration * lateralDistanceToGoal));
+        double lateralVelocityGoal = MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * lateralZeroPowerLocal * lateralDistanceToGoal));
+        double lateralVelocityZeroPowerDecay = lateralVelocity - MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(lateralVelocity, 2) + 2 * lateralZeroPowerLocal * lateralDistanceToGoal));
 
         Vector forwardVelocityError = new Vector(forwardVelocityGoal - forwardVelocityZeroPowerDecay - forwardVelocity, forwardHeadingVector.getTheta());
         Vector lateralVelocityError = new Vector(lateralVelocityGoal - lateralVelocityZeroPowerDecay - lateralVelocity, lateralHeadingVector.getTheta());

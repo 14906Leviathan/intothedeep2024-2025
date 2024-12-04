@@ -32,27 +32,8 @@ public class LocalizationTest extends LinearOpMode {
         robot.init(hardwareMap, false, false);
 
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive.class)) {
-            AprilTagProcessor aprilTag = AprilTagProcessor.easyCreateWithDefaults();
-            String webcamName = "Webcam 1";
-            VisionPortal visionPortal = new VisionPortal.Builder()
-                    .addProcessor(aprilTag)
-                    .setCamera(hardwareMap.get(WebcamName.class, webcamName))
-                    .setCameraResolution(new Size(640, 480))
-//                    .setLiveViewContainerId(0)
-                    .enableLiveView(true)
-                    .build();
 
-            AprilTagProcessor aprilTag2 = AprilTagProcessor.easyCreateWithDefaults();
-            String webcamName2 = "Webcam 2";
-            VisionPortal visionPortal2 = new VisionPortal.Builder()
-                    .addProcessor(aprilTag2)
-                    .setCamera(hardwareMap.get(WebcamName.class, webcamName))
-                    .setCameraResolution(new Size(640, 480))
-//                    .setLiveViewContainerId(0)
-                    .enableLiveView(false)
-                    .build();
-
-            MecanumDrive drive = new AprilTagDrive(hardwareMap, new Pose2d(0, 0, 0), aprilTag);
+            MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0), false);
 
             waitForStart();
 

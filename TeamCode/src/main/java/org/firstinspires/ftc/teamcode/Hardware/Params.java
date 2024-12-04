@@ -8,7 +8,8 @@ import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 
 @Config
 public class Params {
-    public static double ARM_SCORE_SPECIMEN = 65;
+    public static double ARM_FAST_OFFSET = 5;
+    public static double ARM_SCORE_SPECIMEN = 62;
     public static double SLIDES_SCORE_SPECIMEN = 6;
     public static double SLIDES_ENSURE_SCORE_SPECIMEN = 6;
     public static double ARM_BUCKET2_SCORE_DEG = 110; //143
@@ -16,7 +17,7 @@ public class Params {
     public static double ARM_CLIMB_UP_MAX_POS = 120; //143
     public static double ARM_CLIMB_UP_MIN_POS = 105; //143
     public static double ARM_CLIMB_DOWN_POS = 8; //143
-    public static double ARM_TOUCH_POLE_AUTO_DOWN = 62; //143
+    public static double ARM_TOUCH_POLE_AUTO_DOWN = 58; //143
     public static double ARM_TOUCH_POLE_AUTO_UP = 80; //143
     public static double ARM_SPECIMEN_POLE_2_MAX_TWO_WHEEL = 75; //143
     public static double ARM_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 60; //143
@@ -57,7 +58,7 @@ public class Params {
     public static final double INTAKE_MIN_POS = 2;
     public static final double ARM_IDLE_DEG = 25;
     public static final double ARM_INTAKE_MODE_UP_DEG = 11;
-    public static final double ARM_CLAW_MODE_UP_DEG = 9;
+    public static final double ARM_CLAW_MODE_UP_DEG = 5;
     public static final double ARM_CLAW_MODE_UP_DEG_AUTO = 15;
     public static final double ARM_CLAW_MODE_UP_DEG_AUTO_LAST_SAMPLE = 8;
     public static final double SLIDES_ARM_ROTATION_THRESHOLD = 10;
@@ -90,7 +91,9 @@ public class Params {
     public static final double ARM_ERROR_TOLERANCE = 9;
     public static final double ARM_ERROR_TOLERANCE_AUTO = 4;
     public static final double ARM_AUTO_SPECIMEN_INTAKE = 16;
+    public static final double ARM_TELEOP_SPECIMEN_INTAKE = 19;
     public static final double SLIDES_AUTO_SPECIMEN_INTAKE = 12;
+    public static final double SLIDES_TELEOP_SPECIMEN_INTAKE = 15;
     public static final double SLIDES_ERROR_TOLERANCE = 7;
     public static final double SLIDES_ERROR_TOLERANCE_AUTO = 4;
     public static final double AUTO_DEFAULT_SPEED = .9;

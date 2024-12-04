@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.arcrobotics.ftclib.hardware.SimpleServo;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -31,6 +32,7 @@ public class HWProfile {
     public IMU.Parameters imuParams;
     public GoBildaPinpointDriver pinpoint = null;
     public Rev2mDistanceSensor distanceOne = null;
+    public Limelight3A limelight;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -118,6 +120,8 @@ public class HWProfile {
         poleToucher.setInverted(true);
 
         distanceOne = hwMap.get(Rev2mDistanceSensor.class, "distanceOne");
+
+        limelight = hwMap.get(Limelight3A.class, "limelight");
 
 //        pinpoint = hwMap.get(GoBildaPinpointDriver.class,"pinpoint");
     }

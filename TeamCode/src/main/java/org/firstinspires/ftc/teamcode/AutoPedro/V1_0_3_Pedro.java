@@ -203,14 +203,23 @@ public class V1_0_3_Pedro extends LinearOpMode {
         autoManager.setSpeed(.7);
         if (specNum == 1) {
             currentMode = TeleopMode.SPECIMEN_SCORE;
+            arm.update();
+
             autoManager.runPath(autoManager.specScore1);
         } else if (specNum == 2) {
             currentMode = TeleopMode.SPECIMEN_SCORE;
+            arm.update();
+            arm.setArmPositionSpecimen(80);
+            arm.setSlidesPositionSpecimen(7);
             autoManager.runPath(autoManager.specScore2);
         } else if (specNum == 3) {
             currentMode = TeleopMode.SPECIMEN_SCORE;
+            arm.update();
+            arm.setArmPositionSpecimen(80);
+            arm.setSlidesPositionSpecimen(7);
             autoManager.runPath(autoManager.specScore3);
         }
+
         autoManager.setSpeed(1);
         autoManager.safeSleep(400);
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
@@ -219,7 +228,7 @@ public class V1_0_3_Pedro extends LinearOpMode {
         arm.setSlidesPositionSpecimen(params.SLIDES_SCORE_SPECIMEN);
         autoManager.safeSleep(500);
 //        arm.setSlidesPositionSpecimen(params.SLIDES_ENSURE_SCORE_SPECIMEN);
-        autoManager.safeSleep(350);
+//        autoManager.safeSleep(350);
 
         intake.outtake();
         intake.update();
