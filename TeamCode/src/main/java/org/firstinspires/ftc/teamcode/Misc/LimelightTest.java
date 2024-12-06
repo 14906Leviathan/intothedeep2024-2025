@@ -67,20 +67,20 @@ public class LimelightTest extends LinearOpMode {
         arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
         arm.update();
 
+        robot.limelight.start();
+
         while (opModeInInit()) {
             arm.update();
         }
 
         waitForStart();
 
-        robot.limelight.pipelineSwitch(1);
-        robot.limelight.start();
-
         follower.startTeleopDrive();
 
 
         while (opModeIsActive()) {
             LLResult result = robot.limelight.getLatestResult();
+
             arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
             arm.update();
 
@@ -99,11 +99,11 @@ public class LimelightTest extends LinearOpMode {
             yController.setPID(kP, kI, kD);
 
             if(result != null) {
-                if (!result.getDetectorResults().isEmpty()) {
-                    LLResultTypes.DetectorResult sample = result.getDetectorResults().get(0);
+                if (result.getTx() != 0 && result.getTy() != 0) {
+//                    LLResultTypes.DetectorResult sample = result.getDetectorResults().get(0);
 
-                    double x = sample.getTargetYDegrees() * 0.15060241;
-                    double y = sample.getTargetXDegrees() * -0.182815356;
+                    double x = result.getTx() * -0.15060241;
+                    double y = result.getTy() * 0.182815356;
 
                     double xOut = xController.calculate(x);
 
@@ -125,7 +125,7 @@ public class LimelightTest extends LinearOpMode {
 //                        ));
 //
 //                        holdX = targetX;
-                        autoManager.homeToSample(0, 10000);
+                        autoManager.homeToSample(0);
                     }
 
                     if(home) {
@@ -153,6 +153,17 @@ public class LimelightTest extends LinearOpMode {
                 } else {
                     follower.setTeleOpMovementVectors(0, 0, 0);
                 }
+
+                telemetry.addData("staleness: ", result.getStaleness());
+                telemetry.addData("result: ", result.getDetectorResults().size());
+                telemetry.addData("barcode: ", result.getBarcodeResults().size());
+                telemetry.addData("x: ", result.getPythonOutput()[0]);
+                telemetry.addData("y: ", result.getPythonOutput()[1]);
+                telemetry.addData("tx: ", result.getTx());
+                telemetry.addData("ty: ", result.getTy());
+                telemetry.addData("ta: ", result.getTa());
+                telemetry.addLine();
+                telemetry.addData("pipeline: ", result.getPipelineIndex());
             } else {
                 follower.setTeleOpMovementVectors(0, 0, 0);
             }
@@ -161,6 +172,7 @@ public class LimelightTest extends LinearOpMode {
 
             telemetry.addData("robot x: ", follower.getPose().getX());
             telemetry.addData("robot y: ", follower.getPose().getY());
+            telemetry.addData("fps: ", robot.limelight.getStatus().getFps());
             telemetry.update();
         }
     }

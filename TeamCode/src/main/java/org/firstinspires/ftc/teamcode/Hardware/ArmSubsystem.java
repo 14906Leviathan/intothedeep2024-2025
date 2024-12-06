@@ -434,8 +434,16 @@ public class ArmSubsystem extends Subsystem {
                         setTargetSlidesPosition(params.SLIDES_MIN_POS);
                     } else {
                         if (armTipBucketScore) {
-                            setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN);
+                            if(autoMode) {
+                                setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN_AUTO);
+                                setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG - 5);
+                            } else {
+                                setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN);
+                                setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
+                            }
                         } else {
+                            setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
+
                             if (autoMode) {
                                 setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW_AUTO);
                             } else {
@@ -443,7 +451,6 @@ public class ArmSubsystem extends Subsystem {
                             }
                         }
                     }
-                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
                 }
             } else if (bucketScore == 1) {
                 if (params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {

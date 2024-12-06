@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Misc.GoBildaPinpointDriver;
@@ -33,6 +34,7 @@ public class HWProfile {
     public GoBildaPinpointDriver pinpoint = null;
     public Rev2mDistanceSensor distanceOne = null;
     public Limelight3A limelight;
+    public VoltageSensor voltageSensor;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -122,6 +124,9 @@ public class HWProfile {
         distanceOne = hwMap.get(Rev2mDistanceSensor.class, "distanceOne");
 
         limelight = hwMap.get(Limelight3A.class, "limelight");
+
+        voltageSensor = hwMap.voltageSensor.iterator().next();
+
 
 //        pinpoint = hwMap.get(GoBildaPinpointDriver.class,"pinpoint");
     }

@@ -95,6 +95,7 @@ public class Follower {
     private boolean teleopDrive;
 
     private double maxPower = 1;
+    private double oldMaxPower = 1;
     private double previousSecondaryTranslationalIntegral;
     private double previousTranslationalIntegral;
     private double holdPointTranslationalScaling = FollowerConstants.holdPointTranslationalScaling;
@@ -109,6 +110,8 @@ public class Follower {
 
     private ArrayList<Vector> velocities = new ArrayList<>();
     private ArrayList<Vector> accelerations = new ArrayList<>();
+    private double criticalVoltage = 0;
+    private double criticalVoltageDrivePower = 0;
 
     private Vector averageVelocity;
     private Vector averagePreviousVelocity;
@@ -152,6 +155,19 @@ public class Follower {
     public Follower(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
         initialize();
+    }
+
+    /**
+     *
+     * This method tells the follower to slow down if the voltage
+     * of the robot goes below a certain point
+     *
+     * @param voltage The voltage at which the Pedro Pathing slows down (Ex. 10)
+     * @param setPower The power to slow down to (Ex. 0.4)
+     */
+    public void setSlowDownVoltage(double voltage, double setPower) {
+        this.criticalVoltage = voltage;
+        this.criticalVoltageDrivePower = setPower;
     }
 
     /**
@@ -480,10 +496,24 @@ public class Follower {
                 if (holdingPosition) {
                     closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
 
+                    double voltage = vSensor.getVoltage();
+
+                    if(voltage <= criticalVoltage) {
+                        if(oldMaxPower == 0) {
+                            oldMaxPower = maxPower;
+                        }
+                        setMaxPower(criticalVoltageDrivePower);
+                    } else {
+                        if(oldMaxPower != 0) {
+                            setMaxPower(oldMaxPower);
+
+                            oldMaxPower = 0; // we set this to 0 so that if we reach critical voltage again, it will not set oldMaxPower to criticalVoltageDrivePower
+                        }
+                    }
+
                     drivePowers = driveVectorScaler.getDrivePowers(MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling), MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling), new Vector(), poseUpdater.getPose().getHeading());
 
                     limitDrivePowers();
-                    double voltage = vSensor.getVoltage();
 
                     for (int i = 0; i < motors.size(); i++) {
                         motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
@@ -494,11 +524,24 @@ public class Follower {
 
                         if (followingPathChain) updateCallbacks();
 
+                        double voltage = vSensor.getVoltage();
+
+                        if(voltage <= criticalVoltage) {
+                            if(oldMaxPower == 0) {
+                                oldMaxPower = maxPower;
+                            }
+                            setMaxPower(criticalVoltageDrivePower);
+                        } else {
+                            if(oldMaxPower != 0) {
+                                setMaxPower(oldMaxPower);
+
+                                oldMaxPower = 0; // we set this to 0 so that if we reach critical voltage again, it will not set oldMaxPower to criticalVoltageDrivePower
+                            }
+                        }
+
                         drivePowers = driveVectorScaler.getDrivePowers(getCorrectiveVector(), getHeadingVector(), getDriveVector(), poseUpdater.getPose().getHeading());
 
                         limitDrivePowers();
-
-                        double voltage = vSensor.getVoltage();
 
                         for (int i = 0; i < motors.size(); i++) {
                             motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
@@ -751,9 +794,9 @@ public class Follower {
         double forwardZeroPowerLocal = forwardZeroPowerAcceleration;
 
         if (forwardDistanceToGoal < 0) {
-            if (forwardZeroPowerLocal > 0) forwardZeroPowerLocal *= -1;
+            forwardZeroPowerLocal = Math.abs(forwardZeroPowerLocal);
         } else if (forwardDistanceToGoal > 0) {
-            if (forwardZeroPowerLocal < 0) forwardZeroPowerLocal *= -1;
+            forwardZeroPowerLocal = -Math.abs(forwardZeroPowerLocal);
         }
 
         double forwardVelocityGoal = MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * forwardZeroPowerLocal * forwardDistanceToGoal));
@@ -766,9 +809,9 @@ public class Follower {
         double lateralZeroPowerLocal = lateralZeroPowerAcceleration;
 
         if (lateralDistanceToGoal < 0) {
-            if (lateralZeroPowerLocal > 0) lateralZeroPowerLocal *= -1;
+            lateralZeroPowerLocal = Math.abs(lateralZeroPowerLocal);
         } else if (lateralDistanceToGoal > 0) {
-            if (lateralZeroPowerLocal < 0) lateralZeroPowerLocal *= -1;
+            lateralZeroPowerLocal = -Math.abs(lateralZeroPowerLocal);
         }
 
         double lateralVelocityGoal = MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * lateralZeroPowerLocal * lateralDistanceToGoal));

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -55,18 +56,18 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
     private SampleDetectionPipelinePNP detectionPipe;
     private OpenCvWebcam webcam;
     private AutoManagerPedro autoManager;
-    private Thread armHandlerThread = new Thread(() -> {
+    private boolean useLimelight = true;
+    private Thread limelightHandler = new Thread(() -> {
         while (opModeIsActive()) {
-//            arm.update();
-//            intake.update();
-//            autoManager.update();
-
-            telemetry.addData("X:", follower.getPose().getX());
-            telemetry.addData("Y:", follower.getPose().getY());
-            telemetry.addData("heading:", Math.toDegrees(follower.getTotalHeading()));
-            telemetry.addData("autoManager state:", autoState);
-            telemetry.update();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                //boo hoo
+                break;
+            }
         }
+
+        robot.limelight.stop();
     });
     private final boolean debug = false;
     private boolean pathStarted = true;
@@ -112,13 +113,18 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
             intake.update();
             telemetryA.addData("start x: ", robotStartPose.getX());
             telemetryA.addData("start y: ", robotStartPose.getY());
-            telemetryA.addData("limelight fps:", robot.limelight.getStatus().getFps());
+            telemetryA.addData("limelight fps: ", robot.limelight.getStatus().getFps());
+            telemetryA.addData("using LL: ", useLimelight);
             telemetryA.addData("s1 x: ", s1Xerror);
             telemetryA.addData("s1 y: ", s1Yerror);
             telemetryA.addData("s2 x: ", s2Xerror);
             telemetryA.addData("s2 y: ", s2Yerror);
             telemetryA.addData("s3 x: ", s3Xerror);
             telemetryA.addData("s3 y: ", s3Yerror);
+
+            if(robot.limelight.getStatus().getFps() == 0.0 && useLimelight) {
+                useLimelight = false;
+            }
         }, arm, intake, robot);
         autoManager.buildPaths(autoLocation);
         follower.setPose(autoManager.start_3_1_V1);
@@ -155,6 +161,12 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         while (!opModeIsActive()) {
             arm.update();
             intake.update();
+            telemetry.addData("limelight connected: ", robot.limelight.isConnected());
+            if(robot.limelight.getStatus().getFps() == 0) {
+                for(int i = 0; i <= 30; i++) {
+                    telemetry.addLine("UNPLUG AND REPLUG THE LIMELIGHT");
+                }
+            }
             telemetry.addLine("The robot must be started on the third tile");
             telemetry.addLine("to the right from the buckets, the robot must be");
             telemetry.addLine("started on the left line of the tile, and the robot");
@@ -165,13 +177,28 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
             follower.setStartingPose(autoManager.start_3_1_V1);
             telemetry.addData("x: ", follower.getPose().getX());
             telemetry.addData("y: ", follower.getPose().getY());
+
+//            LLResult result = robot.limelight.getLatestResult();
+
+//            if (result != null) {
+//                telemetry.addData("detectX: ", result.getPythonOutput()[0]);
+//                telemetry.addData("detectY: ", result.getPythonOutput()[1]);
+//            }
             telemetry.update();
         }
 
         waitForStart();
 
-        robot.limelight.pipelineSwitch(1);
-        robot.limelight.start();
+//        limelightHandler.start();
+
+        if (!robot.limelight.isRunning()) {
+            robot.limelight.start();
+            autoManager.safeSleep(50);
+            robot.limelight.pipelineSwitch(1);
+            autoManager.safeSleep(50);
+            robot.limelight.pipelineSwitch(3);
+            autoManager.safeSleep(50); //jank fix for an issue
+        }
 
         follower.updatePose();
         follower.update();
@@ -207,7 +234,7 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         bucketScore(2);
         intake(3);
         bucketScore(3);
-        park();
+//        park();
 
         params.AUTO_END_HEADING = Math.toDegrees(follower.getTotalHeading());
 
@@ -217,18 +244,22 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
     }
 
     public void specimenScore(int sampleNum) {
-        autoManager.setSpeed(.7);
-        if(sampleNum == 1) {
+        autoManager.setSpeed(1);
+        if (sampleNum == 1) {
             currentMode = TeleopMode.SPECIMEN_SCORE;
             autoManager.runPath(autoManager.specScore1, true);
         }
         autoManager.setSpeed(1);
-        autoManager.safeSleep(150);
-        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
-
-        arm.setArmPositionSpecimen(params.ARM_SCORE_SPECIMEN);
-        arm.setSlidesPositionSpecimen(params.SLIDES_SCORE_SPECIMEN);
         autoManager.safeSleep(350);
+//        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
+
+        arm.setArmPositionSpecimen(75); //params.ARM_SCORE_SPECIMEN
+        arm.setSlidesPositionSpecimen(6); //params.SLIDES_SCORE_SPECIMEN
+        autoManager.safeSleep(500);
+        arm.setArmPositionSpecimen(95); //params.ARM_SCORE_SPECIMEN
+        arm.setSlidesPositionSpecimen(0); //params.SLIDES_SCORE_SPECIMEN
+        autoManager.safeSleep(350);
+//        autoManager.safeSleep(30_000);
 //        autoManager.runPath(new PathBuilder()
 //                .addPath(new Path(
 //                        new BezierLine(
@@ -236,12 +267,13 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 //                                new Point(30.0, autoManager.specScore1.build().getPath(autoManager.specScore1.build().size() - 1).getLastControlPoint().getY(), Point.CARTESIAN)
 //                        )
 //                )), false);
-        arm.setSlidesPositionSpecimen(params.SLIDES_ENSURE_SCORE_SPECIMEN);
-        autoManager.safeSleep(350);
+//        arm.setSlidesPositionSpecimen(params.SLIDES_ENSURE_SCORE_SPECIMEN);
+//        autoManager.safeSleep(350);
 
         intake.outtake();
         intake.update();
-        autoManager.safeSleep(650);
+        autoManager.safeSleep(200);
+//        autoManager.safeSleep(30000);
 
         autoManager.runPath(autoManager.specBackup);
     }
@@ -258,8 +290,8 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 
     public void intake(int sampleNum) {
         arm.setIntakePosition(params.PEDRO_AUTO_INTAKE_Y1_POS);
-//        arm.intakeUpMode();
-        if(sampleNum != 3) {
+        arm.intakeUpMode();
+        if (sampleNum != 3) {
 //            arm.intakeDownMode();
             arm.intakeUpMode();
         } else {
@@ -268,42 +300,53 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 
         Pose error = new Pose();
 
-                autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
+        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
         if (sampleNum == 1) {
-            autoManager.setSpeed(.65);
-            autoManager.runPath(autoManager.intakeYellow1, true);
-//            autoManager.safeSleep(10000);
-            error = autoManager.homeToSample(Math.toRadians(0), 1250);
-        } else if (sampleNum == 2) {
-            autoManager.runPath(autoManager.intakeYellow2, true);
-//            autoManager.safeSleep(10000);
-            error = autoManager.homeToSample(Math.toRadians(0), 1250);
-        } else if (sampleNum == 3) {
             autoManager.setSpeed(.7);
+            autoManager.runPath(autoManager.intakeYellow1, true);
+            autoManager.safeSleep(200);
+//            autoManager.waitForArmAndSlides(300);
+            error = autoManager.homeToSample(Math.toRadians(0));
+        } else if (sampleNum == 2) {
+            autoManager.setSpeed(.7);
+            autoManager.runPath(autoManager.intakeYellow2, true);
+            autoManager.safeSleep(700);
+            autoManager.waitForArmAndSlides(500);
+            error = autoManager.homeToSample(Math.toRadians(0));
+        } else if (sampleNum == 3) {
+            autoManager.setSpeed(.8);
             arm.setAutoLastSample(true);
             intake.setGrabAngle(GrabAngle.CUSTOM);
             intake.setCustomGrabAngle(135);
+            arm.intakeUpMode();
             autoManager.runPath(autoManager.intakeYellow3, true);
-            autoManager.safeSleep(750);
+            arm.intakeUpMode();
+            autoManager.safeSleep(200);
+            autoManager.waitForArmAndSlides(500);
+            error = autoManager.homeToSample(Math.toRadians(0));
         }
 
-        arm.intakeDownMode();
+        autoManager.setSpeed(1);
 
-        autoManager.holdPoint(new Pose(
-                follower.getPose().getX() + 4,
-                follower.getPose().getY(),
-                follower.getTotalHeading()
-        ));
-        autoManager.safeSleep(1250);
-        autoManager.waitForArmAndSlides(1000);
-
-        if(sampleNum == 3) {
+        if(sampleNum != 3) {
             arm.intakeDownMode();
-            autoManager.safeSleep(350);
+
+            autoManager.holdPoint(new Pose(
+                    follower.getPose().getX() + 4.5,
+                    follower.getPose().getY(),
+                    follower.getTotalHeading()
+            ));
         } else {
-//            autoManager.waitForSlides();
-//            autoManager.safeSleep(250);
+            autoManager.holdPoint(new Pose(
+                    follower.getPose().getX() + 2.75,
+                    follower.getPose().getY() + 0,
+                    follower.getTotalHeading()
+            ));
+
+            arm.intakeDownMode();
         }
+        autoManager.safeSleep(850);
+//        autoManager.waitForArmAndSlides(1000);
 
         intake.intake();
         autoManager.safeSleep(250);

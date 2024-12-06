@@ -42,7 +42,7 @@ public class Params {
     public static final double SLIDES_SPECIMEN_POLE_2_MIN_TWO_WHEEL = 25;
     public static final double SLIDES_SPECIMEN_POLE_2_MAX_CLAW = 30;
     public static final double SLIDES_SPECIMEN_POLE_2_DEFAULT_CLAW = 12;
-    public static final double SLIDES_SPECIMEN_POLE_2_MIN_CLAW = 4;
+    public static final double SLIDES_SPECIMEN_POLE_2_MIN_CLAW = 0;
     public static final int ARM_EXTENDED_DEG = 15;
     public static final double DISTANCE_ONE_OFFSET = 3;
     public static final int SLIDES_TICKS_PER_INCH = 1922/43;
@@ -53,6 +53,7 @@ public class Params {
     public static final double SLIDES_SPECIMEN_INTAKE_CLAW = 11;
     public static final double SLIDES_MIN_POS = 0;
     public static final double SLIDES_OUTTAKE_RETRACT_MODE_LEN = 35;
+    public static final double SLIDES_OUTTAKE_RETRACT_MODE_LEN_AUTO = 32;
     public static final double INTAKE_MAX_POS = 32;
     public static final double INTAKE_DEF_POS = 15;
     public static final double INTAKE_MIN_POS = 2;

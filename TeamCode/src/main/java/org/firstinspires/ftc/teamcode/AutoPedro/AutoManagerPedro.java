@@ -5,9 +5,8 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -23,6 +22,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierCurve;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierPoint;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathBuilder;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
@@ -66,10 +66,10 @@ public class AutoManagerPedro {
     private Runnable updateAction;
     private MultipleTelemetry telemetry;
     private Params params;
-    public static double xP = .05;
-    public static double xI = 0;
-    public static double xD = 0;
-    private PIDController xController = new PIDController(xP, xI, xD);
+    public static double xP = 0.004;
+    public static double xD = 0.0008;
+    private PIDController xController = new PIDController(xP, 0, xD);
+    private VoltageSensor vSensor;
 
     public AutoManagerPedro(LinearOpMode opMode, Follower _follower, Runnable updateAction, ArmSubsystem arm, IntakeSubsystem intake, HWProfile robot) {
         follower = _follower;
@@ -80,22 +80,29 @@ public class AutoManagerPedro {
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         this.robot = robot;
         this.params = new Params();
+
+        this.follower.setSlowDownVoltage(8, .4);
     }
 
     private void run(PathChain path, boolean correct) {
         if (!pathingDisabled) follower.followPath(path, correct);
 
         while (follower.isBusy()) {
-            update();
+            try {
+                update();
 
-            if (opMode.isStopRequested()) {
+                if (opMode.isStopRequested() || !opMode.opModeIsActive()) {
+                    follower.breakFollowing();
+                    break;
+                }
+            } catch (Exception e) {
                 follower.breakFollowing();
                 break;
             }
         }
     }
 
-    public Pose homeToSample(double heading, double timeout) {
+    public Pose homeToSample(double heading) {
         ElapsedTime timer = new ElapsedTime();
         timer.reset();
         double startY = follower.getPose().getY();
@@ -111,149 +118,210 @@ public class AutoManagerPedro {
         double error = .5;
         double setPower = .35;
         int cycle = 0;
-        ElapsedTime timer2 = new ElapsedTime();
         int runs = 1;
+        double xPower = 0;
+        double yPower = 0;
         double x = 0;
         double y = 0;
+        double noSampleTimeoutTime = 500;
         double cps = 0;
 
-        xController.setSetPoint(targetX);
-        xController.setTolerance(1);
 
-        timer2.reset();
+//        robot.limelight.pipelineSwitch(1);
+//        safeSleep(50);
+//        robot.limelight.pipelineSwitch(3);
+//        safeSleep(50);
 
-        while (timer.time(TimeUnit.MILLISECONDS) < timeout) {
-            xController.setPID(xP, xI, xD);
+        vSensor = robot.voltageSensor;
 
-//            if (detectionPipe.getDetectedStones().size() == 1) {
-//                double x = detectionPipe.getDetectedStones().get(0).tvec.get(1, 0)[0] * -0.886367665;
-//                double y = detectionPipe.getDetectedStones().get(0).tvec.get(0, 0)[0] * 0.362568435;
-//
-//                telemetry.addData("x: ", x);
-//
-//                double targetX = follower.getPose().getX() + (-6 - x);
-//
-////                    follower.followPath(new Path(
-////                            new BezierLine(
-////                                    new Point(follower.getPose()),
-////                                    new Point(targetX, 0, Point.CARTESIAN)
-////                            )
-////                    )
-////                            .setConstantHeadingInterpolation(0)
-////                            .setPathEndTimeoutConstraint(.9), false);
-//                follower.holdPoint(new Pose(
-//                        targetX,
-//                        startY,
-//                        heading
-//                ));
-//
-//                follower.setMaxPower(1);
-//                telemetry.addData("targetX: ", targetX);
-//
-//                update();
-//
-//                if (!opMode.opModeIsActive()) break;
-//                if (opMode.isStopRequested()) break;
-//
-//                safeSleep(100);
-//            } else {
-//                follower.holdPoint(new Pose(
-//                        follower.getPose().getX(),
-//                        follower.getPose().getY(),
-//                        heading
-//                ));
-//            }
-            LLResult result = robot.limelight.getLatestResult();
-
-            update();
-
-            if (opMode.isStopRequested()) break;
-            if (!opMode.opModeIsActive()) break;
-
-            if(timer2.time(TimeUnit.SECONDS) >= 1) {
-                cps = cycle;
-
-                timer2.reset();
-                cycle = 0;
-            }
-
-            if (result != null) {
-                if (result.isValid()) {
-                    cycle++;
-
-                    robot.limelight.reloadPipeline();
-
-                    follower.setMaxPower(1);
-
-                    LLResultTypes.DetectorResult sample = result.getDetectorResults().get(0);
-
-                    x = sample.getTargetYDegrees() * 0.15060241;
-                    y = sample.getTargetXDegrees() * -0.182815356;
-                    double xToPos = (follower.getPose().getX() + (targetX - x));
-                    double yToPos = (follower.getPose().getY() + (targetY - y));
-
-//                    if(x < 0) xToPos /= 2;
-
-                    try {
-                        telemetry.addData("update hold: ", Math.abs(follower.getPose().getX() - follower.getCurrentPath().getLastControlPoint().getX()) < .35 && Math.abs(targetX - x) > error);
-                    } catch (Exception e) {
-                        //boo hoo an error threw
-                    }
-                    telemetry.addData("runFollow: ", runFollow);
-                    telemetry.addData("x: ", x);
-                    telemetry.addData("x velo: ", follower.getVelocity().getXComponent());
-                    telemetry.addData("xToPos: ", xToPos);
-                    telemetry.addData("fps: ", robot.limelight.getStatus().getFps());
-                    telemetry.addData("y: ", y);
-
-                    telemetry.addData("cycles per seconds: ", cps);
-
-//                    usingPID = Math.abs(x) >= 3;
-//                    usingPID = false;
-
-
-                    if (runFollow) {
-
-                        if(cps >= 10) {
-//                            safeSleep(250);
-//                            continue;
-                        }
-
-                        follower.holdPoint(new Pose(
-                                xToPos,
-                                yToPos,
-                                heading
-                        ));
-
-                        runFollow = false;
-                    }
-
-                    if ((/*Math.abs(follower.getVelocity().getXComponent()) < .5 && */Math.abs(targetX - x) > 1) || Math.abs(targetY - y) > 1) {
-                        follower.updateHoldPoint(new Pose(
-                                xToPos,
-                                yToPos,
-                                heading
-                        ));
-
-                        safeSleep(350);
-                    }
-                } else {
-                    follower.setMaxPower(.1);
-                }
-            } else {
-                follower.setMaxPower(.1);
-
-                telemetry.addLine("low power");
-            }
-
-            telemetry.update();
-        }
+        timer.reset();
 
         follower.startTeleopDrive();
-        follower.setTeleOpMovementVectors(0, 0, 0);
 
+        xController.setSetPoint(0);
+
+        try {
+            while (opMode.opModeIsActive() && !opMode.isStopRequested()) {
+                if (!opMode.opModeIsActive()) break;
+                if (opMode.isStopRequested()) break;
+
+                if (robot.limelight.getStatus().getFps() == 0) break;
+
+                xController.setPID(xP, 0, xD);
+
+                LLResult result = robot.limelight.getLatestResult();
+
+                update();
+
+                if (result != null) {
+                    if (result.getPythonOutput()[0] != -1 && result.getPythonOutput()[1] != -1) {
+                        timer.reset();
+
+                        cycle++;
+
+                        x = (result.getPythonOutput()[0] - 320 / 2);
+                        y = ((result.getPythonOutput()[1] - 480 / 2) + 75);
+
+                        double voltage = vSensor.getVoltage();
+
+                        xPower = -xController.calculate(x) * (12.0 / voltage);
+                        yPower = y / 150;
+
+                        if ((Math.abs(x) < 20 && Math.abs(y) <= 1000) && (Math.abs(follower.getVelocity().getXComponent()) < 1 && Math.abs(follower.getVelocity().getYComponent()) < 1))
+                            break;
+
+//                    xPower = MathFunctions.clamp(xPower, -.5, .5);
+                        yPower = MathFunctions.clamp(yPower, -.5, .5);
+
+                        follower.setTeleOpMovementVectors(xPower, 0, 0, false);
+
+//                    safeSleep(50);
+
+                        telemetry.addData("x: ", x);
+                        telemetry.addData("y: ", y);
+                        telemetry.addData("xVelo: ", follower.getVelocity().getXComponent());
+                        telemetry.addData("yVelo: ", follower.getVelocity().getYComponent());
+                    } else {
+                        if(timer.time(TimeUnit.MILLISECONDS) > noSampleTimeoutTime) {
+                            break;
+                        }
+                    }
+                }
+
+                telemetry.update();
+            }
+
+            follower.startTeleopDrive();
+            follower.setTeleOpMovementVectors(0, 0, 0);
+
+        } catch (Exception e) {
+            // boo hoo an error threw
+        }
         return new Pose(x, y);
     }
+
+//    public Pose homeToSample(double heading, double timeout) {
+//        ElapsedTime timer = new ElapsedTime();
+//        timer.reset();
+//        double startY = follower.getPose().getY();
+//        boolean start = true;
+//        double holdX = 0;
+//        double targetX = 0;
+//        double targetY = 0;
+//        boolean usingPID = false;
+//        boolean usingPIDStart = true;
+//        boolean runFollow = true;
+//        boolean firstRun = true;
+//        boolean finalUpdate = false;
+//        double error = .5;
+//        double setPower = .35;
+//        int cycle = 0;
+//        ElapsedTime timer2 = new ElapsedTime();
+//        int runs = 1;
+//        double x = 0;
+//        double y = 0;
+//        double cps = 0;
+//
+//        xController.setSetPoint(targetX);
+//        xController.setTolerance(1);
+//
+//        robot.limelight.pipelineSwitch(1);
+//        safeSleep(50);
+//        robot.limelight.pipelineSwitch(3);
+//        safeSleep(50);
+//
+//        timer2.reset();
+//
+//        while (timer.time(TimeUnit.MILLISECONDS) < timeout) {
+//            LLResult result = robot.limelight.getLatestResult();
+//
+//            update();
+//
+//            if (opMode.isStopRequested()) break;
+//            if (!opMode.opModeIsActive()) break;
+//
+//            if(timer2.time(TimeUnit.SECONDS) >= 1) {
+//                cps = cycle;
+//
+//                timer2.reset();
+//                cycle = 0;
+//            }
+//
+//            if (result != null) {
+//                if (result.isValid()) {
+//                    cycle++;
+//
+//                    follower.setMaxPower(1);
+//
+////                    LLResultTypes.DetectorResult sample = result.getDetectorResults().get(0);
+//
+//                    x = result.getTx();
+//                    y = result.getTy();
+//                    double xToPos = (follower.getPose().getX() + (targetX - x));
+//                    double yToPos = (follower.getPose().getY() + (targetY - y));
+//
+////                    if(x < 0) xToPos /= 2;
+//
+//                    try {
+//                        telemetry.addData("update hold: ", Math.abs(follower.getPose().getX() - follower.getCurrentPath().getLastControlPoint().getX()) < .35 && Math.abs(targetX - x) > error);
+//                    } catch (Exception e) {
+//                        //boo hoo an error threw
+//                    }
+//                    telemetry.addData("runFollow: ", runFollow);
+//                    telemetry.addData("x: ", x);
+//                    telemetry.addData("x velo: ", follower.getVelocity().getXComponent());
+//                    telemetry.addData("xToPos: ", xToPos);
+//                    telemetry.addData("fps: ", robot.limelight.getStatus().getFps());
+//                    telemetry.addData("y: ", y);
+//
+//                    telemetry.addData("cycles per seconds: ", cps);
+//
+////                    usingPID = Math.abs(x) >= 3;
+////                    usingPID = false;
+//
+//
+//                    if (runFollow) {
+//
+//                        if(cps >= 10) {
+////                            safeSleep(250);
+////                            continue;
+//                        }
+//
+//                        follower.holdPoint(new Pose(
+//                                xToPos,
+//                                yToPos,
+//                                heading
+//                        ));
+//
+//                        runFollow = false;
+//                    }
+//
+//                    if ((/*Math.abs(follower.getVelocity().getXComponent()) < .5 && */Math.abs(targetX - x) > 1) || Math.abs(targetY - y) > 1) {
+//                        follower.updateHoldPoint(new Pose(
+//                                xToPos,
+//                                yToPos,
+//                                heading
+//                        ));
+//
+//                        safeSleep(350);
+//                    }
+//                } else {
+//                    follower.setMaxPower(.1);
+//                }
+//            } else {
+//                follower.setMaxPower(.1);
+//
+//                telemetry.addLine("low power");
+//            }
+//
+//            telemetry.update();
+//        }
+//
+//        follower.startTeleopDrive();
+//        follower.setTeleOpMovementVectors(0, 0, 0);
+//
+//        return new Pose(x, y);
+//    }
 
     public void runPath(PathChain path) {
         run(path, true);
@@ -331,19 +399,21 @@ public class AutoManagerPedro {
                                 new BezierCurve(
                                         startPose,
                                         new Point(33 /*2.75*/, -45/*19.5*/, Point.CARTESIAN),
-                                        new Point(33 /*2.75*/, -40/*19.5*/, Point.CARTESIAN)
+                                        new Point(33 /*2.75*/, -40/*19.5*/, Point.CARTESIAN) //33
                                 )
                         ))
                         .addTemporalCallback(0, () -> {
                             currentMode = TeleopMode.SPECIMEN_SCORE;
                             arm.setTeleopMode(currentMode);
+                            arm.setAnimationType(AnimationType.NONE);
                             arm.update();
 
                             arm.setArmPositionSpecimen(100);
-                            arm.setSlidesPositionSpecimen(8);
+                            arm.setSlidesPositionSpecimen(9.5);
                         })
+                        .setZeroPowerAccelerationMultiplier(1)
                         .setConstantHeadingInterpolation(Math.toRadians(0))
-                        .setPathEndTimeoutConstraint(250)
+                        .setPathEndTimeoutConstraint(100)
                         .setPathEndTValueConstraint(.9);
 
                 specBackup = new PathBuilder()
@@ -370,7 +440,7 @@ public class AutoManagerPedro {
                 startHeading = start_4_0_V1.getHeading();
             }
 
-            Point bucketFinalPoint = new Point(2.75 /*2.75*/, 20/*19.5*/, Point.CARTESIAN);
+            Point bucketFinalPoint = new Point(3.5 /*2.75*/, 19.5/*19.5*/, Point.CARTESIAN);
 
             bucketScorePathS1 = new PathBuilder()
                     .addPath(new Path(
@@ -475,7 +545,7 @@ public class AutoManagerPedro {
                     .addPath(new Path(
                             new BezierLine(
                                     bucketFinalPoint,
-                                    new Point(28.1 - xOffset, 12, Point.CARTESIAN)
+                                    new Point(18 - xOffset, 12, Point.CARTESIAN) //28.1
                             )
                     ))
                     .setLinearHeadingInterpolation(Math.toRadians(130), .875, .25)
@@ -490,14 +560,17 @@ public class AutoManagerPedro {
                     .setPathEndTValueConstraint(.97)
                     .addPath(new Path(
                             new BezierLine(
-                                    new Point(26.5, 12, Point.CARTESIAN),
-                                    new Point(26.5, 20, Point.CARTESIAN)
+                                    new Point(23, 12, Point.CARTESIAN),
+                                    new Point(23, 17.5, Point.CARTESIAN)
                             )
                     ))
                     .setConstantHeadingInterpolation(.875)
 //                    .setLinearHeadingInterpolation(Math.toRadians(0), .875)
                     .setPathEndTValueConstraint(.93)
                     .setPathEndTimeoutConstraint(100);
+
+
+            double bucketScoreZPM = 3;
 
             bucketScorePathFromIntake1 = new PathBuilder()
                     .addPath(new Path(
@@ -510,6 +583,7 @@ public class AutoManagerPedro {
                     .addParametricCallback(.95, () -> {
                         setSpeed(1);
                     })
+                    .setZeroPowerAccelerationMultiplier(bucketScoreZPM)
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(130), .5)
 //                    .setConstantHeadingInterpolation(Math.toRadians(130))
                     .setPathEndTValueConstraint(.87);
@@ -525,6 +599,7 @@ public class AutoManagerPedro {
                     .addParametricCallback(.95, () -> {
                         setSpeed(1);
                     })
+                    .setZeroPowerAccelerationMultiplier(bucketScoreZPM)
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(130), .5)
 //                    .setConstantHeadingInterpolation(Math.toRadians(130))
                     .setPathEndTValueConstraint(.87);
@@ -540,6 +615,7 @@ public class AutoManagerPedro {
                     .addParametricCallback(.95, () -> {
                         setSpeed(1);
                     })
+                    .setZeroPowerAccelerationMultiplier(bucketScoreZPM)
                     .setLinearHeadingInterpolation(.875, Math.toRadians(130), .5)
 //                    .setConstantHeadingInterpolation(Math.toRadians(130))
                     .setPathEndTValueConstraint(.87);
@@ -1033,19 +1109,20 @@ public class AutoManagerPedro {
     }
 
     public void waitForArmAndSlides(int timeout) {
-        double position = arm.getSlidesTargetPos();
         ElapsedTime timer = new ElapsedTime();
         double armPos = arm.getArmPosition();
         double armTargetPos = arm.getArmTargetPosition();
         double slidesPos = arm.getSlidesPosition();
         double slidesTargetPos = arm.getSlidesTargetPos();
         timer.reset();
+        timer.startTime();
 
-        while (!((armPos + this.params.ARM_ERROR_TOLERANCE_AUTO > armTargetPos && position - this.params.ARM_ERROR_TOLERANCE_AUTO < armTargetPos) && (armPos + this.params.SLIDES_ERROR_TOLERANCE_AUTO > armTargetPos && armPos - this.params.SLIDES_ERROR_TOLERANCE_AUTO < armTargetPos)) || timer.time(TimeUnit.MILLISECONDS) > timeout) {
+        while (!( (armPos + this.params.ARM_ERROR_TOLERANCE_AUTO > armTargetPos && armPos - this.params.ARM_ERROR_TOLERANCE_AUTO < armTargetPos) && (slidesPos + this.params.SLIDES_ERROR_TOLERANCE_AUTO > slidesTargetPos && slidesPos - this.params.SLIDES_ERROR_TOLERANCE_AUTO < slidesTargetPos))) {
             update();
 
             if (opMode.isStopRequested()) break;
             if (!opMode.opModeIsActive()) break;
+            if (timer.time(TimeUnit.MILLISECONDS) >= timeout) break;
         }
     }
 
