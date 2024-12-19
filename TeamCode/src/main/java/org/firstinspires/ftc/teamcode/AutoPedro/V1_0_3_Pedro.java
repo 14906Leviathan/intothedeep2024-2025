@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -23,6 +24,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 
 import java.util.concurrent.TimeUnit;
 
+@Disabled
 @Config
 @Autonomous(name = "0+3 V1 Pedro", group = "0", preselectTeleOp = "0: Main TeleOp")
 public class V1_0_3_Pedro extends LinearOpMode {
@@ -108,7 +110,6 @@ public class V1_0_3_Pedro extends LinearOpMode {
         autoManager = new AutoManagerPedro(this, follower, () -> {
             arm.update();
             intake.update();
-            telemetryA.addData("distance: ", robot.distanceOne.getDistance(DistanceUnit.INCH));
             telemetryA.addData("x: ", follower.getPose().getX());
             telemetryA.addData("y: ", follower.getPose().getY());
             telemetryA.update();

@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.Misc;
 
+import android.graphics.Canvas;
+import android.util.Size;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
@@ -8,30 +11,32 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.teamcode.AutoPedro.AutoManagerPedro;
-import org.firstinspires.ftc.teamcode.AutoRoadrunner.AutoManager;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
+import org.firstinspires.ftc.teamcode.OpenCV.SampleDetectCustom;
+import org.firstinspires.ftc.teamcode.OpenCV.SampleDetectionPipeline;
 import org.firstinspires.ftc.teamcode.OpenCV.SampleDetectionPipelinePNP;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
-import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Point;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.opencv.core.Mat;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "2: Sample Sense Test", group = "1")
 @Config
 public class SampleSenseTest extends LinearOpMode {
-    SampleDetectionPipelinePNP detectionPipe;
+    SampleDetectionPipeline detectionPipe;
     OpenCvWebcam webcam;
     private Follower follower;
     double startX = 0;
@@ -81,7 +86,7 @@ public class SampleSenseTest extends LinearOpMode {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
-        detectionPipe = new SampleDetectionPipelinePNP();
+        detectionPipe = new SampleDetectionPipeline();
 
         webcam.setPipeline(detectionPipe);
 
@@ -89,7 +94,7 @@ public class SampleSenseTest extends LinearOpMode {
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
+                webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT, OpenCvWebcam.StreamFormat.MJPEG);
             }
 
             @Override
@@ -97,7 +102,7 @@ public class SampleSenseTest extends LinearOpMode {
             }
         });
 
-        FtcDashboard.getInstance().startCameraStream(webcam, 30);
+        FtcDashboard.getInstance().startCameraStream(webcam, 90);
 
         telemetry.addLine("Waiting for start");
         telemetry.update();
@@ -148,75 +153,21 @@ public class SampleSenseTest extends LinearOpMode {
 
             drivePid.setPID(kP, kI, kD);
 
-            telemetry.addData("Samples: ", detectionPipe.getDetectedStones().size());
-            if (detectionPipe.getDetectedStones().size() >= 1) {
-                double x = detectionPipe.getDetectedStones().get(0).tvec.get(1, 0)[0]; // * -0.886367665;
-                double y = detectionPipe.getDetectedStones().get(0).tvec.get(0, 0)[0]; //* 0.362568435;
-
-                telemetry.addData("x: ", x);
-                telemetry.addData("y: ", y);
-
-                if (runHome && !follower.isBusy()) {
-//                    double targetX = follower.getPose().getX() + (-5 - x);
-//
-////                    follower.followPath(new Path(
-////                            new BezierLine(
-////                                    new Point(follower.getPose()),
-////                                    new Point(targetX, 0, Point.CARTESIAN)
-////                            )
-////                    )
-////                            .setConstantHeadingInterpolation(0)
-////                            .setPathEndTimeoutConstraint(.9), false);
-//                    follower.holdPoint(new Pose(
-//                            targetX,
-//                            0,
-//                            0
-//                    ));
-//
-//                    follower.setMaxPower(.5);
-//
-//                    telemetry.addData("targetX: ", targetX);
-//                    autoManager.homeToSample(detectionPipe, 0, 1000);
-                }
-            } else {
-                follower.setTeleOpMovementVectors(0, 0, 0, true);
-            }
-
-            if (gamepad1.left_bumper) {
-                arm.intakeDownMode();
-            } else {
-                arm.intakeUpMode();
-            }
-
             telemetry.addData("robot x: ", follower.getPose().getX());
             telemetry.addData("robot y: ", follower.getPose().getY());
 
-            /*
-             * NOTE: stopping the stream from the camera early (before the end of the OpMode
-             * when it will be automatically stopped for you) *IS* supported. The "if" statement
-             * below will stop streaming from the camera when the "A" button on gamepad 1 is pressed.
-             */
+            ArrayList<SampleDetectionPipeline.AnalyzedStone> stones = detectionPipe.getDetectedStones();
 
-            if (gamepad1.a) {
-                runHome = true;
-                homed = false;
+            if(!stones.isEmpty()) {
+                SampleDetectionPipeline.AnalyzedStone stone = stones.get(0);
 
-                timer.reset();
+                telemetry.addData("x: ", stone.x);
+                telemetry.addData("y: ", stone.y);
             }
 
-            if (timer.time(TimeUnit.MILLISECONDS) > 500) {
-                homed = true;
-                runHome = false;
-            }
-
-            /*
-             * For the purposes of this sample, throttle ourselves to 10Hz loop to avoid burning
-             * excess CPU cycles for no reason. (By default, telemetry is only sent to the DS at 4Hz
-             * anyway). Of course in a real OpMode you will likely not want to do this.
-             */
             telemetry.update();
 
-            safeWait(100);
+//            safeWait(100);
         }
     }
 

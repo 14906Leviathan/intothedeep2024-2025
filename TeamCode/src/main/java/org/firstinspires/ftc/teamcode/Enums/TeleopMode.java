@@ -7,6 +7,6 @@ public enum TeleopMode {
     IDLE,
     CLIMB,
     TOUCH_POLE_AUTO,
-    DEBUG,
+    CUSTOM_POSITION,
     AUTO_SLIDES_IN
 }

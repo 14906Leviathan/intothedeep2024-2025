@@ -95,14 +95,14 @@ public class MecanumDrive {
         public double headingGain = 4; // shared with turn
 
         public double axialVelGain = 2.4;
-//        public double axialVelGain = 2.4;
+        //        public double axialVelGain = 2.4;
         public double lateralVelGain = 1.4;
         public double headingVelGain = 1; // shared with turn
 
         //sensing params
         public double sampleXTargetIn = 1;
         public double sampleYTargetIn = -4.6;
-//        public double senseInMultX = 0.254065041;
+        //        public double senseInMultX = 0.254065041;
         public double senseInMultX = 0.304878049;
         public double senseInMultY = 1.961168857;
     }

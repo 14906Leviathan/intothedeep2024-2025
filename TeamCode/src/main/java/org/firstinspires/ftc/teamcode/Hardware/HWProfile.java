@@ -32,7 +32,6 @@ public class HWProfile {
     public SimpleServo poleToucher = null;
     public IMU.Parameters imuParams;
     public GoBildaPinpointDriver pinpoint = null;
-    public Rev2mDistanceSensor distanceOne = null;
     public Limelight3A limelight;
     public VoltageSensor voltageSensor;
 
@@ -121,7 +120,6 @@ public class HWProfile {
         poleToucher = new SimpleServo(hwMap, "poleToucher", 0, 180, AngleUnit.DEGREES);
         poleToucher.setInverted(true);
 
-        distanceOne = hwMap.get(Rev2mDistanceSensor.class, "distanceOne");
 
         limelight = hwMap.get(Limelight3A.class, "limelight");
 

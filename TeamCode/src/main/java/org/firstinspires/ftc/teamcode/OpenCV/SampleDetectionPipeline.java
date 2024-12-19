@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpenCV;
 
+import org.opencv.imgproc.Moments;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import org.opencv.core.Core;
@@ -55,10 +56,12 @@ public class SampleDetectionPipeline extends OpenCvPipeline
 
     static final int CONTOUR_LINE_THICKNESS = 2;
 
-    static class AnalyzedStone
+    public static class AnalyzedStone
     {
-        double angle;
-        String color;
+        public double angle;
+        public String color;
+        public double x = 0;
+        public double y = 0;
     }
 
     ArrayList<AnalyzedStone> internalStoneList = new ArrayList<>();
@@ -239,6 +242,8 @@ public class SampleDetectionPipeline extends OpenCvPipeline
         // Store the detected stone information
         AnalyzedStone analyzedStone = new AnalyzedStone();
         analyzedStone.angle = rotRectAngle;
+        analyzedStone.x = rotatedRectFitToContour.center.y;
+        analyzedStone.y = rotatedRectFitToContour.center.x;
         analyzedStone.color = color;
         internalStoneList.add(analyzedStone);
     }

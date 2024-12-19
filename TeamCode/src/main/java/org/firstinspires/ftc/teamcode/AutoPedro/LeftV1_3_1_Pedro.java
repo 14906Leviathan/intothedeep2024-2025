@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.AutoPedro;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -172,9 +171,9 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
             telemetry.addLine("started on the left line of the tile, and the robot");
             telemetry.addLine("needs to be facing towards the submersible");
             telemetry.addLine();
+            follower.setPose(autoManager.start_3_1_V1);
             telemetry.addData("limelight fps: ", robot.limelight.getStatus().getFps());
             telemetry.addData("slides raw enc:", robot.slidesMotor.getCurrentPosition());
-            follower.setStartingPose(autoManager.start_3_1_V1);
             telemetry.addData("x: ", follower.getPose().getX());
             telemetry.addData("y: ", follower.getPose().getY());
 
@@ -187,26 +186,25 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
             telemetry.update();
         }
 
+        follower.setPose(autoManager.start_3_1_V1);
+
         waitForStart();
 
 //        limelightHandler.start();
 
         if (!robot.limelight.isRunning()) {
             robot.limelight.start();
-            autoManager.safeSleep(50);
-            robot.limelight.pipelineSwitch(1);
-            autoManager.safeSleep(50);
-            robot.limelight.pipelineSwitch(3);
-            autoManager.safeSleep(50); //jank fix for an issue
+//            autoManager.safeSleep(50);
+//            robot.limelight.pipelineSwitch(1);
+//            autoManager.safeSleep(50);
+//            robot.limelight.pipelineSwitch(3);
+//            autoManager.safeSleep(50); //jank fix for an issue
         }
 
-        follower.updatePose();
-        follower.update();
-        autoManager.safeSleep(100);
         follower.setPose(autoManager.start_3_1_V1);
         autoManager.safeSleep(100);
         params.AUTO_SCORE = 37;
-        params.AUTO_END_HEADING = -90;
+        params.AUTO_END_HEADING = 130;
 
         time.reset();
         arm.setArmPower(.6);
@@ -253,10 +251,10 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         autoManager.safeSleep(350);
 //        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
-        arm.setArmPositionSpecimen(75); //params.ARM_SCORE_SPECIMEN
+        arm.setArmPositionSpecimen(70); //params.ARM_SCORE_SPECIMEN
         arm.setSlidesPositionSpecimen(6); //params.SLIDES_SCORE_SPECIMEN
         autoManager.safeSleep(500);
-        arm.setArmPositionSpecimen(95); //params.ARM_SCORE_SPECIMEN
+        arm.setArmPositionSpecimen(90); //params.ARM_SCORE_SPECIMEN
         arm.setSlidesPositionSpecimen(0); //params.SLIDES_SCORE_SPECIMEN
         autoManager.safeSleep(350);
 //        autoManager.safeSleep(30_000);
@@ -280,7 +278,7 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 
     public void park() {
         autoManager.setSpeed(1);
-        params.TELEOP_START_MODE = TeleopMode.TOUCH_POLE_AUTO;
+        params.TELEOP_START_MODE = TeleopMode.BUCKET_SCORE;
         autoManager.runPath(autoManager.park, false);
 //        arm.update();
 //        autoManager.safeSleep(750);
@@ -289,6 +287,8 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
     }
 
     public void intake(int sampleNum) {
+        arm.setArmPower(1);
+
         arm.setIntakePosition(params.PEDRO_AUTO_INTAKE_Y1_POS);
         arm.intakeUpMode();
         if (sampleNum != 3) {
@@ -298,97 +298,129 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
             arm.intakeUpMode();
         }
 
-        Pose error = new Pose();
+        Pose endPose = new Pose();
 
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
         if (sampleNum == 1) {
-            autoManager.setSpeed(.7);
+            autoManager.setSpeed(1);
             autoManager.runPath(autoManager.intakeYellow1, true);
-            autoManager.safeSleep(200);
+            autoManager.waitUntilBelowError(.1, .1, 1000);
 //            autoManager.waitForArmAndSlides(300);
-            error = autoManager.homeToSample(Math.toRadians(0));
+//            autoManager.waitForSlides();
+            endPose = autoManager.homeToSample(Math.toRadians(0));
+//            autoManager.safeSleep(2500);
         } else if (sampleNum == 2) {
-            autoManager.setSpeed(.7);
+            autoManager.setSpeed(1);
             autoManager.runPath(autoManager.intakeYellow2, true);
             autoManager.safeSleep(700);
-            autoManager.waitForArmAndSlides(500);
-            error = autoManager.homeToSample(Math.toRadians(0));
+            autoManager.waitUntilBelowError(.25, .1, 500);
+            endPose = autoManager.homeToSample(Math.toRadians(0));
+//            autoManager.safeSleep(2500);
         } else if (sampleNum == 3) {
-            autoManager.setSpeed(.8);
+            autoManager.setSpeed(1);
             arm.setAutoLastSample(true);
-            intake.setGrabAngle(GrabAngle.CUSTOM);
-            intake.setCustomGrabAngle(135);
+            arm.setArmPower(1);
             arm.intakeUpMode();
             autoManager.runPath(autoManager.intakeYellow3, true);
             arm.intakeUpMode();
-            autoManager.safeSleep(200);
-            autoManager.waitForArmAndSlides(500);
-            error = autoManager.homeToSample(Math.toRadians(0));
+            autoManager.waitForArmAndSlides(250);
+            endPose = autoManager.homeToSample(Math.toRadians(0));
+//            autoManager.safeSleep(2500);
         }
+
+        if(endPose == new Pose(0, 0, 0)) endPose = follower.getPose();
 
         autoManager.setSpeed(1);
 
-        if(sampleNum != 3) {
+        double xTarget = 0;
+
+        if(sampleNum == 1) {
             arm.intakeDownMode();
+            arm.setArmPower(.6);
+
+            xTarget = endPose.getX() + 4.5;
 
             autoManager.holdPoint(new Pose(
-                    follower.getPose().getX() + 4.5,
-                    follower.getPose().getY(),
-                    follower.getTotalHeading()
+                    endPose.getX() + 4.5,
+                    autoManager.intakeYellow1.build().getPath(autoManager.intakeYellow1.build().size() - 1).getLastControlPoint().getY(),
+                    autoManager.intakeYellow1.build().getPath(autoManager.intakeYellow1.build().size() - 1).getPathEndHeadingConstraint()
             ));
-        } else {
-            autoManager.holdPoint(new Pose(
-                    follower.getPose().getX() + 2.75,
-                    follower.getPose().getY() + 0,
-                    follower.getTotalHeading()
-            ));
-
+        } else if(sampleNum == 2) {
             arm.intakeDownMode();
+            arm.setArmPower(.6);
+
+            xTarget = endPose.getX() + 4.5;
+
+            autoManager.holdPoint(new Pose(
+                    endPose.getX() + 4.5,
+                    autoManager.intakeYellow2.build().getPath(autoManager.intakeYellow2.build().size() - 1).getLastControlPoint().getY(),
+                    autoManager.intakeYellow2.build().getPath(autoManager.intakeYellow2.build().size() - 1).getPathEndHeadingConstraint()
+            ));
+        } else if(sampleNum == 3) {
+            xTarget = endPose.getX() + 3;
+
+            autoManager.holdPoint(new Pose(
+                    endPose.getX() + 3,
+                    20,
+                    follower.getTotalHeading()
+            ));
+            autoManager.safeSleep(300);
+            arm.intakeDownMode();
+
+            arm.setArmPower(1);
         }
-        autoManager.safeSleep(850);
+        autoManager.safeSleep(650);
 //        autoManager.waitForArmAndSlides(1000);
 
         intake.intake();
         autoManager.safeSleep(250);
 
+//        s1Xerror = Math.abs(follower.getPose().getX() - xTarget);
+//        s1Yerror = endPose.getY();
+//
         if (sampleNum == 1) {
-            s1Xerror = error.getX();
-            s1Yerror = error.getY();
+            s1Xerror = Math.abs(follower.getPose().getX() - xTarget);
+            s1Yerror = endPose.getY();
         } else if (sampleNum == 2) {
-            s2Xerror = error.getX();
-            s2Yerror = error.getY();
+            s2Xerror = Math.abs(follower.getPose().getX() - xTarget);
+            s2Yerror = endPose.getY();
         } else if (sampleNum == 3) {
-            s3Xerror = follower.getPose().getX();
-            s3Yerror = follower.getPose().getY();
+            s3Xerror = Math.abs(follower.getPose().getX() - xTarget);
+            s3Yerror = endPose.getY();
         }
 
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
+        arm.setArmPower(1);
         currentMode = TeleopMode.BUCKET_SCORE;
         arm.setTeleopMode(currentMode);
-//        arm.setAnimationType(AnimationType.FAST);
+//        if(sampleNum != 3) arm.setAnimationType(AnimationType.FAST);
         arm.setBucket(2);
         arm.update();
-        autoManager.safeSleep(1250);
+        autoManager.safeSleep(800); //1250
+        arm.setArmPower(.6);
     }
 
     public void bucketScore(int sampleNum) {
-        intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
-        intake.update();
+        arm.extendSlidesOuttake();
 
         if (arm.getTeleopMode() != TeleopMode.BUCKET_SCORE) {
             currentMode = TeleopMode.BUCKET_SCORE;
             arm.setTeleopMode(currentMode);
-            arm.setAnimationType(AnimationType.NONE);
             arm.setBucket(2);
+            arm.update();
             if (sampleNum == 1) {
-                autoManager.safeSleep(1000);
+                autoManager.safeSleep(1250);
             } else {
                 autoManager.safeSleep(100);
             }
         }
 
-        autoManager.setSpeed(.8);
+        arm.setSlidesPower(1);
+        arm.extendSlidesOuttake();
+        arm.update();
+
+        autoManager.setSpeed(1);
         if (sampleNum == 1) {
             autoManager.runPath(autoManager.bucketScorePathFromIntake1, true);
         } else if (sampleNum == 2) {
@@ -399,13 +431,17 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
-        autoManager.safeSleep(200);
+        autoManager.waitUntilBelowError(.25, .25,200);
         arm.setArmTipBucketScore(true);
-        autoManager.safeSleep(350);
+        autoManager.safeSleep(300);
         intake.outtake();
-        autoManager.safeSleep(450);
+        autoManager.safeSleep(100);
         arm.setArmTipBucketScore(false);
-        autoManager.safeSleep(400);
+        if(sampleNum != 3) {
+            autoManager.safeSleep(600);
+        } else {
+            autoManager.safeSleep(800);
+        }
 
         if (sampleNum != 4) {
 //            autoManager.setSpeed(.6);

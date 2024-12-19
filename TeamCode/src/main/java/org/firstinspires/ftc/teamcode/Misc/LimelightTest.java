@@ -1,19 +1,12 @@
 package org.firstinspires.ftc.teamcode.Misc;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.AutoPedro.AutoManagerPedro;
-import org.firstinspires.ftc.teamcode.AutoRoadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
@@ -22,7 +15,6 @@ import org.firstinspires.ftc.teamcode.Hardware.Params;
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
-import org.firstinspires.ftc.teamcode.pedroPathing.util.PIDFController;
 
 @Config
 @TeleOp()
@@ -102,8 +94,8 @@ public class LimelightTest extends LinearOpMode {
                 if (result.getTx() != 0 && result.getTy() != 0) {
 //                    LLResultTypes.DetectorResult sample = result.getDetectorResults().get(0);
 
-                    double x = result.getTx() * -0.15060241;
-                    double y = result.getTy() * 0.182815356;
+                    double x = (result.getPythonOutput()[0] - 320 / 2);
+                    double y = (result.getPythonOutput()[1] - 320 / 2);
 
                     double xOut = xController.calculate(x);
 
@@ -166,6 +158,10 @@ public class LimelightTest extends LinearOpMode {
                 telemetry.addData("pipeline: ", result.getPipelineIndex());
             } else {
                 follower.setTeleOpMovementVectors(0, 0, 0);
+            }
+
+            if(gamepad1.b) {
+                follower.setPose(new Pose(0, 0, follower.getTotalHeading()));
             }
 
             follower.update();

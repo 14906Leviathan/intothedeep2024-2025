@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
+import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
@@ -66,8 +67,9 @@ public class AutoManagerPedro {
     private Runnable updateAction;
     private MultipleTelemetry telemetry;
     private Params params;
-    public static double xP = 0.004;
-    public static double xD = 0.0008;
+    public static double xP = 0.005;
+    public static double xD = 0.0009;
+    public static double homeTolerance = 5;
     private PIDController xController = new PIDController(xP, 0, xD);
     private VoltageSensor vSensor;
 
@@ -105,26 +107,13 @@ public class AutoManagerPedro {
     public Pose homeToSample(double heading) {
         ElapsedTime timer = new ElapsedTime();
         timer.reset();
-        double startY = follower.getPose().getY();
-        boolean start = true;
-        double holdX = 0;
-        double targetX = 0;
-        double targetY = 0;
-        boolean usingPID = false;
-        boolean usingPIDStart = true;
-        boolean runFollow = true;
-        boolean firstRun = true;
-        boolean finalUpdate = false;
-        double error = .5;
-        double setPower = .35;
-        int cycle = 0;
-        int runs = 1;
         double xPower = 0;
         double yPower = 0;
         double x = 0;
         double y = 0;
         double noSampleTimeoutTime = 500;
         double cps = 0;
+        Pose endPose = new Pose();
 
 
 //        robot.limelight.pipelineSwitch(1);
@@ -132,10 +121,16 @@ public class AutoManagerPedro {
 //        robot.limelight.pipelineSwitch(3);
 //        safeSleep(50);
 
-        vSensor = robot.voltageSensor;
-
         timer.reset();
 
+//        arm.setPedroAuto(true);
+//        arm.setAutoMode(true);
+//        arm.setArmPower(1);
+//        arm.setIntakePosition(arm.getIntakePosition());
+//        arm.update();
+
+        follower.breakFollowing();
+        safeSleep(50);
         follower.startTeleopDrive();
 
         xController.setSetPoint(0);
@@ -157,18 +152,18 @@ public class AutoManagerPedro {
                     if (result.getPythonOutput()[0] != -1 && result.getPythonOutput()[1] != -1) {
                         timer.reset();
 
-                        cycle++;
-
                         x = (result.getPythonOutput()[0] - 320 / 2);
                         y = ((result.getPythonOutput()[1] - 480 / 2) + 75);
 
-                        double voltage = vSensor.getVoltage();
+                        double voltage = robot.voltageSensor.getVoltage();
 
                         xPower = -xController.calculate(x) * (12.0 / voltage);
                         yPower = y / 150;
 
-                        if ((Math.abs(x) < 20 && Math.abs(y) <= 1000) && (Math.abs(follower.getVelocity().getXComponent()) < 1 && Math.abs(follower.getVelocity().getYComponent()) < 1))
+                        if ((Math.abs(x) < homeTolerance && Math.abs(y) <= 1000)) {
+                            endPose = follower.getPose();
                             break;
+                        }
 
 //                    xPower = MathFunctions.clamp(xPower, -.5, .5);
                         yPower = MathFunctions.clamp(yPower, -.5, .5);
@@ -179,6 +174,7 @@ public class AutoManagerPedro {
 
                         telemetry.addData("x: ", x);
                         telemetry.addData("y: ", y);
+                        telemetry.addData("voltage: ", robot.voltageSensor.getVoltage());
                         telemetry.addData("xVelo: ", follower.getVelocity().getXComponent());
                         telemetry.addData("yVelo: ", follower.getVelocity().getYComponent());
                     } else {
@@ -197,7 +193,7 @@ public class AutoManagerPedro {
         } catch (Exception e) {
             // boo hoo an error threw
         }
-        return new Pose(x, y);
+        return endPose;
     }
 
 //    public Pose homeToSample(double heading, double timeout) {
@@ -398,8 +394,8 @@ public class AutoManagerPedro {
                         .addPath(new Path(
                                 new BezierCurve(
                                         startPose,
-                                        new Point(33 /*2.75*/, -45/*19.5*/, Point.CARTESIAN),
-                                        new Point(33 /*2.75*/, -40/*19.5*/, Point.CARTESIAN) //33
+                                        new Point(32.5 /*2.75*/, -45/*19.5*/, Point.CARTESIAN),
+                                        new Point(32.5 /*2.75*/, -40/*19.5*/, Point.CARTESIAN) //33
                                 )
                         ))
                         .addTemporalCallback(0, () -> {
@@ -409,9 +405,9 @@ public class AutoManagerPedro {
                             arm.update();
 
                             arm.setArmPositionSpecimen(100);
-                            arm.setSlidesPositionSpecimen(9.5);
+                            arm.setSlidesPositionSpecimen(10.5);
                         })
-                        .setZeroPowerAccelerationMultiplier(1)
+                        .setZeroPowerAccelerationMultiplier(.5)
                         .setConstantHeadingInterpolation(Math.toRadians(0))
                         .setPathEndTimeoutConstraint(100)
                         .setPathEndTValueConstraint(.9);
@@ -440,7 +436,7 @@ public class AutoManagerPedro {
                 startHeading = start_4_0_V1.getHeading();
             }
 
-            Point bucketFinalPoint = new Point(3.5 /*2.75*/, 19.5/*19.5*/, Point.CARTESIAN);
+            Point bucketFinalPoint = new Point(3 /*2.75*/, 19.5/*19.5*/, Point.CARTESIAN);
 
             bucketScorePathS1 = new PathBuilder()
                     .addPath(new Path(
@@ -450,7 +446,7 @@ public class AutoManagerPedro {
                             )
                     ))
                     .setLinearHeadingInterpolation(startHeading, Math.toRadians(130))
-                    .setPathEndTValueConstraint(.9);
+                    .setPathEndTValueConstraint(.8);
 
 //            bucketScorePathFromIntake1.getPath(0).setConstantHeadingInterpolation(Math.toRadians(140));
 //            bucketScorePathFromIntake1.getPath(0).setPathEndTValueConstraint(.9);
@@ -479,7 +475,7 @@ public class AutoManagerPedro {
 
             Point intakeYellow1Start = bucketFinalPoint;
             double intakeYellow1StartHeading = 130;
-            double xOffset = -1;
+            double xOffset = 0;
 
             if (autoLocation == AutoLocation.PEDRO_LEFT_3_1_V1) {
                 intakeYellow1Start = specBackup.build().getPath(0).getLastControlPoint();
@@ -487,23 +483,29 @@ public class AutoManagerPedro {
                 xOffset = 0;
             }
 
+            double intakeZPM = 3;
+
 
             intakeYellow1 = new PathBuilder()
                     .addPath(new Path(
                             new BezierLine(
                                     intakeYellow1Start,
-                                    new Point(19 - xOffset, 10, Point.CARTESIAN) //24.25 10
+                                    new Point(19 - xOffset, 9, Point.CARTESIAN) //24.25 10
                             )
                     ))
-                    .setLinearHeadingInterpolation(Math.toRadians(intakeYellow1StartHeading), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(intakeYellow1StartHeading), Math.toRadians(0), .5)
                     .addParametricCallback(.6, () -> {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
+                        if(autoLocation == AutoLocation.PEDRO_LEFT_4_0_V1) {
+                            arm.setAnimationType(AnimationType.FAST);
+                        }
                         arm.update();
                     })
                     .addParametricCallback(.9, () -> {
                         setSpeed(1);
                     })
+                    .setZeroPowerAccelerationMultiplier(intakeZPM)
                     .setPathEndTValueConstraint(.95)
                     .setPathEndTimeoutConstraint(100);
 
@@ -515,12 +517,15 @@ public class AutoManagerPedro {
                     .addPath(new Path(
                             new BezierLine(
                                     bucketFinalPoint,
-                                    new Point(17 - xOffset, 20, Point.CARTESIAN)
+                                    new Point(17 - xOffset, 19, Point.CARTESIAN)
                             )
                     ))
                     .addParametricCallback(.6, () -> {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
+                        if(autoLocation == AutoLocation.PEDRO_LEFT_4_0_V1) {
+                            arm.setAnimationType(AnimationType.FAST);
+                        }
                         arm.update();
                     })
                     .setLinearHeadingInterpolation(Math.toRadians(130), Math.toRadians(0))
@@ -534,6 +539,7 @@ public class AutoManagerPedro {
                         setSpeed(1);
                     })
 //                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setZeroPowerAccelerationMultiplier(intakeZPM)
                     .setPathEndTValueConstraint(.97)
                     .setPathEndTimeoutConstraint(100);
 
@@ -545,13 +551,21 @@ public class AutoManagerPedro {
                     .addPath(new Path(
                             new BezierLine(
                                     bucketFinalPoint,
-                                    new Point(18 - xOffset, 12, Point.CARTESIAN) //28.1
+                                    new Point(18 - xOffset, 6, Point.CARTESIAN) //28.1
                             )
                     ))
-                    .setLinearHeadingInterpolation(Math.toRadians(130), .875, .25)
-                    .addParametricCallback(.4, () -> {
+                    .setLinearHeadingInterpolation(Math.toRadians(130), .875, .75)
+                    .addParametricCallback(.3, () -> {
+                        intake.setGrabAngle(GrabAngle.CUSTOM);
+                        intake.setCustomGrabAngle(135);
+                        intake.update();
+
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
+                        if(autoLocation == AutoLocation.PEDRO_LEFT_4_0_V1) {
+                            arm.setAnimationType(AnimationType.FAST);
+                        }
+                        arm.intakeUpMode();
                         arm.update();
                     })
                     .addParametricCallback(.9, () -> {
@@ -566,32 +580,35 @@ public class AutoManagerPedro {
                     ))
                     .setConstantHeadingInterpolation(.875)
 //                    .setLinearHeadingInterpolation(Math.toRadians(0), .875)
-                    .setPathEndTValueConstraint(.93)
-                    .setPathEndTimeoutConstraint(100);
+                    .setZeroPowerAccelerationMultiplier(intakeZPM)
+                    .setPathEndTValueConstraint(.9)
+                    .setPathEndTimeoutConstraint(0);
 
 
-            double bucketScoreZPM = 3;
+            double bucketScoreZPM = 3.5;
+
 
             bucketScorePathFromIntake1 = new PathBuilder()
                     .addPath(new Path(
-                            new BezierLine(
+                            new BezierCurve(
                                     intakeYellow1.build().getPath(intakeYellow1.build().size() - 1).getLastControlPoint(),
+                                    new Point(15, 0, Point.CARTESIAN),
                                     bucketFinalPoint
-
                             )
                     ))
                     .addParametricCallback(.95, () -> {
                         setSpeed(1);
                     })
                     .setZeroPowerAccelerationMultiplier(bucketScoreZPM)
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(130), .5)
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(130), .75)
 //                    .setConstantHeadingInterpolation(Math.toRadians(130))
                     .setPathEndTValueConstraint(.87);
 
             bucketScorePathFromIntake2 = new PathBuilder()
                     .addPath(new Path(
-                            new BezierLine(
+                            new BezierCurve(
                                     intakeYellow2.build().getPath(intakeYellow2.build().size() - 1).getLastControlPoint(),
+                                    new Point(15, 5, Point.CARTESIAN),
                                     bucketFinalPoint
 
                             )
@@ -600,23 +617,23 @@ public class AutoManagerPedro {
                         setSpeed(1);
                     })
                     .setZeroPowerAccelerationMultiplier(bucketScoreZPM)
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(130), .5)
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(130), .75)
 //                    .setConstantHeadingInterpolation(Math.toRadians(130))
                     .setPathEndTValueConstraint(.87);
 
             bucketScorePathFromIntake3 = new PathBuilder()
                     .addPath(new Path(
-                            new BezierLine(
+                            new BezierCurve(
                                     intakeYellow3.build().getPath(intakeYellow3.build().size() - 1).getLastControlPoint(),
+                                    new Point(15, 5, Point.CARTESIAN),
                                     bucketFinalPoint
-
                             )
                     ))
                     .addParametricCallback(.95, () -> {
                         setSpeed(1);
                     })
                     .setZeroPowerAccelerationMultiplier(bucketScoreZPM)
-                    .setLinearHeadingInterpolation(.875, Math.toRadians(130), .5)
+                    .setLinearHeadingInterpolation(.875, Math.toRadians(130), .75)
 //                    .setConstantHeadingInterpolation(Math.toRadians(130))
                     .setPathEndTValueConstraint(.87);
 
@@ -964,9 +981,10 @@ public class AutoManagerPedro {
                             )
                     ))
                     .setLinearHeadingInterpolation(Math.toRadians(130), .875, .25)
-                    .addParametricCallback(.4, () -> {
+                    .addParametricCallback(.3, () -> {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
+                        arm.intakeUpMode();
                         arm.update();
                     })
                     .addParametricCallback(.9, () -> {
@@ -1108,6 +1126,22 @@ public class AutoManagerPedro {
         }
     }
 
+    public void waitUntilBelowError(double xErrorTarget, double yErrorTarget, int timeout) {
+        ElapsedTime timer = new ElapsedTime();
+
+        timer.reset();
+        timer.startTime();
+
+        while (timer.time(TimeUnit.MILLISECONDS) < timeout) {
+            update();
+
+            double xError = Math.abs(follower.getCurrentPath().getLastControlPoint().getX() - follower.getPose().getX());
+            double yError = Math.abs(follower.getCurrentPath().getLastControlPoint().getY() - follower.getPose().getY());
+
+            if(xError < xErrorTarget && yError < yErrorTarget) break;
+        }
+    }
+
     public void waitForArmAndSlides(int timeout) {
         ElapsedTime timer = new ElapsedTime();
         double armPos = arm.getArmPosition();
@@ -1127,6 +1161,5 @@ public class AutoManagerPedro {
     }
 
     private void relocalizeX() {
-        follower.setPose(new Pose(robot.distanceOne.getDistance(DistanceUnit.INCH) - .25, follower.getPose().getY(), follower.getTotalHeading()));
     }
 }

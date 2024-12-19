@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 
 @TeleOp(name = "4: Broken Bot", group = "4")
@@ -26,6 +25,10 @@ public class BrokenBot extends LinearOpMode {
         VoltageSensor voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         waitForStart();
+
+        arm.setArmCustomPosition(45);
+        arm.setAutoMode(true);
+        arm.useMotionProfile(true);
 
         while(opModeIsActive()) {
             if(gamepad1.dpad_up) {
@@ -52,15 +55,15 @@ public class BrokenBot extends LinearOpMode {
                 robot.motorLR.setPower(0);
             }
 
-//            if(gamepad1.a) {
-//                currentMode = TeleopMode.DEBUG;
-//                arm.setTeleopMode(currentMode);
-//                arm.setArmTargetPosition(45);
-//            } else if (gamepad1.b) {
-//                currentMode = TeleopMode.DEBUG;
-//                arm.setTeleopMode(currentMode);
-//                arm.setArmTargetPosition(15);
-//            }
+            if(gamepad1.a) {
+                currentMode = TeleopMode.CUSTOM_POSITION;
+                arm.setTeleopMode(currentMode);
+                arm.setArmCustomPosition(45);
+            } else if (gamepad1.b) {
+                currentMode = TeleopMode.CUSTOM_POSITION;
+                arm.setTeleopMode(currentMode);
+                arm.setArmCustomPosition(15);
+            }
 
             if(gamepad1.right_bumper) {
                 robot.clawServo.turnToAngle(0);
@@ -77,7 +80,6 @@ public class BrokenBot extends LinearOpMode {
             arm.update();
 
             telemetry.addData("VSensor: ", voltageSensor.getVoltage());
-            telemetry.addData("DS One distance: ", robot.distanceOne.getDistance(DistanceUnit.INCH));
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
             telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());
             telemetry.addData("motorRR", robot.motorRR.getCurrentPosition());

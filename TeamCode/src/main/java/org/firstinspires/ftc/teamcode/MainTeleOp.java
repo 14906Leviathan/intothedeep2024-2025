@@ -365,6 +365,13 @@ public class MainTeleOp extends LinearOpMode {
                         rBumperCooldown = true;
                         intake.toggle();
                     }
+
+                    if(gamepad1.left_bumper) {
+                        teleopMode = TeleopMode.BUCKET_SCORE;
+                        arm.setTeleopMode(teleopMode);
+//                arm.setAnimationType(AnimationType.FAST);
+                        arm.setBucket(2);
+                    }
                 }
             }
 

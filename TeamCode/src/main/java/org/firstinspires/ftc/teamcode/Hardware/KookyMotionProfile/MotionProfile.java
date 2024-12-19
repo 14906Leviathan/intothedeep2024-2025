@@ -17,6 +17,42 @@ public class MotionProfile {
     public ProfileState state = new ProfileState();
     public ProfileConstraints constraints;
 
+    private void update() {
+//        if (finalPosition < initialPosition) {
+//            flipped = true;
+//            this.originalPos = initialPosition;
+//            double temp = initialPosition;
+//            initialPosition = finalPosition;
+//            finalPosition = temp;
+//        }
+        this.distance = finalPosition - initialPosition;
+
+        t1 = constraints.velo / constraints.accel;
+        t3 = constraints.velo / constraints.decel;
+        t2 = Math.abs(distance) / constraints.velo - (t1 + t3) / 2;
+
+        if (t2 < 0) {
+            this.t2 = 0;
+
+            double a = (constraints.accel / 2) * (1 - constraints.accel / -constraints.decel);
+            double c = -distance;
+
+            t1 = Math.sqrt(-4 * a * c) / (2 * a);
+            t3 = -(constraints.accel * t1) / -constraints.decel;
+            t1_stop_position = (constraints.accel * Math.pow(t1, 2)) / 2;
+
+            max_velocity = constraints.accel * t1;
+
+            t2_stop_position = t1_stop_position;
+        } else {
+            max_velocity = constraints.velo;
+            t1_stop_position = (constraints.velo * t1) / 2;
+            t2_stop_position = t1_stop_position + t2 * max_velocity;
+        }
+
+        totalTime = t1 + t2 + t3;
+    }
+
     public MotionProfile(double initialPosition, double finalPosition, ProfileConstraints constraints) {
         if (finalPosition < initialPosition) {
             flipped = true;
@@ -57,6 +93,8 @@ public class MotionProfile {
     }
 
     public ProfileState calculate(final double time) {
+        update();
+
         double position, velocity, acceleration, stage_time;
         if (time <= t1) {
             stage_time = time;

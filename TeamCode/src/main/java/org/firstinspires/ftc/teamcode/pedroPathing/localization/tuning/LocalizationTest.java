@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.PoseUpdater;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.DashboardPoseTracker;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.Drawing;
@@ -45,7 +46,7 @@ public class LocalizationTest extends OpMode {
     private DcMotorEx rightFront;
     private DcMotorEx rightRear;
     private List<DcMotorEx> motors;
-    private Rev2mDistanceSensor distanceOne;
+//    private Rev2mDistanceSensor distanceOne;
 
     /**
      * This initializes the PoseUpdater, the mecanum drive motors, and the FTC Dashboard telemetry.
@@ -76,7 +77,12 @@ public class LocalizationTest extends OpMode {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
-        distanceOne = hardwareMap.get(Rev2mDistanceSensor.class, "distanceOne");
+        poseUpdater.update();
+
+        poseUpdater.setPose(new Pose(10,10,0));
+        poseUpdater.setStartingPose(new Pose(10,10,0));
+
+//        distanceOne = hardwareMap.get(Rev2mDistanceSensor.class, "distanceOne");
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         telemetryA.addLine("This will print your robot's position to telemetry while "
@@ -116,7 +122,7 @@ public class LocalizationTest extends OpMode {
 
         telemetryA.addData("x", poseUpdater.getPose().getX());
         telemetryA.addData("y", poseUpdater.getPose().getY());
-        telemetryA.addData("dist", distanceOne.getDistance(DistanceUnit.INCH));
+//        telemetryA.addData("dist", distanceOne.getDistance(DistanceUnit.INCH));
         telemetryA.addData("heading", poseUpdater.getPose().getHeading());
         telemetryA.addData("total heading", poseUpdater.getTotalHeading());
         telemetryA.update();
