@@ -26,6 +26,7 @@
 //import static com.qualcomm.robotcore.util.TypeConversion.byteArrayToInt;
 //
 //import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
+//import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 //import com.qualcomm.robotcore.hardware.I2cAddr;
 //import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
 //import com.qualcomm.robotcore.hardware.I2cDeviceSynchSimple;
@@ -35,6 +36,8 @@
 //
 //import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 //import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+////import org.firstinspires.ftc.robotcore.external.navigation;
+
 //import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 //
 //import java.nio.ByteBuffer;
@@ -314,6 +317,9 @@
 //     * @param yEncoder FORWARD or REVERSED, Y (strafe) pod should increase when the robot is moving left
 //     */
 //    public void setEncoderDirections(EncoderDirection xEncoder, EncoderDirection yEncoder){
+//        if (xEncoder == EncoderDirection.REVERSED) {
+//            writeInt(Register.DEVICE_CONTROL,1<<4);
+//        }
 //        if (xEncoder == EncoderDirection.FORWARD){
 //            writeInt(Register.DEVICE_CONTROL,1<<5);
 //        }
@@ -386,6 +392,8 @@
 //     * relative to that new, more accurate position.
 //     * @param pos a Pose2D describing the robot's new position.
 //     */
+//    public SparkFunOTOS.Pose2D setPosition(SparkFunOTOS.Pose2D pos){
+
 //    public Pose2D setPosition(Pose2D pos){
 //        writeByteArray(Register.X_POSITION,(floatToByteArray((float) pos.getX(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
 //        writeByteArray(Register.Y_POSITION,(floatToByteArray((float) pos.getY(DistanceUnit.MM),ByteOrder.LITTLE_ENDIAN)));

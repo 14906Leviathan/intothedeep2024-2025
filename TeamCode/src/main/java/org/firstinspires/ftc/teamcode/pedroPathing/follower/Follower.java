@@ -28,6 +28,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -96,6 +97,8 @@ public class Follower {
     private boolean holdPositionAtEnd;
     private boolean teleopDrive;
 
+    private double maxPower = 1;
+    private double oldMaxPower = 1;
     private double previousSecondaryTranslationalIntegral;
     private double previousTranslationalIntegral;
     private double holdPointTranslationalScaling = FollowerConstants.holdPointTranslationalScaling;
@@ -110,6 +113,8 @@ public class Follower {
 
     private ArrayList<Vector> velocities = new ArrayList<>();
     private ArrayList<Vector> accelerations = new ArrayList<>();
+    private double criticalVoltage = 0;
+    private double criticalVoltageDrivePower = 0;
 
     private Vector averageVelocity;
     private Vector averagePreviousVelocity;
@@ -137,6 +142,7 @@ public class Follower {
     private double[] driveErrors;
     private double rawDriveError;
     private double previousRawDriveError;
+    private VoltageSensor vSensor;
 
     public static boolean drawOnDashboard = true;
     public static boolean useTranslational = true;
@@ -155,6 +161,19 @@ public class Follower {
     }
 
     /**
+     *
+     * This method tells the follower to slow down if the voltage
+     * of the robot goes below a certain point
+     *
+     * @param voltage The voltage at which the Pedro Pathing slows down (Ex. 10)
+     * @param setPower The power to slow down to (Ex. 0.4)
+     */
+    public void setSlowDownVoltage(double voltage, double setPower) {
+        this.criticalVoltage = voltage;
+        this.criticalVoltageDrivePower = setPower;
+    }
+
+    /**
      * This initializes the follower.
      * In this, the DriveVectorScaler and PoseUpdater is instantiated, the drive motors are
      * initialized and their behavior is set, and the variables involved in approximating first and
@@ -168,6 +187,9 @@ public class Follower {
         leftRear = hardwareMap.get(DcMotorEx.class, leftRearMotorName);
         rightRear = hardwareMap.get(DcMotorEx.class, rightRearMotorName);
         rightFront = hardwareMap.get(DcMotorEx.class, rightFrontMotorName);
+      
+        vSensor = hardwareMap.voltageSensor.iterator().next();
+      
         leftFront.setDirection(leftFrontMotorDirection);
         leftRear.setDirection(leftRearMotorDirection);
         rightFront.setDirection(rightFrontMotorDirection);
@@ -375,6 +397,15 @@ public class Follower {
         holdPoint(new Point(pose), pose.getHeading());
     }
 
+    public void updateHoldPoint(Pose pose) {
+        if (holdingPosition) {
+//            isBusy = false;
+//            followingPathChain = false;
+            currentPath = new Path(new BezierPoint(new Point(pose)));
+            currentPath.setConstantHeadingInterpolation(pose.getHeading());
+//            closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
+        }
+    }
     /**
      * This follows a Path.
      * This also makes the Follower hold the last Point on the Path.
@@ -458,10 +489,25 @@ public class Follower {
                 if (holdingPosition) {
                     closestPose = currentPath.getClosestPoint(poseUpdater.getPose(), 1);
 
+                    double voltage = vSensor.getVoltage();
+
+                    if(voltage <= criticalVoltage) {
+                        if(oldMaxPower == 0) {
+                            oldMaxPower = maxPower;
+                        }
+                        setMaxPower(criticalVoltageDrivePower);
+                    } else {
+                        if(oldMaxPower != 0) {
+                            setMaxPower(oldMaxPower);
+
+                            oldMaxPower = 0; // we set this to 0 so that if we reach critical voltage again, it will not set oldMaxPower to criticalVoltageDrivePower
+                        }
+                    }
+
                     drivePowers = driveVectorScaler.getDrivePowers(MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling), MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling), new Vector(), poseUpdater.getPose().getHeading());
 
                     for (int i = 0; i < motors.size(); i++) {
-                        motors.get(i).setPower(drivePowers[i]);
+                        motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
                     }
                 } else {
                     if (isBusy) {
@@ -469,10 +515,25 @@ public class Follower {
 
                         if (followingPathChain) updateCallbacks();
 
+                        double voltage = vSensor.getVoltage();
+
+                        if(voltage <= criticalVoltage) {
+                            if(oldMaxPower == 0) {
+                                oldMaxPower = maxPower;
+                            }
+                            setMaxPower(criticalVoltageDrivePower);
+                        } else {
+                            if(oldMaxPower != 0) {
+                                setMaxPower(oldMaxPower);
+
+                                oldMaxPower = 0; // we set this to 0 so that if we reach critical voltage again, it will not set oldMaxPower to criticalVoltageDrivePower
+                            }
+                        }
+
                         drivePowers = driveVectorScaler.getDrivePowers(getCorrectiveVector(), getHeadingVector(), getDriveVector(), poseUpdater.getPose().getHeading());
 
                         for (int i = 0; i < motors.size(); i++) {
-                            motors.get(i).setPower(drivePowers[i]);
+                            motors.get(i).setPower(drivePowers[i] * (12.0 / voltage));
                         }
                     }
                     if (currentPath.isAtParametricEnd()) {
@@ -716,14 +777,32 @@ public class Follower {
         Vector forwardHeadingVector = new Vector(1.0, poseUpdater.getPose().getHeading());
         double forwardVelocity = MathFunctions.dotProduct(forwardHeadingVector, velocity);
         double forwardDistanceToGoal = MathFunctions.dotProduct(forwardHeadingVector, distanceToGoalVector);
-        double forwardVelocityGoal = MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * forwardZeroPowerAcceleration * forwardDistanceToGoal));
-        double forwardVelocityZeroPowerDecay = forwardVelocity - MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(forwardVelocity, 2) + 2 * forwardZeroPowerAcceleration * forwardDistanceToGoal));
+
+        double forwardZeroPowerLocal = forwardZeroPowerAcceleration;
+
+        if (forwardDistanceToGoal < 0) {
+            forwardZeroPowerLocal = Math.abs(forwardZeroPowerLocal);
+        } else if (forwardDistanceToGoal > 0) {
+            forwardZeroPowerLocal = -Math.abs(forwardZeroPowerLocal);
+        }
+
+        double forwardVelocityGoal = MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * forwardZeroPowerLocal * forwardDistanceToGoal));
+        double forwardVelocityZeroPowerDecay = forwardVelocity - MathFunctions.getSign(forwardDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(forwardVelocity, 2) + 2 * forwardZeroPowerLocal * forwardDistanceToGoal));
 
         Vector lateralHeadingVector = new Vector(1.0, poseUpdater.getPose().getHeading() - Math.PI / 2);
         double lateralVelocity = MathFunctions.dotProduct(lateralHeadingVector, velocity);
         double lateralDistanceToGoal = MathFunctions.dotProduct(lateralHeadingVector, distanceToGoalVector);
-        double lateralVelocityGoal = MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * lateralZeroPowerAcceleration * lateralDistanceToGoal));
-        double lateralVelocityZeroPowerDecay = lateralVelocity - MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(lateralVelocity, 2) + 2 * lateralZeroPowerAcceleration * lateralDistanceToGoal));
+
+        double lateralZeroPowerLocal = lateralZeroPowerAcceleration;
+
+        if (lateralDistanceToGoal < 0) {
+            lateralZeroPowerLocal = Math.abs(lateralZeroPowerLocal);
+        } else if (lateralDistanceToGoal > 0) {
+            lateralZeroPowerLocal = -Math.abs(lateralZeroPowerLocal);
+        }
+
+        double lateralVelocityGoal = MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(-2 * currentPath.getZeroPowerAccelerationMultiplier() * lateralZeroPowerLocal * lateralDistanceToGoal));
+        double lateralVelocityZeroPowerDecay = lateralVelocity - MathFunctions.getSign(lateralDistanceToGoal) * Math.sqrt(Math.abs(Math.pow(lateralVelocity, 2) + 2 * lateralZeroPowerLocal * lateralDistanceToGoal));
 
         Vector forwardVelocityError = new Vector(forwardVelocityGoal - forwardVelocityZeroPowerDecay - forwardVelocity, forwardHeadingVector.getTheta());
         Vector lateralVelocityError = new Vector(lateralVelocityGoal - lateralVelocityZeroPowerDecay - lateralVelocity, lateralHeadingVector.getTheta());
