@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 
 /**
  * This is the TeleOpEnhancements OpMode. It is an example usage of the TeleOp enhancements that
@@ -52,7 +53,15 @@ public class TeleOpEnhancements extends OpMode {
      */
     @Override
     public void loop() {
-        follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
+        follower.setTeleOpMovementVectors(gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, false);
         follower.update();
+
+        if(gamepad1.options) {
+            follower.setPose(new Pose(0,0,0));
+            gamepad1.rumble(350);
+        }
+
+        telemetry.addData("heading: ", Math.toDegrees(follower.getTotalHeading()));
+        telemetry.update();
     }
 }

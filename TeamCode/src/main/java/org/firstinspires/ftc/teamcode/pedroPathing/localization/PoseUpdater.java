@@ -6,7 +6,10 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers.PinpointLocalizer;
-import org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers.RRMecDriveLocalizer;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers.DriveEncoderLocalizer;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers.ThreeWheelIMULocalizer;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers.ThreeWheelLocalizer;
+import org.firstinspires.ftc.teamcode.pedroPathing.localization.localizers.TwoWheelLocalizer;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
 
@@ -61,6 +64,7 @@ public class PoseUpdater {
         }
 
         this.localizer = localizer;
+        imu = localizer.getIMU();
     }
 
     /**
@@ -262,9 +266,10 @@ public class PoseUpdater {
      */
     public Vector getVelocity() {
         if (currentVelocity == null) {
-            currentVelocity = new Vector();
-            currentVelocity.setOrthogonalComponents(getPose().getX() - previousPose.getX(), getPose().getY() - previousPose.getY());
-            currentVelocity.setMagnitude(MathFunctions.distance(getPose(), previousPose) / ((currentPoseTime - previousPoseTime) / Math.pow(10.0, 9)));
+//            currentVelocity = new Vector();
+//            currentVelocity.setOrthogonalComponents(getPose().getX() - previousPose.getX(), getPose().getY() - previousPose.getY());
+//            currentVelocity.setMagnitude(MathFunctions.distance(getPose(), previousPose) / ((currentPoseTime - previousPoseTime) / Math.pow(10.0, 9)));
+            currentVelocity = localizer.getVelocityVector();
             return MathFunctions.copyVector(currentVelocity);
         } else {
             return MathFunctions.copyVector(currentVelocity);
@@ -301,7 +306,9 @@ public class PoseUpdater {
      * This resets the heading of the robot to the IMU's heading, using Road Runner's pose reset.
      */
     public void resetHeadingToIMU() {
-        localizer.setPose(new Pose(getPose().getX(), getPose().getY(), getNormalizedIMUHeading() + startingPose.getHeading()));
+        if (imu != null) {
+            localizer.setPose(new Pose(getPose().getX(), getPose().getY(), getNormalizedIMUHeading() + startingPose.getHeading()));
+        }
     }
 
     /**
@@ -310,7 +317,9 @@ public class PoseUpdater {
      * method.
      */
     public void resetHeadingToIMUWithOffsets() {
-        setCurrentPoseWithOffset(new Pose(getPose().getX(), getPose().getY(), getNormalizedIMUHeading() + startingPose.getHeading()));
+        if (imu != null) {
+            setCurrentPoseWithOffset(new Pose(getPose().getX(), getPose().getY(), getNormalizedIMUHeading() + startingPose.getHeading()));
+        }
     }
 
     /**
@@ -319,7 +328,10 @@ public class PoseUpdater {
      * @return returns the normalized IMU heading.
      */
     public double getNormalizedIMUHeading() {
-        return MathFunctions.normalizeAngle(-imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        if (imu != null) {
+            return MathFunctions.normalizeAngle(-imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        }
+        return 0;
     }
 
     /**
@@ -343,7 +355,7 @@ public class PoseUpdater {
     /**
      *
      */
-    public void resetIMU() {
+    public void resetIMU() throws InterruptedException {
         localizer.resetIMU();
     }
 }
