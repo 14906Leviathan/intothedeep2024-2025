@@ -37,6 +37,8 @@
 //import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 //import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 ////import org.firstinspires.ftc.robotcore.external.navigation;
+
+//import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 //
 //import java.nio.ByteBuffer;
 //import java.nio.ByteOrder;
@@ -318,6 +320,16 @@
 //        if (xEncoder == EncoderDirection.REVERSED) {
 //            writeInt(Register.DEVICE_CONTROL,1<<4);
 //        }
+//        if (xEncoder == EncoderDirection.FORWARD){
+//            writeInt(Register.DEVICE_CONTROL,1<<5);
+//        }
+//        if (xEncoder == EncoderDirection.REVERSED) {
+//            writeInt(Register.DEVICE_CONTROL,1<<4);
+//        }
+//
+//        if (yEncoder == EncoderDirection.FORWARD){
+//            writeInt(Register.DEVICE_CONTROL,1<<3);
+//        }
 //        if (yEncoder == EncoderDirection.REVERSED){
 //            writeInt(Register.DEVICE_CONTROL,1<<2);
 //        }
@@ -381,6 +393,8 @@
 //     * @param pos a Pose2D describing the robot's new position.
 //     */
 //    public SparkFunOTOS.Pose2D setPosition(SparkFunOTOS.Pose2D pos){
+
+//    public Pose2D setPosition(Pose2D pos){
 //        writeByteArray(Register.X_POSITION,(floatToByteArray((float) pos.getX(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
 //        writeByteArray(Register.Y_POSITION,(floatToByteArray((float) pos.getY(DistanceUnit.MM),ByteOrder.LITTLE_ENDIAN)));
 //        writeByteArray(Register.H_ORIENTATION,(floatToByteArray((float) pos.getHeading(AngleUnit.RADIANS),ByteOrder.LITTLE_ENDIAN)));
