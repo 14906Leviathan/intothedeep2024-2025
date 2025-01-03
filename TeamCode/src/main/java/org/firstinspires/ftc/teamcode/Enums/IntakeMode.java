@@ -4,5 +4,5 @@ public enum IntakeMode {
     INTAKE,
     OUTTAKE,
     HOLD,
-    IDLE
+    LOOSE_GRAB, IDLE
 }

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.AutoPedro;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.Enums.WristAngle;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
@@ -23,6 +25,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Left 4+0 V1 Pedro", group = "0", preselectTeleOp = "0: Main TeleOp")
+@Disabled
 public class LeftV1_4_0_Pedro extends LinearOpMode {
     private Follower follower;
     private ElapsedTime autoTime = new ElapsedTime();
@@ -49,12 +52,13 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
     private boolean autoStart = true;
     private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
     private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
+    private WristAngle wristAngle = WristAngle.SPECIMEN_SCORE_1;
     private boolean opModeRunning = true;
     private AutoManagerPedro autoManager;
     private Thread armHandlerThread = new Thread(() -> {
         while (opModeIsActive()) {
-//            arm.update();
-//            intake.update();
+//            arm.update(opModeIsActive());
+//            intake.update(opModeIsActive());
 //            autoManager.update();
 
             telemetry.addData("X:", follower.getPose().getX());
@@ -100,16 +104,17 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         arm.setPedroAuto(true);
         arm.resetSlidesPosition();
 
+        intake.setWristAngle(wristAngle);
         intake.setGrabAngle(grabAngle);
         intake.setGrabStyle(grabStyle);
         intake.intake();
 
-        intake.update();
-        arm.update();
+        intake.update(opModeIsActive());
+        arm.update(opModeIsActive());
 
         autoManager = new AutoManagerPedro(this, follower, () -> {
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
 
             telemetryA.addData("limelight fps: ", robot.limelight.getStatus().getFps());
             telemetryA.addData("s1 x: ", s1Xerror);
@@ -131,8 +136,8 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         arm.setSlidesPower(1);
 
         while (!opModeIsActive()) {
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
             if(robot.limelight.getStatus().getFps() == 0) {
                 for(int i = 0; i <= 30; i++) {
                     telemetry.addLine("UNPLUG AND REPLUG THE LIMELIGHT");
@@ -220,7 +225,7 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         autoManager.setSpeed(1);
         params.TELEOP_START_MODE = TeleopMode.TOUCH_POLE_AUTO;
         autoManager.runPath(autoManager.park, false);
-//        arm.update();
+//        arm.update(opModeIsActive());
 //        autoManager.safeSleep(750);
 //        arm.setParkArmUp(false);
 //        autoManager.safeSleep(10000);
@@ -336,20 +341,20 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         arm.setTeleopMode(currentMode);
 //        if(sampleNum != 3) arm.setAnimationType(AnimationType.FAST);
         arm.setBucket(2);
-        arm.update();
+        arm.update(opModeIsActive());
         autoManager.safeSleep(800); //1250
         arm.setArmPower(.6);
     }
 
     public void bucketScore(int sampleNum) {
         intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
-        intake.update();
+        intake.update(opModeIsActive());
 
         if (arm.getTeleopMode() != TeleopMode.BUCKET_SCORE) {
             currentMode = TeleopMode.BUCKET_SCORE;
             arm.setTeleopMode(currentMode);
             arm.setBucket(2);
-            arm.update();
+            arm.update(opModeIsActive());
             if (sampleNum == 1) {
                 autoManager.safeSleep(1250);
             } else {
@@ -385,11 +390,11 @@ public class LeftV1_4_0_Pedro extends LinearOpMode {
         if (sampleNum != 4) {
 //            autoManager.setSpeed(.6);
 //            autoManager.runPath(autoManager.backupPath, false);
-//            currentMode = TeleopMode.INTAKE;
+//            currentMode = TeleopMode.DOWN;
 //            arm.setTeleopMode(currentMode);
 //            arm.setIntakePosition(params.PEDRO_AUTO_INTAKE_Y1_POS);
 //            arm.intakeUpMode();
-//            arm.update();
+//            arm.update(opModeIsActive());
 //            autoManager.safeSleep(250);
 //            autoManager.setSpeed(1);
         }

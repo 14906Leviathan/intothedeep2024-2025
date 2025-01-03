@@ -3,15 +3,16 @@ package org.firstinspires.ftc.teamcode.AutoPedro;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.Enums.WristAngle;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
@@ -25,6 +26,7 @@ import org.openftc.easyopencv.OpenCvWebcam;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous(name = "Left 3+1 V1 Pedro", group = "0", preselectTeleOp = "0: Main TeleOp")
+@Disabled
 public class LeftV1_3_1_Pedro extends LinearOpMode {
     private Follower follower;
     private ElapsedTime autoTime = new ElapsedTime();
@@ -51,6 +53,7 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
     private boolean autoStart = true;
     private GrabAngle grabAngle = GrabAngle.VERTICAL_GRAB;
     private GrabStyle grabStyle = GrabStyle.OUTSIDE_GRAB;
+    private WristAngle wristAngle = WristAngle.SPECIMEN_SCORE_1;
     private boolean opModeRunning = true;
     private SampleDetectionPipelinePNP detectionPipe;
     private OpenCvWebcam webcam;
@@ -101,15 +104,16 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         arm.resetSlidesPosition();
 
         intake.setGrabAngle(grabAngle);
+        intake.setWristAngle(wristAngle);
         intake.setGrabStyle(grabStyle);
         intake.intake();
 
-        intake.update();
-        arm.update();
+        intake.update(opModeIsActive());
+        arm.update(opModeIsActive());
 
         autoManager = new AutoManagerPedro(this, follower, () -> {
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
             telemetryA.addData("start x: ", robotStartPose.getX());
             telemetryA.addData("start y: ", robotStartPose.getY());
             telemetryA.addData("limelight fps: ", robot.limelight.getStatus().getFps());
@@ -158,8 +162,8 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 //        FtcDashboard.getInstance().startCameraStream(webcam, 30);
 
         while (!opModeIsActive()) {
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
             telemetry.addData("limelight connected: ", robot.limelight.isConnected());
             if(robot.limelight.getStatus().getFps() == 0) {
                 for(int i = 0; i <= 30; i++) {
@@ -226,12 +230,12 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         robotStartPose = follower.getPose();
 
         specimenScore(1);
-        intake(1);
-        bucketScore(1);
-        intake(2);
-        bucketScore(2);
-        intake(3);
-        bucketScore(3);
+//        intake(1);
+//        bucketScore(1);
+//        intake(2);
+//        bucketScore(2);
+//        intake(3);
+//        bucketScore(3);
 //        park();
 
         params.AUTO_END_HEADING = Math.toDegrees(follower.getTotalHeading());
@@ -251,12 +255,8 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         autoManager.safeSleep(350);
 //        autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
-        arm.setArmPositionSpecimen(70); //params.ARM_SCORE_SPECIMEN
-        arm.setSlidesPositionSpecimen(6); //params.SLIDES_SCORE_SPECIMEN
-        autoManager.safeSleep(500);
-        arm.setArmPositionSpecimen(90); //params.ARM_SCORE_SPECIMEN
-        arm.setSlidesPositionSpecimen(0); //params.SLIDES_SCORE_SPECIMEN
-        autoManager.safeSleep(350);
+        arm.setArmPositionSpecimen(params.ARM_SPECIMEN_POLE_2_START); //params.ARM_SCORE_SPECIMEN
+        arm.setSlidesPositionSpecimen(params.SLIDES_SPECIMEN_POLE_2_SCORE_CLAW); //params.SLIDES_SCORE_SPECIMEN
 //        autoManager.safeSleep(30_000);
 //        autoManager.runPath(new PathBuilder()
 //                .addPath(new Path(
@@ -269,18 +269,18 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 //        autoManager.safeSleep(350);
 
         intake.outtake();
-        intake.update();
+        intake.update(opModeIsActive());
         autoManager.safeSleep(200);
 //        autoManager.safeSleep(30000);
 
-        autoManager.runPath(autoManager.specBackup);
+//        autoManager.runPath(autoManager.specBackup);
     }
 
     public void park() {
         autoManager.setSpeed(1);
         params.TELEOP_START_MODE = TeleopMode.BUCKET_SCORE;
         autoManager.runPath(autoManager.park, false);
-//        arm.update();
+//        arm.update(opModeIsActive());
 //        autoManager.safeSleep(750);
 //        arm.setParkArmUp(false);
 //        autoManager.safeSleep(10000);
@@ -396,7 +396,7 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         arm.setTeleopMode(currentMode);
 //        if(sampleNum != 3) arm.setAnimationType(AnimationType.FAST);
         arm.setBucket(2);
-        arm.update();
+        arm.update(opModeIsActive());
         autoManager.safeSleep(800); //1250
         arm.setArmPower(.6);
     }
@@ -408,7 +408,7 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
             currentMode = TeleopMode.BUCKET_SCORE;
             arm.setTeleopMode(currentMode);
             arm.setBucket(2);
-            arm.update();
+            arm.update(opModeIsActive());
             if (sampleNum == 1) {
                 autoManager.safeSleep(1250);
             } else {
@@ -418,7 +418,7 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
 
         arm.setSlidesPower(1);
         arm.extendSlidesOuttake();
-        arm.update();
+        arm.update(opModeIsActive());
 
         autoManager.setSpeed(1);
         if (sampleNum == 1) {
@@ -446,11 +446,11 @@ public class LeftV1_3_1_Pedro extends LinearOpMode {
         if (sampleNum != 4) {
 //            autoManager.setSpeed(.6);
 //            autoManager.runPath(autoManager.backupPath, false);
-//            currentMode = TeleopMode.INTAKE;
+//            currentMode = TeleopMode.DOWN;
 //            arm.setTeleopMode(currentMode);
 //            arm.setIntakePosition(params.PEDRO_AUTO_INTAKE_Y1_POS);
 //            arm.intakeUpMode();
-//            arm.update();
+//            arm.update(opModeIsActive());
 //            autoManager.safeSleep(250);
 //            autoManager.setSpeed(1);
         }

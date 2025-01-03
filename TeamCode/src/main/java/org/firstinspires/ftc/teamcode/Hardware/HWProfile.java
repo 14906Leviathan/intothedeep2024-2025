@@ -29,6 +29,7 @@ public class HWProfile {
     public AnalogInput armEncoder = null;
     public SimpleServo clawServo = null;
     public SimpleServo clawPivotServo = null;
+    public SimpleServo wristServo = null;
     public SimpleServo poleToucher = null;
     public IMU.Parameters imuParams;
     public GoBildaPinpointDriver pinpoint = null;
@@ -119,6 +120,9 @@ public class HWProfile {
 
         poleToucher = new SimpleServo(hwMap, "poleToucher", 0, 180, AngleUnit.DEGREES);
         poleToucher.setInverted(true);
+
+        wristServo = new SimpleServo(hwMap, "wristServo", 0, 270, AngleUnit.DEGREES);
+        wristServo.setInverted(true);
 
 
         limelight = hwMap.get(Limelight3A.class, "limelight");

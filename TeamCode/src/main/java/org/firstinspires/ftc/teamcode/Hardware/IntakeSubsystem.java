@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.Enums.GrabStyle;
 import org.firstinspires.ftc.teamcode.Enums.IntakeMode;
 import org.firstinspires.ftc.teamcode.Enums.IntakeType;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.Enums.WristAngle;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
 @Config
@@ -24,6 +25,8 @@ public class IntakeSubsystem extends Subsystem {
     public boolean closed = false;
     private boolean shortRange = false;
     private double customAngle = 0;
+    private WristAngle wristAngle = WristAngle.DOWN;
+    private double customWristAngle = 0;
 
     public IntakeSubsystem(HWProfile myRobot, LinearOpMode myOpMode, Params myParams){
         robot = myRobot;
@@ -47,6 +50,10 @@ public class IntakeSubsystem extends Subsystem {
         closed = true;
     }
 
+    public void setCustomWristAngle(double set) {
+        customWristAngle = set;
+    }
+
     public void setShortRange(boolean set) {
         shortRange = set;
     }
@@ -55,12 +62,12 @@ public class IntakeSubsystem extends Subsystem {
         grabStyle = _grabStyle;
     }
 
-    public void setCustomGrabAngle(double customAngle) {
+    public void setCustomPivotAngle(double customAngle) {
         customAngle = MathFunctions.clamp(customAngle, 0, 270);
         this.customAngle = customAngle;
     }
 
-    public double getCustomGrabAngle() {
+    public double getCustomPivotAngle() {
         customAngle = MathFunctions.clamp(customAngle, 0, 270);
         return customAngle;
     }
@@ -74,6 +81,10 @@ public class IntakeSubsystem extends Subsystem {
 
     public GrabAngle getGrabAngle() {
         return grabAngle;
+    }
+
+    public void setWristAngle(WristAngle wristAngle) {
+        this.wristAngle = wristAngle;
     }
 
     public void toggle() {
@@ -104,7 +115,13 @@ public class IntakeSubsystem extends Subsystem {
         currentIntakeMode = IntakeMode.IDLE;
     }
 
-    public void update() {
+    public void looseGrab() {
+        currentIntakeMode = IntakeMode.LOOSE_GRAB;
+    }
+
+    public void update(boolean opModeActive) {
+        if(!opModeActive) return;
+
         if(params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
             if (currentIntakeMode == IntakeMode.INTAKE) {
                 robot.intakeServo1.setPower(params.INTAKE_SPEED);
@@ -145,6 +162,26 @@ public class IntakeSubsystem extends Subsystem {
                 } else if(grabStyle == GrabStyle.INSIDE_GRAB) {
                     robot.clawServo.turnToAngle(params.CLAW_INSIDE_DROP_ANGLE);
                 }
+            } else if (currentIntakeMode == IntakeMode.LOOSE_GRAB) {
+                robot.clawServo.turnToAngle(params.LOOSE_GRAB);
+            }
+
+            if(params.USING_WRIST) {
+                if(wristAngle == WristAngle.DOWN) {
+                    robot.wristServo.turnToAngle(params.WRIST_INTAKE_ANGLE);
+                } else if(wristAngle == WristAngle.BUCKET_SCORE) {
+                    robot.wristServo.turnToAngle(params.WRIST_SCORE_ANGLE);
+                } else if(wristAngle == WristAngle.SPECIMEN_INTAKE) {
+                    robot.wristServo.turnToAngle(params.WRIST_SPECIMEN_INTAKE_ANGLE);
+                } else if(wristAngle == WristAngle.SPECIMEN_SCORE_1) {
+                    robot.wristServo.turnToAngle(params.WRIST_SPECIMEN_SCORE_1_ANGLE);
+                } else if(wristAngle == WristAngle.SPECIMEN_SCORE_2) {
+                    robot.wristServo.turnToAngle(params.WRIST_SPECIMEN_SCORE_2_ANGLE);
+                } else if (wristAngle == WristAngle.IDLE) {
+                    robot.wristServo.turnToAngle(params.WRIST_IDLE_ANGLE);
+                } else if(wristAngle == WristAngle.CUSTOM) {
+                    robot.wristServo.turnToAngle(customWristAngle);
+                }
             }
 
             if(grabAngle == GrabAngle.VERTICAL_GRAB) {
@@ -153,11 +190,17 @@ public class IntakeSubsystem extends Subsystem {
                 robot.clawPivotServo.turnToAngle(params.PIVOT_HORIZONTAL_ANG);
             } else if(grabAngle == GrabAngle.CUSTOM) {
                 robot.clawPivotServo.turnToAngle(customAngle);
+            } else if(grabAngle == GrabAngle.INVERTED) {
+                robot.clawPivotServo.turnToAngle(params.PIVOT_INVERTED);
             }
         }
     }
 
     public void setTeleopMode(TeleopMode mode) {
         return;
+    }
+
+    public WristAngle getWristAngle() {
+        return wristAngle;
     }
 }

@@ -72,12 +72,12 @@ public class BrokenBot extends LinearOpMode {
             }
 
             if(gamepad1.x) {
-                robot.poleToucher.turnToAngle(0);
+                robot.wristServo.turnToAngle(0);
             } else if(gamepad1.y) {
-                robot.poleToucher.turnToAngle(90);
+                robot.wristServo.turnToAngle(90);
             }
 
-            arm.update();
+            arm.update(opModeIsActive());
 
             telemetry.addData("VSensor: ", voltageSensor.getVoltage());
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());

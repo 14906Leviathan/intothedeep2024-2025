@@ -79,8 +79,8 @@ public class SampleSenseTest extends LinearOpMode {
         follower = new Follower(hardwareMap);
 
         autoManager = new AutoManagerPedro(this, follower, () -> {
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
         }, arm, intake, robot);
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -124,10 +124,10 @@ public class SampleSenseTest extends LinearOpMode {
         arm.setTeleopMode(TeleopMode.INTAKE);
         arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
         arm.intakeUpMode();
-        arm.update();
+        arm.update(opModeIsActive());
 
         while (opModeInInit()) {
-            arm.update();
+            arm.update(opModeIsActive());
         }
 
         waitForStart();
@@ -137,7 +137,7 @@ public class SampleSenseTest extends LinearOpMode {
         follower.startTeleopDrive();
 
         while (opModeIsActive()) {
-            arm.update();
+            arm.update(opModeIsActive());
             intake.outtake();
             follower.update();
 
@@ -177,8 +177,8 @@ public class SampleSenseTest extends LinearOpMode {
 
         while (timer.time(TimeUnit.MILLISECONDS) <= time) {
             follower.update();
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
 
             if (isStopRequested()) break;
             if (!opModeIsActive()) break;
