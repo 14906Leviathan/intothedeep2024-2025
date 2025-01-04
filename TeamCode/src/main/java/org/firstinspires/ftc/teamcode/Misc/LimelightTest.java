@@ -46,8 +46,8 @@ public class LimelightTest extends LinearOpMode {
         follower = new Follower(hardwareMap);
 
         autoManager = new AutoManagerPedro(this, follower, () -> {
-            arm.update();
-            intake.update();
+            arm.update(opModeIsActive());
+            intake.update(opModeIsActive());
         }, arm, intake, robot);
 
         arm.setTeleopMode(TeleopMode.INTAKE);
@@ -57,12 +57,12 @@ public class LimelightTest extends LinearOpMode {
         arm.setArmPower(1);
         arm.setSlidesPower(1);
         arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
-        arm.update();
+        arm.update(opModeIsActive());
 
         robot.limelight.start();
 
         while (opModeInInit()) {
-            arm.update();
+            arm.update(opModeIsActive());
         }
 
         waitForStart();
@@ -74,7 +74,7 @@ public class LimelightTest extends LinearOpMode {
             LLResult result = robot.limelight.getLatestResult();
 
             arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
-            arm.update();
+            arm.update(opModeIsActive());
 
 //            if(result != null) {
 //                if(result.isValid()) {

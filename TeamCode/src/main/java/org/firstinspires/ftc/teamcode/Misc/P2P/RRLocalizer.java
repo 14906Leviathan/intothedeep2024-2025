@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.Misc.P2P;
 
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.AutoRoadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Hardware.MecanumDrive;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
-import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
 
 public class RRLocalizer extends Localizer {
     private MecanumDrive mecanumDrive;

@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.tuning;
 
-import android.util.Size;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -11,14 +9,10 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.*;
 
-import org.firstinspires.ftc.teamcode.Misc.AprilTagDrive;
 import org.firstinspires.ftc.teamcode.Misc.Drawing;
-import org.firstinspires.ftc.teamcode.AutoRoadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Hardware.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Misc.TankDrive;
 
 @TeleOp(name = "localization test")

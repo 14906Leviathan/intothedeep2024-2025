@@ -31,6 +31,7 @@ public class HWProfile {
     public SimpleServo diffyRight = null;
     public IMU.Parameters imuParams;
     public VoltageSensor voltageSensor;
+    public Rev2mDistanceSensor distanceOne;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;

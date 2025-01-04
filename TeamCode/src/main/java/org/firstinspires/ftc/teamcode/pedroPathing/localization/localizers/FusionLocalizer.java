@@ -116,7 +116,7 @@ public class FusionLocalizer extends Localizer {
     }
 
     @Override
-    public void resetIMU() {
+    public void resetIMU() throws InterruptedException {
         for (int i = 0; i < localizers.values().size(); i++) {
             Localizer localizer = (Localizer) localizers.values().toArray()[i];
 
