@@ -67,7 +67,7 @@ public class V1_0_4_Pedro extends LinearOpMode {
     public V1_0_4_Pedro() {
     }
 
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException {
         follower = new Follower(hardwareMap);
         follower.resetIMU();
         telemetry.update();
@@ -177,6 +177,9 @@ public class V1_0_4_Pedro extends LinearOpMode {
             autoManager.safeSleep(1000000000);
         } else {
 
+            params.TELEOP_START_MODE = TeleopMode.IDLE;
+            params.AUTO_END_HEADING = 180;
+
 //        bucketScore(1);
             specimenScore(1);
             push();
@@ -187,17 +190,18 @@ public class V1_0_4_Pedro extends LinearOpMode {
             intakeSpec(3);
             specimenScore(4);
 //            park();
-
-            params.AUTO_END_HEADING = Math.toDegrees(follower.getTotalHeading());
-
             telemetryA.addData("time: ", time.time(TimeUnit.SECONDS));
+
+            params.TELEOP_START_MODE = TeleopMode.IDLE;
+            params.AUTO_END_HEADING = Math.toDegrees(follower.getPose().getHeading());
+
             telemetryA.update();
             autoManager.safeSleep(10000);
         }
     }
 
     public void push() {
-        currentMode = TeleopMode.IDLE;
+        currentMode = TeleopMode.INTAKE;
 
         wristAngle = WristAngle.SPECIMEN_INTAKE;
         intake.setWristAngle(wristAngle);
@@ -255,7 +259,6 @@ public class V1_0_4_Pedro extends LinearOpMode {
 
     public void park() {
         autoManager.setSpeed(1);
-        params.TELEOP_START_MODE = TeleopMode.IDLE;
         autoManager.runPath(autoManager.park, false);
 //        arm.update(opModeIsActive());
 //        autoManager.safeSleep(750);
@@ -268,12 +271,16 @@ public class V1_0_4_Pedro extends LinearOpMode {
             intake.setShortRange(true);
             currentMode = TeleopMode.INTAKE;
             arm.setTeleopMode(currentMode);
+            arm.setAnimationType(AnimationType.NONE);
 
             wristAngle = WristAngle.SPECIMEN_INTAKE;
             intake.setWristAngle(wristAngle);
 
             arm.update(opModeIsActive());
             intake.update(opModeIsActive());
+        } else {
+            arm.setSlidesPositionSpecimen(7);
+            arm.update(opModeIsActive());
         }
 
         autoManager.setSpeed(1);
@@ -285,10 +292,17 @@ public class V1_0_4_Pedro extends LinearOpMode {
         } else if (specNum == 3) {
             autoManager.runPath(autoManager.intakeSpec3, true);
         }
-        autoManager.safeSleep(300);
+//        autoManager.useDistance(true);
+        if(specNum == 1) {
+            autoManager.safeSleep(1400);
+        } else {
+            autoManager.safeSleep(900);
+        }
+//        autoManager.useDistance(false);
 
         intake.intake();
         autoManager.safeSleep(300);
+//        follower.setPose(autoManager.getOldPose());
 
         currentMode = TeleopMode.SPECIMEN_SCORE;
         arm.setTeleopMode(currentMode);

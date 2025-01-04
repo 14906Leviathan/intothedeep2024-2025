@@ -10,8 +10,8 @@ import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 public class Params {
     public static double LOOSE_GRAB = 62;
     public static double PIVOT_INVERTED = 270;
-    public static double WRIST_SPECIMEN_SCORE_1_ANGLE = 210;
-    public static double WRIST_SPECIMEN_SCORE_2_ANGLE = 170;
+    public static double WRIST_SPECIMEN_SCORE_1_ANGLE = 205;
+    public static double WRIST_SPECIMEN_SCORE_2_ANGLE = 165;
     public static double WRIST_SPECIMEN_INTAKE_ANGLE = 90;
     public static double WRIST_INTAKE_ANGLE = 0;
     public static double WRIST_IDLE_ANGLE = 90;
@@ -41,8 +41,8 @@ public class Params {
     public static final double SLIDES_BUCKET_1_SCORE_LEN_CLAW = 33;
     public static final double SLIDES_TOUCH_POLE_AUTO = 15;
     public static final double SLIDES_SPECIMEN_POLE_2_SCORE_CLAW = 15;
-    public static final double SLIDES_SPECIMEN_POLE_2_START = 5;
-    public static final double SLIDES_SPECIMEN_POLE_2_START_AUTO = 5;
+    public static final double SLIDES_SPECIMEN_POLE_2_START = 6;
+    public static final double SLIDES_SPECIMEN_POLE_2_START_AUTO = SLIDES_SPECIMEN_POLE_2_START;
     public static final double SLIDES_TICKS_PER_INCH = 1922/43;
     public static final double SLIDES_TRANSITION_LEN = 6;
     public static final double SLIDES_MAX_POS = 43;
@@ -86,7 +86,7 @@ public class Params {
     public static final double ARM_ERROR_TOLERANCE = 9;
     public static final double ARM_ERROR_TOLERANCE_AUTO = 4;
     public static final double ARM_TELEOP_SPECIMEN_INTAKE = 32;
-    public static final double ARM_AUTO_SPECIMEN_INTAKE = 32;
+    public static final double ARM_AUTO_SPECIMEN_INTAKE = 30;
     public static final double ARM_SPECIMEN_INTAKE_OFFSET = 7;
     public static final double SLIDES_AUTO_SPECIMEN_INTAKE = 0;
     public static final double SLIDES_TELEOP_SPECIMEN_INTAKE = 0;
@@ -103,6 +103,7 @@ public class Params {
     public static boolean USING_WRIST = true;
     public static TeleopMode TELEOP_START_MODE = TeleopMode.IDLE;
     public static double AUTO_SCORE = 0;
+    public static double DISTANCE_ONE_SPEC_OFFSET = 5; //less is closer to the wall
 
 
     /* Constructor */

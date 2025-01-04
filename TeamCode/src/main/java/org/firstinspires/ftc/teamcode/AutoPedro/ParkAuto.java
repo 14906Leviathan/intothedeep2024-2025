@@ -41,7 +41,7 @@ public class ParkAuto extends LinearOpMode {
     @Override
     public void runOpMode() {
         follower = new Follower(hardwareMap);
-        follower.resetIMU();
+//        follower.resetIMU();
         follower.setPose(new Pose(9, 83.5, Math.toRadians(0)));
         telemetry.update();
 

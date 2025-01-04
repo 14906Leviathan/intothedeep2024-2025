@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Hardware.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
@@ -679,6 +680,7 @@ public class MainTeleOp extends LinearOpMode {
             mTelemetry.addData("loop: ", loopTime.time(TimeUnit.MILLISECONDS));
 
             if (telemetryDebug) {
+                mTelemetry.addData("distance one: ", robot.distanceOne.getDistance(DistanceUnit.INCH) - 4.5);
                 mTelemetry.addData("wristAngle: ", intake.getWristAngle());
                 mTelemetry.addData("auto pathing enabled: ", autoPathingEnabled);
                 mTelemetry.addData("robot x: ", drive.pose.position.x);

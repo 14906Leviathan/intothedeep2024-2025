@@ -35,6 +35,7 @@ public class HWProfile {
     public GoBildaPinpointDriver pinpoint = null;
     public Limelight3A limelight;
     public VoltageSensor voltageSensor;
+    public Rev2mDistanceSensor distanceOne;
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -124,6 +125,7 @@ public class HWProfile {
         wristServo = new SimpleServo(hwMap, "wristServo", 0, 270, AngleUnit.DEGREES);
         wristServo.setInverted(true);
 
+        distanceOne = hwMap.get(Rev2mDistanceSensor.class, "distanceOne");
 
         limelight = hwMap.get(Limelight3A.class, "limelight");
 
