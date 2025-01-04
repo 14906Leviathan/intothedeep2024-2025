@@ -20,19 +20,16 @@ public class HWProfile {
     public IMU imu;
     public DcMotorEx slidesMotor = null;
     public DcMotorEx armMotor = null;
-    public CRServo intakeServo1 = null;
-    public CRServo intakeServo2 = null;
     public DcMotorEx motorLF = null;
     public DcMotorEx motorLR = null;
     public DcMotorEx motorRF = null;
     public DcMotorEx motorRR = null;
     public AnalogInput armEncoder = null;
     public SimpleServo clawServo = null;
-    public SimpleServo clawPivotServo = null;
     public SimpleServo poleToucher = null;
+    public SimpleServo diffyLeft = null;
+    public SimpleServo diffyRight = null;
     public IMU.Parameters imuParams;
-    public GoBildaPinpointDriver pinpoint = null;
-    public Limelight3A limelight;
     public VoltageSensor voltageSensor;
 
     /* local OpMode members. */
@@ -93,7 +90,7 @@ public class HWProfile {
 
         slidesMotor = hwMap.get(DcMotorEx.class, "slidesMotor");
         slidesMotor.setDirection(DcMotorEx.Direction.FORWARD);
-//        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         slidesMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         slidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         slidesMotor.setPower(0);               // set motor power
@@ -108,24 +105,18 @@ public class HWProfile {
 
         armEncoder = hwMap.get(AnalogInput.class, "armEncoder");
 
-        intakeServo1 = hwMap.get(CRServo.class, "intakeServo1");
-        intakeServo2 = hwMap.get(CRServo.class, "intakeServo2");
-
         clawServo = new SimpleServo(hwMap, "clawServo", 0, 180, AngleUnit.DEGREES);
         clawServo.setInverted(false);
 
-        clawPivotServo = new SimpleServo(hwMap, "clawServoPivot", 0, 270, AngleUnit.DEGREES);
-        clawPivotServo.setInverted(false);
+        diffyLeft = new SimpleServo(hwMap, "diffyLeft", 0, 270, AngleUnit.DEGREES);
+        diffyLeft.setInverted(true);
 
-        poleToucher = new SimpleServo(hwMap, "poleToucher", 0, 180, AngleUnit.DEGREES);
-        poleToucher.setInverted(true);
-
-
-        limelight = hwMap.get(Limelight3A.class, "limelight");
+        diffyRight = new SimpleServo(hwMap, "diffyRight", 0, 270, AngleUnit.DEGREES);
+        diffyRight.setInverted(false);
 
         voltageSensor = hwMap.voltageSensor.iterator().next();
-
-
+//
+//
 //        pinpoint = hwMap.get(GoBildaPinpointDriver.class,"pinpoint");
-    }
+   }
 }  // end of HWProfile Class

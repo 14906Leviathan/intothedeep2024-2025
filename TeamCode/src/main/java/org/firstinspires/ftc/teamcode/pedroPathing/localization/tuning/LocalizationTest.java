@@ -83,8 +83,8 @@ public class LocalizationTest extends OpMode {
 
         poseUpdater.update();
 
-        poseUpdater.setPose(new Pose(10,10,0));
-        poseUpdater.setStartingPose(new Pose(10,10,0));
+//        poseUpdater.setPose(new Pose(10,10,0));
+//        poseUpdater.setStartingPose(new Pose(10,10,0));
 
 //        distanceOne = hardwareMap.get(Rev2mDistanceSensor.class, "distanceOne");
 
@@ -127,8 +127,10 @@ public class LocalizationTest extends OpMode {
         telemetryA.addData("x", poseUpdater.getPose().getX());
         telemetryA.addData("y", poseUpdater.getPose().getY());
 //        telemetryA.addData("dist", distanceOne.getDistance(DistanceUnit.INCH));
-        telemetryA.addData("heading", poseUpdater.getPose().getHeading());
-        telemetryA.addData("total heading", poseUpdater.getTotalHeading());
+        telemetryA.addData("heading", Math.toDegrees(poseUpdater.getPose().getHeading()));
+        telemetryA.addData("heading radians", poseUpdater.getPose().getHeading());
+        telemetryA.addData("check", poseUpdater.getPose().getHeading() > 3.14159);
+        telemetryA.addData("total heading", Math.toDegrees(poseUpdater.getTotalHeading()));
         telemetryA.update();
 
         Drawing.drawPoseHistory(dashboardPoseTracker, "#4CAF50");

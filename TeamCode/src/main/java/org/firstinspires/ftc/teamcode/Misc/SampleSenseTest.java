@@ -115,19 +115,19 @@ public class SampleSenseTest extends LinearOpMode {
          * Wait for the user to press start on the Driver Station
          */
 
-        arm = new ArmSubsystem(robot, this, new Params());
-        arm.setAutoMode(true);
-        arm.setPedroAuto(true);
-        arm.setArmPower(1);
-        arm.setSlidesPower(1);
-
-        arm.setTeleopMode(TeleopMode.INTAKE);
-        arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
-        arm.intakeUpMode();
-        arm.update();
+//        arm = new ArmSubsystem(robot, this, new Params());
+//        arm.setAutoMode(true);
+//        arm.setPedroAuto(true);
+//        arm.setArmPower(1);
+//        arm.setSlidesPower(1);
+//
+//        arm.setTeleopMode(TeleopMode.INTAKE);
+//        arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);
+//        arm.intakeUpMode();
+//        arm.update();
 
         while (opModeInInit()) {
-            arm.update();
+//            arm.update();
         }
 
         waitForStart();
@@ -137,9 +137,9 @@ public class SampleSenseTest extends LinearOpMode {
         follower.startTeleopDrive();
 
         while (opModeIsActive()) {
-            arm.update();
-            intake.outtake();
-            follower.update();
+//            arm.update();
+//            intake.outtake();
+//            follower.update();
 
             /*
              * Send some stats to the telemetry
