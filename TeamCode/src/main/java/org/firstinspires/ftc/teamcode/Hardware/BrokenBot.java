@@ -21,14 +21,14 @@ public class BrokenBot extends LinearOpMode {
         robot = new HWProfile();
         robot.init(hardwareMap, true, false);
         params = new Params();
-        arm = new ArmSubsystem(robot, this, params);
+//        arm = new ArmSubsystem(robot, this, params);
         VoltageSensor voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         waitForStart();
 
-        arm.setArmCustomPosition(45);
-        arm.setAutoMode(true);
-        arm.useMotionProfile(true);
+//        arm.setArmCustomPosition(45);
+//        arm.setAutoMode(true);
+//        arm.useMotionProfile(true);
 
         while(opModeIsActive()) {
             if(gamepad1.dpad_up) {
@@ -56,38 +56,30 @@ public class BrokenBot extends LinearOpMode {
             }
 
             if(gamepad1.a) {
-                currentMode = TeleopMode.CUSTOM_POSITION;
-                arm.setTeleopMode(currentMode);
-                arm.setArmCustomPosition(45);
+//                currentMode = TeleopMode.CUSTOM_POSITION;
+//                arm.setTeleopMode(currentMode);
+//                arm.setArmCustomPosition(45);
             } else if (gamepad1.b) {
-                currentMode = TeleopMode.CUSTOM_POSITION;
-                arm.setTeleopMode(currentMode);
-                arm.setArmCustomPosition(15);
+//                currentMode = TeleopMode.CUSTOM_POSITION;
+//                arm.setTeleopMode(currentMode);
+//                arm.setArmCustomPosition(15);
             }
 
             if(gamepad1.right_bumper) {
-                robot.clawServo.turnToAngle(0);
+//                robot.clawServo.turnToAngle(0);
             } else if(gamepad1.left_bumper) {
-                robot.clawServo.turnToAngle(70);
+//                robot.clawServo.turnToAngle(70);
             }
-
-            if(gamepad1.x) {
-                robot.wristServo.turnToAngle(0);
-            } else if(gamepad1.y) {
-                robot.wristServo.turnToAngle(90);
-            }
-
-            arm.update(opModeIsActive());
 
             telemetry.addData("VSensor: ", voltageSensor.getVoltage());
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
             telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());
             telemetry.addData("motorRR", robot.motorRR.getCurrentPosition());
             telemetry.addData("motorRF", robot.motorRF.getCurrentPosition());
-            telemetry.addData("slides motor pos", robot.slidesMotor.getCurrentPosition());
-            telemetry.addData("arm abs encoder", robot.armEncoder.getVoltage());
-            telemetry.addData("arm encoder", ((double) robot.armMotor.getCurrentPosition()) / params.ARM_TICK_PER_DEG);
-            telemetry.addData("slides extension", robot.slidesMotor.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH);
+//            telemetry.addData("slides motor pos", robot.slidesMotor.getCurrentPosition());
+//            telemetry.addData("arm abs encoder", robot.armEncoder.getVoltage());
+//            telemetry.addData("arm encoder", ((double) robot.armMotor.getCurrentPosition()) / params.ARM_TICK_PER_DEG);
+//            telemetry.addData("slides extension", robot.slidesMotor.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH);
             telemetry.update();
         }
     }

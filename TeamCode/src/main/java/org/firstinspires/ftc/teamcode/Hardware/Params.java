@@ -28,7 +28,6 @@ public class Params {
     public static double ARM_TOUCH_POLE_AUTO_UP = 80; //143
     public static double ARM_SPECIMEN_POLE_2_SCORE = 131; //143.195
     public static double ARM_SPECIMEN_POLE_2_START = 131; //143
-//    public static double ARM_SPECIMEN_POLE_2_MIN_CLAW = 131; //143
     public static final double ARM_ZERO = .352;
     public static final double ARM_ABS_TICK_PER_DEG = 360/3.22;
     public static final double ARM_TICK_PER_DEG = 5_281/360;

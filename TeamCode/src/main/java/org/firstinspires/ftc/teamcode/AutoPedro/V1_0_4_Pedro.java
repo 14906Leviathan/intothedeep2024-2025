@@ -69,7 +69,7 @@ public class V1_0_4_Pedro extends LinearOpMode {
 
     public void runOpMode() throws InterruptedException {
         follower = new Follower(hardwareMap);
-        follower.resetIMU();
+//        follower.resetIMU();
         telemetry.update();
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
