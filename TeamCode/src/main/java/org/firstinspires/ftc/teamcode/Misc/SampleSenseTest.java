@@ -128,8 +128,6 @@ public class SampleSenseTest extends LinearOpMode {
 
         while (opModeInInit()) {
             arm.update(opModeIsActive());
-
-        while (opModeInInit()) {
         }
 
         waitForStart();

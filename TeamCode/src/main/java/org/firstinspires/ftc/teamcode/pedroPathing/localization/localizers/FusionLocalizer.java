@@ -120,7 +120,7 @@ public class FusionLocalizer extends Localizer {
         for (int i = 0; i < localizers.values().size(); i++) {
             Localizer localizer = (Localizer) localizers.values().toArray()[i];
 
-//            localizer.resetIMU();
+            localizer.resetIMU();
         }
     }
 }

@@ -9,7 +9,6 @@ import org.firstinspires.ftc.teamcode.pedroPathing.localization.Localizer;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Vector;
-import org.opencv.core.Mat;
 
 /**
  * This is the OTOSLocalizer class. This class extends the Localizer superclass and is a
@@ -74,7 +73,7 @@ public class OTOSLocalizer extends Localizer {
           "SparkFunOTOS Corrected" in your robot config
          */
         // TODO: replace this with your OTOS port
-        otos = hardwareMap.get(SparkFunOTOS.class, "otos");
+        otos = hardwareMap.get(SparkFunOTOS.class, "sensor_otos");
 
         otos.setLinearUnit(DistanceUnit.INCH);
         otos.setAngularUnit(AngleUnit.RADIANS);
@@ -83,10 +82,10 @@ public class OTOSLocalizer extends Localizer {
         // For the OTOS, left/right is the y axis and forward/backward is the x axis, with left being
         // positive y and forward being positive x. PI/2 radians is facing forward, and clockwise
         // rotation is negative rotation.
-        otos.setOffset(new SparkFunOTOS.Pose2D(-.75,3.5,Math.toRadians(-90)));
+        otos.setOffset(new SparkFunOTOS.Pose2D(0,0,Math.PI / 2));
 
         // TODO: replace these with your tuned multipliers
-        otos.setLinearScalar(.975609);
+        otos.setLinearScalar(1.0);
         otos.setAngularScalar(1.0);
 
         otos.calibrateImu();
@@ -111,15 +110,10 @@ public class OTOSLocalizer extends Localizer {
     public Pose getPose() {
         Pose pose = new Pose(otosPose.x, otosPose.y, otosPose.h);
 
-//        if(pose.getHeading() > 3.14159) {
-//            pose.setHeading(Math.toRadians(-(360 - Math.toDegrees(pose.getHeading()))));
-//        }
-
         Vector vec = pose.getVector();
         vec.rotateVector(startPose.getHeading());
 
-        return pose;
-//        return MathFunctions.addPoses(startPose, new Pose(vec.getXComponent(), vec.getYComponent(), pose.getHeading()));
+        return MathFunctions.addPoses(startPose, new Pose(vec.getXComponent(), vec.getYComponent(), pose.getHeading()));
     }
 
     /**
