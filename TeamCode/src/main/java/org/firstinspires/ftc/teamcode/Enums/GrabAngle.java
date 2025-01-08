@@ -4,5 +4,5 @@ public enum GrabAngle {
     VERTICAL_GRAB,
     HORIZONTAL_GRAB,
     CUSTOM,
-    INVERTE
+    INVERTED
 }
