@@ -71,6 +71,8 @@ public class BrokenBot extends LinearOpMode {
 //                robot.clawServo.turnToAngle(70);
             }
 
+            robot.diffyRight.turnToAngle(45);
+
             if(gamepad1.x) {
 //                robot.poleToucher.turnToAngle(0);
             } else if(gamepad1.y) {
@@ -79,7 +81,12 @@ public class BrokenBot extends LinearOpMode {
 
 //            arm.update();
 
+            robot.slidesMotor.setPower(0);
+            robot.armMotor.setPower(0);
+
             telemetry.addData("VSensor: ", voltageSensor.getVoltage());
+            telemetry.addData("arm encoder: ", robot.armEncoder.getVoltage());
+            telemetry.addData("slides encoder: ", robot.slidesMotor.getCurrentPosition());
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
             telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());
             telemetry.addData("motorRR", robot.motorRR.getCurrentPosition());

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Hardware;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Abstracts.Subsystem;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
@@ -146,19 +147,19 @@ public class IntakeSubsystem extends Subsystem {
         }
 
         if (wristAngle == WristAngle.DOWN) {
-            robot.wristServo.turnToAngle(params.WRIST_INTAKE_ANGLE);
+            currentWristAngle = params.WRIST_INTAKE_ANGLE;
         } else if (wristAngle == WristAngle.BUCKET_SCORE) {
-            robot.wristServo.turnToAngle(params.WRIST_SCORE_ANGLE);
+            currentWristAngle = params.WRIST_SCORE_ANGLE;
         } else if (wristAngle == WristAngle.SPECIMEN_INTAKE) {
-            robot.wristServo.turnToAngle(params.WRIST_SPECIMEN_INTAKE_ANGLE);
+            currentWristAngle = params.WRIST_SPECIMEN_INTAKE_ANGLE;
         } else if (wristAngle == WristAngle.SPECIMEN_SCORE_1) {
-            robot.wristServo.turnToAngle(params.WRIST_SPECIMEN_SCORE_1_ANGLE);
+            currentWristAngle = params.WRIST_SPECIMEN_SCORE_1_ANGLE;
         } else if (wristAngle == WristAngle.SPECIMEN_SCORE_2) {
-            robot.wristServo.turnToAngle(params.WRIST_SPECIMEN_SCORE_2_ANGLE);
+            currentWristAngle = params.WRIST_SPECIMEN_SCORE_2_ANGLE;
         } else if (wristAngle == WristAngle.IDLE) {
-            robot.wristServo.turnToAngle(params.WRIST_IDLE_ANGLE);
+            currentWristAngle = params.WRIST_IDLE_ANGLE;
         } else if (wristAngle == WristAngle.CUSTOM) {
-            robot.wristServo.turnToAngle(customWristAngle);
+            currentWristAngle = customWristAngle;
         }
 
         if (grabAngle == GrabAngle.VERTICAL_GRAB) {
@@ -170,6 +171,8 @@ public class IntakeSubsystem extends Subsystem {
         } else if (grabAngle == GrabAngle.INVERTED) {
             currentPivotAngle = params.PIVOT_INVERTED;
         }
+
+        updateDiffy();
     }
 
     public void setTeleopMode(TeleopMode mode) {
@@ -177,7 +180,14 @@ public class IntakeSubsystem extends Subsystem {
     }
 
     private void updateDiffy() {
+        double fixedWristPos = Range.clip(currentWristAngle, 0, 180);
+        fixedWristPos += 45;
+        double fixedPivotPos = (Range.clip(currentPivotAngle, -90, 90) / 2);
 
+//        opMode.telemetry.addData("fixedPivot: ", fixedPivotPos);
+
+        robot.diffyRight.turnToAngle(fixedWristPos - fixedPivotPos);
+        robot.diffyLeft.turnToAngle(fixedWristPos + fixedPivotPos);
     }
 
     public WristAngle getWristAngle() {

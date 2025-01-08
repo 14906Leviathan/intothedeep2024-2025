@@ -491,19 +491,6 @@ public class Follower {
 
                     double voltage = vSensor.getVoltage();
 
-                    if(voltage <= criticalVoltage) {
-                        if(oldMaxPower == 0) {
-                            oldMaxPower = maxPower;
-                        }
-                        setMaxPower(criticalVoltageDrivePower);
-                    } else {
-                        if(oldMaxPower != 0) {
-                            setMaxPower(oldMaxPower);
-
-                            oldMaxPower = 0; // we set this to 0 so that if we reach critical voltage again, it will not set oldMaxPower to criticalVoltageDrivePower
-                        }
-                    }
-
                     drivePowers = driveVectorScaler.getDrivePowers(MathFunctions.scalarMultiplyVector(getTranslationalCorrection(), holdPointTranslationalScaling), MathFunctions.scalarMultiplyVector(getHeadingVector(), holdPointHeadingScaling), new Vector(), poseUpdater.getPose().getHeading());
 
                     for (int i = 0; i < motors.size(); i++) {
@@ -516,19 +503,6 @@ public class Follower {
                         if (followingPathChain) updateCallbacks();
 
                         double voltage = vSensor.getVoltage();
-
-                        if(voltage <= criticalVoltage) {
-                            if(oldMaxPower == 0) {
-                                oldMaxPower = maxPower;
-                            }
-                            setMaxPower(criticalVoltageDrivePower);
-                        } else {
-                            if(oldMaxPower != 0) {
-                                setMaxPower(oldMaxPower);
-
-                                oldMaxPower = 0; // we set this to 0 so that if we reach critical voltage again, it will not set oldMaxPower to criticalVoltageDrivePower
-                            }
-                        }
 
                         drivePowers = driveVectorScaler.getDrivePowers(getCorrectiveVector(), getHeadingVector(), getDriveVector(), poseUpdater.getPose().getHeading());
 
@@ -1083,7 +1057,7 @@ public class Follower {
     /**
      * This resets the IMU, if applicable.
      */
-    private void resetIMU() throws InterruptedException {
+    public void resetIMU() throws InterruptedException {
         poseUpdater.resetIMU();
     }
 }

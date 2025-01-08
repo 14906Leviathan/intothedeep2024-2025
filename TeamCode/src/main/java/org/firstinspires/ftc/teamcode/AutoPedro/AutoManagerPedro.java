@@ -14,6 +14,7 @@ import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.AutoLocation;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
+import org.firstinspires.ftc.teamcode.Enums.WristAngle;
 import org.firstinspires.ftc.teamcode.Hardware.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
@@ -47,9 +48,11 @@ public class AutoManagerPedro {
     public PathBuilder specScore1;
     public PathBuilder specScore2;
     public PathBuilder specScore3;
+    public PathBuilder specScore4;
     public PathBuilder intakeSpec1;
-    public PathBuilder pushSample1;
+    public PathBuilder pushSamples;
     public PathBuilder intakeSpec2;
+    public PathBuilder intakeSpec3;
     public PathBuilder specBackup;
     private Follower follower;
     private HWProfile robot;
@@ -62,7 +65,7 @@ public class AutoManagerPedro {
     // zero is two tiles from bucket to the leftmost of the tile
     public Pose start_4_0_V1 = new Pose(.399, -.48, Math.toRadians(90));
     public Pose start_3_1_V1 = new Pose(0, -23.6, Math.toRadians(0));
-    public Pose start_0_3_V1 = new Pose(0, -49.9, Math.toRadians(0));
+    public Pose start_0_4_V1 = new Pose(3, -49.9, Math.toRadians(180));
     private Point leftScoreLocation = new Point(19, 109, Point.CARTESIAN);
     private Runnable updateAction;
     private MultipleTelemetry telemetry;
@@ -72,6 +75,8 @@ public class AutoManagerPedro {
     public static double homeTolerance = 5;
     private PIDController xController = new PIDController(xP, 0, xD);
     private VoltageSensor vSensor;
+    private boolean useDistanceReloc = false;
+    private Pose oldPose = new Pose();
 
     public AutoManagerPedro(LinearOpMode opMode, Follower _follower, Runnable updateAction, ArmSubsystem arm, IntakeSubsystem intake, HWProfile robot) {
         follower = _follower;
@@ -105,219 +110,97 @@ public class AutoManagerPedro {
     }
 
     public Pose homeToSample(double heading) {
-        ElapsedTime timer = new ElapsedTime();
-        timer.reset();
-        double xPower = 0;
-        double yPower = 0;
-        double x = 0;
-        double y = 0;
-        double noSampleTimeoutTime = 500;
-        double cps = 0;
-        Pose endPose = new Pose();
-
-
-//        robot.limelight.pipelineSwitch(1);
-//        safeSleep(50);
-//        robot.limelight.pipelineSwitch(3);
-//        safeSleep(50);
-
-        timer.reset();
-
-//        arm.setPedroAuto(true);
-//        arm.setAutoMode(true);
-//        arm.setArmPower(1);
-//        arm.setIntakePosition(arm.getIntakePosition());
-//        arm.update();
-
-        follower.breakFollowing();
-        safeSleep(50);
-        follower.startTeleopDrive();
-
-        xController.setSetPoint(0);
-
-        try {
-            while (opMode.opModeIsActive() && !opMode.isStopRequested()) {
-                if (!opMode.opModeIsActive()) break;
-                if (opMode.isStopRequested()) break;
-
-                if (robot.limelight.getStatus().getFps() == 0) break;
-
-                xController.setPID(xP, 0, xD);
-
-                LLResult result = robot.limelight.getLatestResult();
-
-                update();
-
-                if (result != null) {
-                    if (result.getPythonOutput()[0] != -1 && result.getPythonOutput()[1] != -1) {
-                        timer.reset();
-
-                        x = (result.getPythonOutput()[0] - 320 / 2);
-                        y = ((result.getPythonOutput()[1] - 480 / 2) + 75);
-
-                        double voltage = robot.voltageSensor.getVoltage();
-
-                        xPower = -xController.calculate(x) * (12.0 / voltage);
-                        yPower = y / 150;
-
-                        if ((Math.abs(x) < homeTolerance && Math.abs(y) <= 1000)) {
-                            endPose = follower.getPose();
-                            break;
-                        }
-
-//                    xPower = MathFunctions.clamp(xPower, -.5, .5);
-                        yPower = MathFunctions.clamp(yPower, -.5, .5);
-
-                        follower.setTeleOpMovementVectors(xPower, 0, 0, false);
-
-//                    safeSleep(50);
-
-                        telemetry.addData("x: ", x);
-                        telemetry.addData("y: ", y);
-                        telemetry.addData("voltage: ", robot.voltageSensor.getVoltage());
-                        telemetry.addData("xVelo: ", follower.getVelocity().getXComponent());
-                        telemetry.addData("yVelo: ", follower.getVelocity().getYComponent());
-                    } else {
-                        if(timer.time(TimeUnit.MILLISECONDS) > noSampleTimeoutTime) {
-                            break;
-                        }
-                    }
-                }
-
-                telemetry.update();
-            }
-
-            follower.startTeleopDrive();
-            follower.setTeleOpMovementVectors(0, 0, 0);
-
-        } catch (Exception e) {
-            // boo hoo an error threw
-        }
-        return endPose;
-    }
-
-//    public Pose homeToSample(double heading, double timeout) {
 //        ElapsedTime timer = new ElapsedTime();
 //        timer.reset();
-//        double startY = follower.getPose().getY();
-//        boolean start = true;
-//        double holdX = 0;
-//        double targetX = 0;
-//        double targetY = 0;
-//        boolean usingPID = false;
-//        boolean usingPIDStart = true;
-//        boolean runFollow = true;
-//        boolean firstRun = true;
-//        boolean finalUpdate = false;
-//        double error = .5;
-//        double setPower = .35;
-//        int cycle = 0;
-//        ElapsedTime timer2 = new ElapsedTime();
-//        int runs = 1;
+//        double xPower = 0;
+//        double yPower = 0;
 //        double x = 0;
 //        double y = 0;
+//        double noSampleTimeoutTime = 500;
 //        double cps = 0;
+//        Pose endPose = new Pose();
 //
-//        xController.setSetPoint(targetX);
-//        xController.setTolerance(1);
 //
-//        robot.limelight.pipelineSwitch(1);
+////        robot.limelight.pipelineSwitch(1);
+////        safeSleep(50);
+////        robot.limelight.pipelineSwitch(3);
+////        safeSleep(50);
+//
+//        timer.reset();
+//
+////        arm.setPedroAuto(true);
+////        arm.setAutoMode(true);
+////        arm.setArmPower(1);
+////        arm.setIntakePosition(arm.getIntakePosition());
+////        arm.update();
+//
+//        follower.breakFollowing();
 //        safeSleep(50);
-//        robot.limelight.pipelineSwitch(3);
-//        safeSleep(50);
+//        follower.startTeleopDrive();
 //
-//        timer2.reset();
+//        xController.setSetPoint(0);
 //
-//        while (timer.time(TimeUnit.MILLISECONDS) < timeout) {
-//            LLResult result = robot.limelight.getLatestResult();
+//        try {
+//            while (opMode.opModeIsActive() && !opMode.isStopRequested()) {
+//                if (!opMode.opModeIsActive()) break;
+//                if (opMode.isStopRequested()) break;
 //
-//            update();
+//                if (robot.limelight.getStatus().getFps() == 0) break;
 //
-//            if (opMode.isStopRequested()) break;
-//            if (!opMode.opModeIsActive()) break;
+//                xController.setPID(xP, 0, xD);
 //
-//            if(timer2.time(TimeUnit.SECONDS) >= 1) {
-//                cps = cycle;
+//                LLResult result = robot.limelight.getLatestResult();
 //
-//                timer2.reset();
-//                cycle = 0;
-//            }
+//                update();
 //
-//            if (result != null) {
-//                if (result.isValid()) {
-//                    cycle++;
+//                if (result != null) {
+//                    if (result.getPythonOutput()[0] != -1 && result.getPythonOutput()[1] != -1) {
+//                        timer.reset();
 //
-//                    follower.setMaxPower(1);
+//                        x = (result.getPythonOutput()[0] - 320 / 2);
+//                        y = ((result.getPythonOutput()[1] - 480 / 2) + 75);
 //
-////                    LLResultTypes.DetectorResult sample = result.getDetectorResults().get(0);
+//                        double voltage = robot.voltageSensor.getVoltage();
 //
-//                    x = result.getTx();
-//                    y = result.getTy();
-//                    double xToPos = (follower.getPose().getX() + (targetX - x));
-//                    double yToPos = (follower.getPose().getY() + (targetY - y));
+//                        xPower = -xController.calculate(x) * (12.0 / voltage);
+//                        yPower = y / 150;
 //
-////                    if(x < 0) xToPos /= 2;
-//
-//                    try {
-//                        telemetry.addData("update hold: ", Math.abs(follower.getPose().getX() - follower.getCurrentPath().getLastControlPoint().getX()) < .35 && Math.abs(targetX - x) > error);
-//                    } catch (Exception e) {
-//                        //boo hoo an error threw
-//                    }
-//                    telemetry.addData("runFollow: ", runFollow);
-//                    telemetry.addData("x: ", x);
-//                    telemetry.addData("x velo: ", follower.getVelocity().getXComponent());
-//                    telemetry.addData("xToPos: ", xToPos);
-//                    telemetry.addData("fps: ", robot.limelight.getStatus().getFps());
-//                    telemetry.addData("y: ", y);
-//
-//                    telemetry.addData("cycles per seconds: ", cps);
-//
-////                    usingPID = Math.abs(x) >= 3;
-////                    usingPID = false;
-//
-//
-//                    if (runFollow) {
-//
-//                        if(cps >= 10) {
-////                            safeSleep(250);
-////                            continue;
+//                        if ((Math.abs(x) < homeTolerance && Math.abs(y) <= 1000)) {
+//                            endPose = follower.getPose();
+//                            break;
 //                        }
 //
-//                        follower.holdPoint(new Pose(
-//                                xToPos,
-//                                yToPos,
-//                                heading
-//                        ));
+////                    xPower = MathFunctions.clamp(xPower, -.5, .5);
+//                        yPower = MathFunctions.clamp(yPower, -.5, .5);
 //
-//                        runFollow = false;
+//                        follower.setTeleOpMovementVectors(xPower, 0, 0, false);
+//
+////                    safeSleep(50);
+//
+//                        telemetry.addData("x: ", x);
+//                        telemetry.addData("y: ", y);
+//                        telemetry.addData("voltage: ", robot.voltageSensor.getVoltage());
+//                        telemetry.addData("xVelo: ", follower.getVelocity().getXComponent());
+//                        telemetry.addData("yVelo: ", follower.getVelocity().getYComponent());
+//                    } else {
+//                        if(timer.time(TimeUnit.MILLISECONDS) > noSampleTimeoutTime) {
+//                            break;
+//                        }
 //                    }
-//
-//                    if ((/*Math.abs(follower.getVelocity().getXComponent()) < .5 && */Math.abs(targetX - x) > 1) || Math.abs(targetY - y) > 1) {
-//                        follower.updateHoldPoint(new Pose(
-//                                xToPos,
-//                                yToPos,
-//                                heading
-//                        ));
-//
-//                        safeSleep(350);
-//                    }
-//                } else {
-//                    follower.setMaxPower(.1);
 //                }
-//            } else {
-//                follower.setMaxPower(.1);
 //
-//                telemetry.addLine("low power");
+//                telemetry.update();
 //            }
 //
-//            telemetry.update();
+//            follower.startTeleopDrive();
+//            follower.setTeleOpMovementVectors(0, 0, 0);
+//
+//        } catch (Exception e) {
+//            // boo hoo an error threw
 //        }
-//
-//        follower.startTeleopDrive();
-//        follower.setTeleOpMovementVectors(0, 0, 0);
-//
-//        return new Pose(x, y);
-//    }
+//        return endPose;
+        return new Pose();
+    }
 
     public void runPath(PathChain path) {
         run(path, true);
@@ -336,7 +219,9 @@ public class AutoManagerPedro {
     }
 
     public void update() {
-        robot.limelight.getLatestResult();
+//        robot.limelight.getLatestResult();
+
+        if(useDistanceReloc) relocalizeX(params.DISTANCE_ONE_SPEC_OFFSET);
 
         follower.update();
         updateAction.run();
@@ -402,7 +287,7 @@ public class AutoManagerPedro {
                             currentMode = TeleopMode.SPECIMEN_SCORE;
                             arm.setTeleopMode(currentMode);
                             arm.setAnimationType(AnimationType.NONE);
-                            arm.update();
+                            arm.update(opMode.opModeIsActive());
 
                             arm.setArmPositionSpecimen(100);
                             arm.setSlidesPositionSpecimen(10.5);
@@ -423,7 +308,7 @@ public class AutoManagerPedro {
                         .addParametricCallback(.35, () -> {
                             currentMode = TeleopMode.INTAKE;
                             arm.setTeleopMode(currentMode);
-                            arm.update();
+                            arm.update(opMode.opModeIsActive());
                         })
                         .addParametricCallback(.99, () -> {
 //                            relocalizeX();
@@ -500,7 +385,7 @@ public class AutoManagerPedro {
                         if(autoLocation == AutoLocation.PEDRO_LEFT_4_0_V1) {
                             arm.setAnimationType(AnimationType.FAST);
                         }
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                     })
                     .addParametricCallback(.9, () -> {
                         setSpeed(1);
@@ -526,7 +411,7 @@ public class AutoManagerPedro {
                         if(autoLocation == AutoLocation.PEDRO_LEFT_4_0_V1) {
                             arm.setAnimationType(AnimationType.FAST);
                         }
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                     })
                     .setLinearHeadingInterpolation(Math.toRadians(130), Math.toRadians(0))
 //                    .addPath(new Path(
@@ -557,8 +442,8 @@ public class AutoManagerPedro {
                     .setLinearHeadingInterpolation(Math.toRadians(130), .875, .75)
                     .addParametricCallback(.3, () -> {
                         intake.setGrabAngle(GrabAngle.CUSTOM);
-                        intake.setCustomGrabAngle(135);
-                        intake.update();
+                        intake.setCustomPivotAngle(135);
+                        intake.update(opMode.opModeIsActive());
 
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
@@ -566,7 +451,7 @@ public class AutoManagerPedro {
                             arm.setAnimationType(AnimationType.FAST);
                         }
                         arm.intakeUpMode();
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                     })
                     .addParametricCallback(.9, () -> {
                         setSpeed(1);
@@ -652,7 +537,7 @@ public class AutoManagerPedro {
                     .addParametricCallback(.4, () -> {
                         currentMode = TeleopMode.TOUCH_POLE_AUTO;
                         arm.setTeleopMode(currentMode);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                         arm.setParkArmUp(true);
                         safeSleep(1500);
                         arm.setParkArmUp(false);
@@ -676,98 +561,151 @@ public class AutoManagerPedro {
 //            park.getPath(1).setPathEndTValueConstraint(.9);
 //            park.getPath(0).setPathEndTimeoutConstraint(10);
 //            park.getPath(1).setPathEndTimeoutConstraint(10);
-        } else if (autoLocation == AutoLocation.PEDRO_LEFT_0_3_V1) {
-            startPose = new Point(start_0_3_V1.getX(), start_0_3_V1.getY(), Point.CARTESIAN);
+        } else if (autoLocation == AutoLocation.PEDRO_LEFT_0_4_V1) {
+            startPose = new Point(start_0_4_V1.getX(), start_0_4_V1.getY(), Point.CARTESIAN);
+
+            double looseGrabP1 = .2;
+            double looseGrabP2 = .6;
+            double scoreX = 26.5;
+            double initalScoreY = -40;
 
             specScore1 = new PathBuilder()
                     .addPath(new Path(
                             new BezierCurve(
                                     startPose,
-                                    new Point(25 /*2.75*/, -46/*19.5*/, Point.CARTESIAN),
-                                    new Point(34.5 /*2.75*/, -45/*19.5*/, Point.CARTESIAN)
+                                    new Point(scoreX - 1 /*2.75*/, initalScoreY/*19.5*/, Point.CARTESIAN),
+                                    new Point(scoreX - 1 /*2.75*/, initalScoreY/*19.5*/, Point.CARTESIAN)
                             )
                     ))
                     .addTemporalCallback(0, () -> {
                         currentMode = TeleopMode.SPECIMEN_SCORE;
                         arm.setTeleopMode(currentMode);
                         arm.setAnimationType(AnimationType.NONE);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
 
-                        arm.setArmPositionSpecimen(100);
-                        arm.setSlidesPositionSpecimen(8);
+//                        arm.setArmPositionSpecimen(100);
+//                        arm.setSlidesPositionSpecimen(9);
+//                        arm.update(opMode.opModeIsActive());
                     })
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
-                    .setPathEndTimeoutConstraint(250)
+                    .addParametricCallback(looseGrabP1, () -> {
+                        intake.looseGrab();
+                    })
+                    .addParametricCallback(looseGrabP2, () -> {
+                        intake.intake();
+                    })
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
+                    .setPathEndTimeoutConstraint(0)
+                    .setPathEndVelocityConstraint(100)
+                    .setZeroPowerAccelerationMultiplier(1.5)
                     .setPathEndTValueConstraint(.9);
 
-            pushSample1 = new PathBuilder()
+            int sample1Y = -85;
+            int sample2Y = -95;
+            int sampleOffset = 10;
+            int stopX = 21;
+            int midZPM = 10;
+            double pushSamplesHeading = 180;
+            int endZPM = 6;
+
+            pushSamples = new PathBuilder()
                     .addPath(new Path(
                             new BezierCurve(
                                     specScore1.build().getPath(specScore1.build().size() - 1).getLastControlPoint(),
                                     new Point(0, -30, Point.CARTESIAN),
-                                    new Point(10, -70, Point.CARTESIAN)
+                                    new Point(stopX, sample1Y+sampleOffset, Point.CARTESIAN)
                             )
                     ))
-                    .setConstantHeadingInterpolation(0)
-                    .addPath(new Path(
-                            new BezierCurve(
-                                    new Point(10, -70, Point.CARTESIAN),
-                                    new Point(50, -70, Point.CARTESIAN),
-                                    new Point(50, -80, Point.CARTESIAN)
-                            )
-                    ))
-                    .addTemporalCallback(0, () -> {
-                        currentMode = TeleopMode.IDLE;
-                        arm.setTeleopMode(currentMode);
-                        arm.update();
-                    })
-                    .setConstantHeadingInterpolation(0)
-                    .addPath(new Path(
-                            new BezierLine(
-                                    new Point(50, -80, Point.CARTESIAN),
-                                    new Point(10, -80, Point.CARTESIAN)
-                            )
-                    ))
-                    .setConstantHeadingInterpolation(0)
-                    .setPathEndTValueConstraint(.9);
-
-            intakeSpec1 = new PathBuilder()
-                    .addPath(new Path(
-                            new BezierCurve(
-                                    pushSample1.build().getPath(pushSample1.build().size() - 1).getLastControlPoint(),
-                                    new Point(25 /*2.75*/, -80/*19.5*/, Point.CARTESIAN),
-                                    new Point(5.5 /*2.75*/, -92/*19.5*/, Point.CARTESIAN)
-                            )
-                    ))
-                    .addParametricCallback(.35, () -> {
+                    .addTemporalCallback(.25, () -> {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
                         arm.setAnimationType(AnimationType.NONE);
                         arm.intakeSpecimen = true;
-                        arm.intakeUpMode();
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
+                        intake.setWristAngle(WristAngle.DOWN);
                     })
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-135), .5)
-                    .setPathEndTimeoutConstraint(250)
-                    .setPathEndTValueConstraint(.95);
+                    .setZeroPowerAccelerationMultiplier(midZPM)
+//                    .setTangentHeadingInterpolation()
+                    .setLinearHeadingInterpolation(Math.toRadians(pushSamplesHeading), Math.toRadians(pushSamplesHeading), .1)
+                    .addPath(new Path(
+                            new BezierCurve(
+                                    new Point(stopX, sample1Y + sampleOffset, Point.CARTESIAN),
+                                    new Point(50, sample1Y + sampleOffset, Point.CARTESIAN),
+                                    new Point(50, sample1Y, Point.CARTESIAN)
+                            )
+                    ))
+                    .setZeroPowerAccelerationMultiplier(midZPM)
+//                    .setTangentHeadingInterpolation()
+                    .setLinearHeadingInterpolation(Math.toRadians(pushSamplesHeading), Math.toRadians(pushSamplesHeading), .25)
+//                    .setConstantHeadingInterpolation(0)
+                    .addPath(new Path(
+                            new BezierLine(
+                                    new Point(50, sample1Y, Point.CARTESIAN),
+                                    new Point(stopX, sample1Y, Point.CARTESIAN)
+                            )
+                    ))
+                    .setZeroPowerAccelerationMultiplier(2)
+                    .setConstantHeadingInterpolation(Math.toRadians(pushSamplesHeading))
+                    .addPath(new Path(
+                            new BezierLine(
+                                    new Point(stopX, sample1Y, Point.CARTESIAN),
+                                    new Point(35, sample1Y, Point.CARTESIAN)
+                            )
+                    ))
+                    .setPathEndVelocityConstraint(80)
+                    .setConstantHeadingInterpolation(Math.toRadians(pushSamplesHeading))
+                    .addPath(new Path(new BezierLine(
+                            new Point(50, sample2Y, Point.CARTESIAN),
+                            new Point(9, sample2Y, Point.CARTESIAN)
+                    )))
+                    .addTemporalCallback(.25, () -> {
+                        arm.setTeleopMode(TeleopMode.INTAKE);
+                        arm.intakeSpecimen = true;
+                        arm.update(opMode.opModeIsActive());
+
+                        arm.intakeDownMode();
+                        arm.update(opMode.opModeIsActive());
+                    })
+                    .setZeroPowerAccelerationMultiplier(10)
+                    .setConstantHeadingInterpolation(Math.toRadians(pushSamplesHeading))
+                    .setPathEndTValueConstraint(.9);
+
+            double grabY = -80;
+            double grabX = 4;
+            int intakeTimeout = 0;
+            double intakeEndVelo = 80;
+            double intakeZPM = 1;
+            double intakeHeading = -150;
+            Point intakeMidPoint = new Point(40, grabY + 1, Point.CARTESIAN);
+
+
+            intakeSpec1 = new PathBuilder()
+                    .addPath(new Path(
+                            new BezierCurve(
+                                    specScore1.build().getPath(specScore1.build().size() - 1).getLastControlPoint(),
+                                    new Point(45, grabY + 3, Point.CARTESIAN),
+                                    new Point(grabX /*2.75*/, grabY/*19.5*/, Point.CARTESIAN)
+                            )
+                    ))
+                    .setPathEndVelocityConstraint(intakeEndVelo)
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(intakeHeading))
+                    .setZeroPowerAccelerationMultiplier(intakeZPM)
+                    .setPathEndTimeoutConstraint(intakeTimeout);
 
             specScore2 = new PathBuilder()
                     .addPath(new Path(
                             new BezierCurve(
                                     intakeSpec1.build().getPath(intakeSpec1.build().size() - 1).getLastControlPoint(),
-                                    new Point(10 /*2.75*/, -80/*19.5*/, Point.CARTESIAN),
-                                    new Point(34.5 /*2.75*/, -35/*19.5*/, Point.CARTESIAN)
+                                    new Point(5 /*2.75*/, -80/*19.5*/, Point.CARTESIAN),
+                                    new Point(scoreX /*2.75*/, initalScoreY-(5*1)/*19.5*/, Point.CARTESIAN)
                             )
                     ))
-                    .addParametricCallback(.35, () -> {
-                        currentMode = TeleopMode.SPECIMEN_SCORE;
-                        arm.setTeleopMode(currentMode);
-                        arm.update();
-
-                        arm.setArmPositionSpecimen(100);
-                        arm.setSlidesPositionSpecimen(8);
+                    .addParametricCallback(looseGrabP1, () -> {
+                        intake.looseGrab();
                     })
-                    .setLinearHeadingInterpolation(intakeSpec1.build().getPath(intakeSpec1.build().size() - 1).getHeadingGoal(1), Math.toRadians(0))
+                    .addParametricCallback(looseGrabP2, () -> {
+                        intake.intake();
+                    })
+                    .setLinearHeadingInterpolation(Math.toRadians(intakeHeading), Math.toRadians(180))
                     .setPathEndTimeoutConstraint(100)
                     .setPathEndTValueConstraint(.9);
 
@@ -775,40 +713,91 @@ public class AutoManagerPedro {
                     .addPath(new Path(
                             new BezierCurve(
                                     specScore2.build().getPath(specScore2.build().size() - 1).getLastControlPoint(),
-                                    new Point(10 /*2.75*/, -60/*19.5*/, Point.CARTESIAN),
-                                    new Point(6 /*2.75*/, -91/*19.5*/, Point.CARTESIAN)
+                                    new Point(10 /*2.75*/, grabY/*19.5*/, Point.CARTESIAN),
+                                    intakeMidPoint,
+                                    new Point(grabX - .25 /*2.75*/, grabY/*19.5*/, Point.CARTESIAN)
                             )
                     ))
-                    .addParametricCallback(.35, () -> {
-                        currentMode = TeleopMode.INTAKE;
-                        arm.setTeleopMode(currentMode);
-                        arm.setAnimationType(AnimationType.NONE);
-                        arm.intakeSpecimen = true;
-                        arm.intakeUpMode();
-                        arm.update();
-                    })
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-135), .5)
-                    .setPathEndTimeoutConstraint(250)
-                    .setPathEndTValueConstraint(.95);
+                    .setPathEndVelocityConstraint(intakeEndVelo)
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(intakeHeading))
+                    .setZeroPowerAccelerationMultiplier(intakeZPM)
+                    .setPathEndTimeoutConstraint(intakeTimeout);
+//                    .addPath(new Path(
+//                            new BezierLine(
+//                                    intakeMidPoint,
+//                            )
+//                    ))
+//                    .setConstantHeadingInterpolation(Math.toRadians(180))
+//                    .setPathEndTimeoutConstraint(0)
+//                    .setZeroPowerAccelerationMultiplier(3)
+//                    .setPathEndTValueConstraint(.9);
 
             specScore3 = new PathBuilder()
                     .addPath(new Path(
                             new BezierCurve(
                                     intakeSpec2.build().getPath(intakeSpec2.build().size() - 1).getLastControlPoint(),
-                                    new Point(0 /*2.75*/, -80/*19.5*/, Point.CARTESIAN),
-                                    new Point(38 /*2.75*/, -25/*19.5*/, Point.CARTESIAN)
+                                    new Point(5 /*2.75*/, -30/*19.5*/, Point.CARTESIAN),
+                                    new Point(scoreX /*2.75*/, initalScoreY-(5*2)/*19.5*/, Point.CARTESIAN)
                             )
                     ))
-                    .addParametricCallback(.35, () -> {
-                        currentMode = TeleopMode.SPECIMEN_SCORE;
-                        arm.setTeleopMode(currentMode);
-                        arm.update();
-
-                        arm.setArmPositionSpecimen(100);
-                        arm.setSlidesPositionSpecimen(8);
+                    .addParametricCallback(looseGrabP1, () -> {
+                        intake.looseGrab();
                     })
-                    .setLinearHeadingInterpolation(intakeSpec1.build().getPath(intakeSpec1.build().size() - 1).getHeadingGoal(1), Math.toRadians(0))
+                    .addParametricCallback(looseGrabP2, () -> {
+                        intake.intake();
+                    })
+                    .setLinearHeadingInterpolation(Math.toRadians(intakeHeading), Math.toRadians(180))
                     .setPathEndTimeoutConstraint(100)
+                    .setPathEndTValueConstraint(.9);
+
+            intakeSpec3 = new PathBuilder()
+                    .addPath(new Path(
+                            new BezierLine(
+                                    specScore3.build().getPath(specScore3.build().size() - 1).getLastControlPoint(),
+                                    new Point(25 /*2.75*/, -40/*19.5*/, Point.CARTESIAN)
+                            )
+                    ))
+                    .addParametricCallback(.89, () -> {
+                        intake.outtake();
+                        intake.setWristAngle(WristAngle.SPECIMEN_INTAKE);
+
+                        intake.setShortRange(true);
+                        currentMode = TeleopMode.INTAKE;
+                        arm.setTeleopMode(currentMode);
+
+                        arm.update(opMode.opModeIsActive());
+                        intake.update(opMode.opModeIsActive());
+                    })
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
+                    .setPathEndTimeoutConstraint(0)
+                    .addPath(new Path(
+                            new BezierCurve(
+                                    new Point(25 /*2.75*/, -40/*19.5*/, Point.CARTESIAN),
+                                    intakeMidPoint,
+                                    new Point(grabX - .25 /*2.75*/, grabY/*19.5*/, Point.CARTESIAN)
+                            )
+                    ))
+                    .setPathEndVelocityConstraint(intakeEndVelo)
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(intakeHeading))
+                    .setZeroPowerAccelerationMultiplier(intakeZPM)
+                    .setPathEndTimeoutConstraint(intakeTimeout);
+
+            specScore4 = new PathBuilder()
+                    .addPath(new Path(
+                            new BezierCurve(
+                                    intakeSpec2.build().getPath(intakeSpec2.build().size() - 1).getLastControlPoint(),
+                                    new Point(5 /*2.75*/, -80/*19.5*/, Point.CARTESIAN),
+                                    new Point(scoreX /*2.75*/, initalScoreY-(5*1)/*19.5*/, Point.CARTESIAN)
+                            )
+                    ))
+                    .addParametricCallback(looseGrabP1, () -> {
+                        intake.looseGrab();
+                    })
+                    .addParametricCallback(looseGrabP2, () -> {
+                        intake.intake();
+                    })
+                    .setLinearHeadingInterpolation(Math.toRadians(intakeHeading), Math.toRadians(180))
+                    .setPathEndTimeoutConstraint(0)
                     .setPathEndTValueConstraint(.9);
 
             park = new PathBuilder()
@@ -823,7 +812,7 @@ public class AutoManagerPedro {
                         currentMode = TeleopMode.IDLE;
                         arm.setTeleopMode(currentMode);
                         arm.setAnimationType(AnimationType.NONE);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                     })
                     .setConstantHeadingInterpolation(Math.toRadians(0))
                     .setPathEndTimeoutConstraint(0)
@@ -854,12 +843,12 @@ public class AutoManagerPedro {
                     .addTemporalCallback(0, () -> {
                         currentMode = TeleopMode.SPECIMEN_SCORE;
                         arm.setTeleopMode(currentMode);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
 
                         arm.setArmPositionSpecimen(100);
                         arm.setSlidesPositionSpecimen(8);
                     })
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
                     .setPathEndTimeoutConstraint(250)
                     .setPathEndTValueConstraint(.9);
 
@@ -875,10 +864,10 @@ public class AutoManagerPedro {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
                         arm.setIntakePush(true);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
 
                         intake.intake();
-                        intake.update();
+                        intake.update(opMode.opModeIsActive());
                     })
                     .addParametricCallback(.99, () -> {
 //                            relocalizeX();
@@ -917,7 +906,7 @@ public class AutoManagerPedro {
             Point intakeYellow1Start = specBackup.build().getPath(0).getLastControlPoint();
             double intakeYellow1StartHeading = 0;
 
-            pushSample1 = new PathBuilder()
+            pushSamples = new PathBuilder()
                     .addPath(new BezierLine(
                             specBackup.build().getPath(0).getLastControlPoint(),
                             new Point(26, 10, Point.CARTESIAN) //24.25 10
@@ -953,7 +942,7 @@ public class AutoManagerPedro {
                     .addParametricCallback(.6, () -> {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                     })
                     .setLinearHeadingInterpolation(Math.toRadians(130), Math.toRadians(0))
                     .addPath(new Path(
@@ -985,7 +974,7 @@ public class AutoManagerPedro {
                         currentMode = TeleopMode.INTAKE;
                         arm.setTeleopMode(currentMode);
                         arm.intakeUpMode();
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                     })
                     .addParametricCallback(.9, () -> {
                         setSpeed(1);
@@ -1062,7 +1051,7 @@ public class AutoManagerPedro {
                     .addParametricCallback(.4, () -> {
                         currentMode = TeleopMode.TOUCH_POLE_AUTO;
                         arm.setTeleopMode(currentMode);
-                        arm.update();
+                        arm.update(opMode.opModeIsActive());
                         arm.setParkArmUp(true);
                         safeSleep(1500);
                         arm.setParkArmUp(false);
@@ -1160,6 +1149,20 @@ public class AutoManagerPedro {
         }
     }
 
-    private void relocalizeX() {
+    public void useDistance(boolean set) {
+        useDistanceReloc = set;
+    }
+
+    public Pose getOldPose() {
+        return oldPose;
+    }
+
+    private void relocalizeX(double sensorOffset) {
+//        double newX = robot.distanceOne.getDistance(DistanceUnit.INCH) - sensorOffset;
+//        double delta = newX - follower.getPose().getX();
+//
+//        oldPose = new Pose(follower.getPose().getX() + delta, follower.getPose().getY(), follower.getPose().getHeading());
+//
+//        follower.setPose(new Pose(newX, follower.getPose().getY(), follower.getPose().getHeading()));
     }
 }

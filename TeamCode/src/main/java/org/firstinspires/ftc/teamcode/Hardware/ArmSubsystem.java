@@ -13,7 +13,6 @@ import org.firstinspires.ftc.teamcode.Enums.IntakeType;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 import org.firstinspires.ftc.teamcode.Hardware.KookyMotionProfile.MotionProfile;
 import org.firstinspires.ftc.teamcode.Hardware.KookyMotionProfile.ProfileConstraints;
-import org.firstinspires.ftc.teamcode.Hardware.KookyMotionProfile.ProfileState;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 
 import java.util.concurrent.TimeUnit;
@@ -31,29 +30,22 @@ public class ArmSubsystem extends Subsystem {
     D: if you’re getting close to where you want to be, slow down.
      */
 //    public static double Kp = 70;
-    public static double Kp = 90;
-    public static double KpScore = 50;
-    public static double Ki = 0.5;
-    public static double Kd = 0.0005;
+    public static double Kp = .015;
+    public static double KpScore = .02;
+    public static double Ki = 0;
+    public static double Kd = 0.0013;
+    public static double KdScore = 0;
 
-    public static double Kp_Intake = 160;
-    public static double Ki_Intake = 1;
-    public static double Kd_Intake = 1;
+    public static double Kp_Intake = .1;
+    public static double Ki_Intake = 0.1;
+    public static double Kd_Intake = 0;
 
-    public static double KpAutoUp = Kp;
-    public static double KpAutoDown = Kp;
-    public static double KiAutoUp = Ki;
-    public static double KiAutoDown = Ki;
-    public static double KdAutoUp = Kd;
-    public static double KdAutoDown = Kd;
-
-    public static double SlidesKp = 8;
+    public static double SlidesKp = .0025;
     public static double SlidesKi = 0;
-    public static double SlidesKd = 0.35;
-    public static double Kf = 0.005;
+    public static double SlidesKd = 0.0001;
     private boolean pedroAuto = false;
     private boolean armGoingDown = false;
-    private double out = 0;
+    public double out = 0;
     public double slidesOut = 0;
     private double oldTargetPos = 0;
     private boolean armUpPark = false;
@@ -253,16 +245,12 @@ public class ArmSubsystem extends Subsystem {
         params = myParams;
     }   // close RRMechOps constructor Method
 
-    public void poleToucherIn() {
-        robot.poleToucher.turnToAngle(params.POLE_TOUCHER_IN);
-    }
-
-    public void poleToucherOut() {
-        robot.poleToucher.turnToAngle(params.POLE_TOUCHER_OUT);
-    }
-
     public double getArmPosition() {
-        return (robot.armEncoder.getVoltage() - params.ARM_ZERO) * params.ARM_ABS_TICK_PER_DEG;
+        double pos = (robot.armEncoder.getVoltage() - params.ARM_ZERO) * params.ARM_ABS_TICK_PER_DEG;
+
+        if (params.ARM_ENCODER_INVERTED) pos *= -1;
+
+        return pos;
     }
 
     public void setArmCustomPosition(double deg) {
@@ -423,43 +411,13 @@ public class ArmSubsystem extends Subsystem {
 
                 setTargetSlidesPosition(slidesPos);
                 double armDeg = 0;
-                if (params.INTAKE_TYPE == IntakeType.CLAW) {
-                    if (!autoMode) {
-                        armDeg = map(slidesPos, 3, 36, 17 - 5, 25 - 1.5);
 
-                        if (!slidesAtPosition(2.5)) armDeg += 3;
-                    } else {
-                        if (!pedroAuto) {
-                            armDeg = map(slidesPos, 3, 36, 17 - 7, 25 - 5);
-                        } else {
-                            if (intakePushSample) {
-                                armDeg = 18;
-                            } else {
-                                if (!autoLastSample) {
-                                    armDeg = 13;
-                                } else {
-                                    armDeg = 10;
-                                }
-                            }
-                        }
-                    }
+                if (intakeDownMode) {
+//                    armDeg = map(slidesPos, 3, 36, 17 - 5, 25 - 1.5);
+                    armDeg = params.ARM_INTAKE_MODE_UP_DEG;
+                } else {
+                    armDeg = params.ARM_INTAKE_POS;
                 }
-                if (params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE)
-                    armDeg = map(slidesPos, 3, 36, 17, 25);
-                if (armDeg < 0) armDeg = 0;
-
-                if (!intakeDownMode && params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE)
-                    armDeg += params.ARM_INTAKE_MODE_UP_DEG;
-                if (!intakeDownMode && params.INTAKE_TYPE == IntakeType.CLAW && !autoMode)
-                    armDeg += params.ARM_CLAW_MODE_UP_DEG;
-                if (!intakeDownMode && params.INTAKE_TYPE == IntakeType.CLAW && autoMode) {
-                    if (!autoLastSample) {
-                        armDeg += params.ARM_CLAW_MODE_UP_DEG_AUTO;
-                    } else {
-                        armDeg += params.ARM_CLAW_MODE_UP_DEG_AUTO;
-                    }
-                }
-
 
                 setArmTargetPosition(armDeg);
             } else {
@@ -495,42 +453,24 @@ public class ArmSubsystem extends Subsystem {
 //            setSlidesPower(params.SLIDE_MOTOR_POWER_OUTTAKE);
 
             if (bucketScore == 2) {
-                if (params.INTAKE_TYPE == IntakeType.TWO_WHEEL_INTAKE) {
-                    if (outtakeSlidesRetracted) {
-                        setTargetSlidesPosition(params.SLIDES_MIN_POS);
-                    } else {
-                        setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN);
-                    }
-                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
-                } else if (params.INTAKE_TYPE == IntakeType.CLAW) {
-                    if (outtakeSlidesRetracted && armTransistionStage == 3) {
-                        setTargetSlidesPosition(params.SLIDES_MIN_POS);
-                    } else {
-                        if (armTipBucketScore) {
-                            if (autoMode) {
-                                setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN_AUTO);
-                                setArmTargetPosition(100);
-                            } else {
-                                setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN);
-                                if (params.USING_WRIST) {
-                                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG_WRIST);
-                                } else {
-                                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
-                                }
-                            }
+                if (outtakeSlidesRetracted && armTransistionStage == 3) {
+                    setTargetSlidesPosition(params.SLIDES_MIN_POS);
+                } else {
+                    if (armTipBucketScore) {
+                        if (autoMode) {
+                            setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN_AUTO);
+                            setArmTargetPosition(100);
                         } else {
-                            if (autoMode) {
-                                setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW_AUTO);
-                                setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG_AUTO);
-                            } else {
-                                if (!params.USING_WRIST) {
-                                    setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
-                                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
-                                } else {
-                                    setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW_WRIST);
-                                    setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG_WRIST);
-                                }
-                            }
+                            setTargetSlidesPosition(params.SLIDES_OUTTAKE_RETRACT_MODE_LEN);
+                            setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
+                        }
+                    } else {
+                        if (autoMode) {
+                            setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW_AUTO);
+                            setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG_AUTO);
+                        } else {
+                            setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
+                            setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
                         }
                     }
                 }
@@ -609,33 +549,28 @@ public class ArmSubsystem extends Subsystem {
 
         setArmPosition();
 
-        if (armTransistionStage == 3 && (currentMode == TeleopMode.INTAKE && !intakeSpecimen && intakeDownMode) && !autoMode) {
+        if (armTransistionStage == 3 && (currentMode == TeleopMode.INTAKE && !intakeSpecimen) && !autoMode) {
             armPID.setP(Kp_Intake);
             armPID.setI(Ki_Intake);
             armPID.setD(Kd_Intake);
-        } else if (autoMode) {
-            if (armGoingDown && !intakeDownMode) {
-                armPID.setP(KpAutoDown);
-                armPID.setI(KiAutoDown);
-                armPID.setD(KdAutoDown);
-            } else {
-                armPID.setP(KpAutoUp);
-                armPID.setI(KiAutoUp);
-                armPID.setD(KdAutoUp);
-            }
         } else {
             if (currentMode == TeleopMode.BUCKET_SCORE) {
                 armPID.setP(KpScore);
+                armPID.setD(KdScore);
             } else {
                 armPID.setP(Kp);
+                armPID.setD(Kd);
             }
             armPID.setI(Ki);
-            armPID.setD(Kd);
         }
 
 //        robot.pinpoint.update();
 
         voltage = robot.voltageSensor.getVoltage();
+
+        double slidesRawPos = robot.slidesMotor.getCurrentPosition();
+
+//        if(slidesRawPos < 0) resetSlidesPosition();
 
         armPID.setTolerance(params.ARM_ERROR_TOLERANCE);
         slidesPID.setTolerance(params.SLIDES_ERROR_TOLERANCE);
@@ -651,7 +586,7 @@ public class ArmSubsystem extends Subsystem {
 
         if (!useThread) {
             try {
-                robot.armMotor.setVelocity(out);
+                robot.armMotor.setPower(out);
             } catch (Exception e) {
                 // boo hoo an error threw
                 robot.armMotor.setPower(0);
@@ -662,7 +597,7 @@ public class ArmSubsystem extends Subsystem {
             armPidThread.interrupt();
         }
 
-        robot.slidesMotor.setVelocity(slidesOut);
+        robot.slidesMotor.setPower(slidesOut);
 
         teleopModeStart = false;
 

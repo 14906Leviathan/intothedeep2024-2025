@@ -26,11 +26,11 @@ public class HWProfile {
     public DcMotorEx motorRR = null;
     public AnalogInput armEncoder = null;
     public SimpleServo clawServo = null;
-    public SimpleServo poleToucher = null;
     public SimpleServo diffyLeft = null;
     public SimpleServo diffyRight = null;
     public IMU.Parameters imuParams;
     public VoltageSensor voltageSensor;
+
 
     /* local OpMode members. */
     public HardwareMap hwMap           =  null;
@@ -62,41 +62,41 @@ public class HWProfile {
             motorLF = hwMap.get(DcMotorEx.class, "motorLF");
             motorLF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motorLF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorLF.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
+            motorLF.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
             motorLF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motorLF.setPower(0);
 
             motorLR = hwMap.get(DcMotorEx.class, "motorLR");
             motorLR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motorLR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorLR.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
+            motorLR.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
             motorLR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motorLR.setPower(0);
 
             motorRF = hwMap.get(DcMotorEx.class, "motorRF");
             motorRF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motorRF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorRF.setDirection(DcMotor.Direction.FORWARD);
+            motorRF.setDirection(DcMotor.Direction.REVERSE);
             motorRF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motorRF.setPower(0);
 
             motorRR = hwMap.get(DcMotorEx.class, "motorRR");
             motorRR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motorRR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorRR.setDirection(DcMotor.Direction.FORWARD);
+            motorRR.setDirection(DcMotor.Direction.REVERSE);
             motorRR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motorRR.setPower(0);
         }
 
         slidesMotor = hwMap.get(DcMotorEx.class, "slidesMotor");
-        slidesMotor.setDirection(DcMotorEx.Direction.FORWARD);
-        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        slidesMotor.setDirection(DcMotorEx.Direction.REVERSE);
         slidesMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        slidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         slidesMotor.setPower(0);               // set motor power
+//        slidesMotor.setMotorDisable();
 
         armMotor = hwMap.get(DcMotorEx.class, "armMotor");
-        armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setTargetPosition(0);
         armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -107,12 +107,14 @@ public class HWProfile {
 
         clawServo = new SimpleServo(hwMap, "clawServo", 0, 180, AngleUnit.DEGREES);
         clawServo.setInverted(false);
+        clawServo.disable();
 
         diffyLeft = new SimpleServo(hwMap, "diffyLeft", 0, 270, AngleUnit.DEGREES);
-        diffyLeft.setInverted(true);
+        diffyLeft.setInverted(false);
 
         diffyRight = new SimpleServo(hwMap, "diffyRight", 0, 270, AngleUnit.DEGREES);
-        diffyRight.setInverted(false);
+        diffyRight.setInverted(true);
+        diffyRight.disable();
 
         voltageSensor = hwMap.voltageSensor.iterator().next();
 //
