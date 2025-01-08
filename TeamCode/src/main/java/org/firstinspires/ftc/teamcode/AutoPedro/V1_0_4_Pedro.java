@@ -85,6 +85,7 @@ public class V1_0_4_Pedro extends LinearOpMode {
         arm.setAutoMode(true);
         arm.setPedroAuto(true);
         arm.resetSlidesPosition();
+        robot.limelight.shutdown();
 
         intake.setWristAngle(wristAngle);
         intake.setGrabAngle(grabAngle);

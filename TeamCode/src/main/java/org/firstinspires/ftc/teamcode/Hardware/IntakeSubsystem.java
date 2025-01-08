@@ -124,7 +124,7 @@ public class IntakeSubsystem extends Subsystem {
     }
 
     public void update(boolean opModeActive) {
-        if (!opModeActive) return;
+        if(!opModeActive) return;
 
         if (currentIntakeMode == IntakeMode.INTAKE) {
             if (grabStyle == GrabStyle.OUTSIDE_GRAB) {
