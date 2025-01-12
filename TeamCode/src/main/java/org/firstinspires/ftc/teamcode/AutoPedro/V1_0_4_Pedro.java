@@ -48,6 +48,10 @@ public class V1_0_4_Pedro extends LinearOpMode {
 //            intake.update(opModeIsActive());
 //            autoManager.update(opModeIsActive());
 
+            if(gamepad1.right_bumper) {
+                intake.toggle();
+            }
+
             telemetry.addData("X:", follower.getPose().getX());
             telemetry.addData("Y:", follower.getPose().getY());
             telemetry.addData("heading:", Math.toDegrees(follower.getTotalHeading()));
@@ -63,6 +67,8 @@ public class V1_0_4_Pedro extends LinearOpMode {
     private int nextAutoState = 0;
     private Telemetry telemetryA;
     private Pose startPose;
+    private boolean runPushForever = false;
+    private boolean lbCooldown = false;
 
     public V1_0_4_Pedro() {
     }
@@ -91,12 +97,14 @@ public class V1_0_4_Pedro extends LinearOpMode {
         intake.setGrabStyle(grabStyle);
         intake.intake();
 
-        intake.update(!isStopRequested());
+//        intake.update(!isStopRequested());
         arm.update(!isStopRequested());
 
         autoManager = new AutoManagerPedro(this, follower, () -> {
             arm.update(opModeIsActive());
-            intake.update(opModeIsActive());
+            if(opModeIsActive()) {
+                intake.update(opModeIsActive());
+            }
             telemetryA.addData("x: ", follower.getPose().getX());
             telemetryA.addData("y: ", follower.getPose().getY());
             telemetryA.update();
@@ -107,7 +115,7 @@ public class V1_0_4_Pedro extends LinearOpMode {
 
         follower.setPose(startPose);
 
-        currentMode = TeleopMode.IDLE;
+        currentMode = TeleopMode.SPECIMEN_SCORE;
         arm.setTeleopMode(currentMode);
         arm.setAnimationType(AnimationType.NONE);
         intake.intake();
@@ -119,25 +127,37 @@ public class V1_0_4_Pedro extends LinearOpMode {
 
         while (!opModeIsActive()) {
             arm.update(opModeIsActive());
-            intake.update(opModeIsActive());
+//            intake.update(opModeIsActive());
+
+            arm.setArmPositionSpecimen(45);
+            arm.setSlidesPositionSpecimen(0);
+
+            arm.update(opModeIsActive());
+
             telemetry.addLine("The robot must be started on the fourth tile");
             telemetry.addLine("to the right from the buckets, the robot must be");
             telemetry.addLine("started on the left line of the tile, and the robot");
             telemetry.addLine("needs to be facing towards the submersible");
             telemetry.addLine();
-            telemetry.addData("slides raw enc:", robot.slidesMotor.getCurrentPosition());
+            telemetry.addData("slides raw enc:", robot.slidesMotor1.getCurrentPosition());
             follower.setPose(startPose);
             telemetry.addData("x: ", follower.getPose().getX());
             telemetry.addData("y: ", follower.getPose().getY());
             telemetry.update();
 
+            if(gamepad1.left_bumper && !lbCooldown) {
+                intake.toggle();
+
+                lbCooldown = true;
+            } else if (!gamepad1.left_bumper) lbCooldown = false;
+
             if (gamepad1.right_trigger > .1) {
                 arm.setSlidesPower(0);
-                robot.slidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+                robot.slidesMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                 resetSlides = true;
             } else if (gamepad1.right_trigger < .1 && resetSlides) {
                 arm.resetSlidesPosition();
-                robot.slidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                robot.slidesMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 arm.setSlidesPower(1);
 
                 resetSlides = false;
@@ -145,6 +165,10 @@ public class V1_0_4_Pedro extends LinearOpMode {
         }
 
         waitForStart();
+
+//        requestOpModeStop();
+
+        intake.update(opModeIsActive());
 
         follower.updatePose();
         follower.update();
@@ -180,20 +204,27 @@ public class V1_0_4_Pedro extends LinearOpMode {
 
 //        bucketScore(1);
             specimenScore(1);
-            push();
+            while (opModeIsActive() && !isStopRequested()) {
+                push();
+
+                if(!runPushForever) break;
+            }
             intakeSpec(1);
             specimenScore(2);
             intakeSpec(2);
             specimenScore(3);
             intakeSpec(3);
             specimenScore(4);
-//            park();
+            intakeSpec(4);
+            specimenScore(5);
+            park();
             telemetryA.addData("time: ", time.time(TimeUnit.SECONDS));
 
             params.TELEOP_START_MODE = TeleopMode.IDLE;
             params.AUTO_END_HEADING = Math.toDegrees(follower.getPose().getHeading());
 
             telemetryA.update();
+            follower.breakFollowing();
             autoManager.safeSleep(10000);
         }
     }
@@ -214,10 +245,12 @@ public class V1_0_4_Pedro extends LinearOpMode {
 
         currentMode = TeleopMode.SPECIMEN_SCORE;
 //        arm.setTeleopMode(currentMode);
+        arm.setSlidesPower(4);
         arm.update(opModeIsActive());
 
         wristAngle = WristAngle.SPECIMEN_SCORE_1;
         intake.setWristAngle(wristAngle);
+        intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
 
         if (specNum == 1) {
             autoManager.runPath(autoManager.specScore1);
@@ -227,19 +260,23 @@ public class V1_0_4_Pedro extends LinearOpMode {
             autoManager.runPath(autoManager.specScore3);
         } else if (specNum == 4) {
             autoManager.runPath(autoManager.specScore4);
+        } else if (specNum == 5) {
+            autoManager.runPath(autoManager.specScore5);
         }
 
         autoManager.setSpeed(1);
+//        autoManager.waitForArmAndSlides(1000);
+        autoManager.safeSleep(50);
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);
 
-//        autoManager.waitForArmAndSlides(1000);
-        autoManager.safeSleep(400);
+        arm.setSlidesPower(1);
 
         arm.setArmPositionSpecimen(params.ARM_SPECIMEN_POLE_2_START); //params.ARM_SCORE_SPECIMEN
         arm.setSlidesPositionSpecimen(params.SLIDES_SPECIMEN_POLE_2_SCORE_CLAW);
         wristAngle = WristAngle.SPECIMEN_SCORE_2;
         intake.setWristAngle(wristAngle);
-        autoManager.safeSleep(350);
+        autoManager.waitForSlides(params.SLIDES_SPECIMEN_POLE_2_SCORE_CLAW, 5.5);
+        autoManager.safeSleep(50);
 
 //        arm.setSlidesPositionSpecimen(params.SLIDES_ENSURE_SCORE_SPECIMEN);
 //        autoManager.safeSleep(350);
@@ -247,17 +284,18 @@ public class V1_0_4_Pedro extends LinearOpMode {
         if (specNum != 3) {
             intake.outtake();
             intake.update(opModeIsActive());
-            autoManager.safeSleep(200);
+            autoManager.safeSleep(50);
             arm.setSlidesPositionSpecimen(7);
-            wristAngle = WristAngle.SPECIMEN_SCORE_2;
-            intake.setWristAngle(wristAngle);
-            autoManager.safeSleep(100);
+            autoManager.safeSleep(50);
         }
     }
 
     public void park() {
-        autoManager.setSpeed(1);
-        autoManager.runPath(autoManager.park, false);
+//        autoManager.safeSleep(250);
+        arm.setTeleopMode(TeleopMode.IDLE);
+        intake.setWristAngle(WristAngle.DOWN);
+//        autoManager.setSpeed(1);
+//        autoManager.runPath(autoManager.park, false);
 //        arm.update(opModeIsActive());
 //        autoManager.safeSleep(750);
 //        arm.setParkArmUp(false);
@@ -270,42 +308,74 @@ public class V1_0_4_Pedro extends LinearOpMode {
             currentMode = TeleopMode.INTAKE;
             arm.setTeleopMode(currentMode);
             arm.setAnimationType(AnimationType.NONE);
+//            arm.setArmPositionSpecimen(34);
 
             wristAngle = WristAngle.SPECIMEN_INTAKE;
             intake.setWristAngle(wristAngle);
+            intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
 
             arm.update(opModeIsActive());
             intake.update(opModeIsActive());
         } else {
-            arm.setSlidesPositionSpecimen(7);
+            arm.setSlidesPositionSpecimen(8);
             arm.update(opModeIsActive());
         }
 
         autoManager.setSpeed(1);
 
         if (specNum == 1) {
-            autoManager.runPath(autoManager.intakeSpec1, true);
+//            autoManager.runPath(autoManager.intakeSpec1, true);
         } else if (specNum == 2) {
             autoManager.runPath(autoManager.intakeSpec2, true);
         } else if (specNum == 3) {
             autoManager.runPath(autoManager.intakeSpec3, true);
+        } else if (specNum == 4) {
+            autoManager.runPath(autoManager.intakeSpec4, true);
         }
+//        arm.setArmPositionSpecimen(params.ARM_AUTO_SPECIMEN_INTAKE);
+//        autoManager.safeSleep(150);
+        autoManager.setSpeed(.5);
+
+        autoManager.holdPoint(new Pose(-5, follower.getPose().getY(), Math.toRadians(180)));
+
 //        autoManager.useDistance(true);
         if(specNum == 1) {
-            autoManager.safeSleep(1400);
+            autoManager.safeSleep(500);
         } else {
-            autoManager.safeSleep(900);
+            autoManager.safeSleep(300);
         }
+
+        autoManager.setSpeed(0);
+//        arm.setArmPositionSpecimen(params.ARM_AUTO_SPECIMEN_INTAKE - 1.5);
+//        arm.update(opModeIsActive());
+//        intake.setWristAngle(WristAngle.CUSTOM);
+//        intake.setCustomWristAngle(40);
+//        intake.update(opModeIsActive());
+
+        autoManager.safeSleep(150);
+
+//        intake.setWristAngle(WristAngle.CUSTOM);
+//        intake.setCustomWristAngle(60);
+//        intake.update(opModeIsActive());
+//
+//        autoManager.safeSleep(300);
+
+
+//        autoManager.holdPoint(new Pose(follower.getPose().getX() - .1, follower.getPose().getY(), Math.toRadians(180)));
+//        autoManager.setSpeed(.1);
+//        autoManager.safeSleep(200);
 //        autoManager.useDistance(false);
 
         intake.intake();
-        autoManager.safeSleep(300);
+        autoManager.safeSleep(150);
+
+        autoManager.setSpeed(1);
 //        follower.setPose(autoManager.getOldPose());
 
         currentMode = TeleopMode.SPECIMEN_SCORE;
         arm.setTeleopMode(currentMode);
         wristAngle = WristAngle.SPECIMEN_SCORE_1;
-        autoManager.safeSleep(100);
+        autoManager.safeSleep(50);
         intake.setWristAngle(wristAngle);
 //        autoManager.waitForArmAndSlides(750);
         autoManager.setSpeed(params.AUTO_DEFAULT_SPEED);

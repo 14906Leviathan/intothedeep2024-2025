@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -12,9 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Hardware.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.GrabAngle;
@@ -26,8 +23,6 @@ import org.firstinspires.ftc.teamcode.Hardware.HWProfile;
 import org.firstinspires.ftc.teamcode.Hardware.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Hardware.Params;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
-import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
-import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants;
@@ -94,12 +89,13 @@ public class MainTeleOp extends LinearOpMode {
     private int cycles = 0;
     private int lastLoopHertz = 0;
     private boolean specimenInScorePos = false;
-    private Follower follower;
-//    private MecanumDrive mecDrive;
+//    private Follower follower;
+    private MecanumDrive mecDrive;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        follower = new Follower(hardwareMap);
+//        follower = new Follower(hardwareMap);
+        mecDrive = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), false);
 
         robot = new HWProfile();
         robot.init(hardwareMap, false, false);
@@ -129,7 +125,7 @@ public class MainTeleOp extends LinearOpMode {
 
         waitForStart();
 
-        robot.slidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.slidesMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setAutoMode(false);
 
         loopTime.reset();
@@ -165,7 +161,7 @@ public class MainTeleOp extends LinearOpMode {
             intake.update(opModeIsActive());
         }
 
-        follower.startTeleopDrive();
+//        follower.startTeleopDrive();
 
         while (opModeIsActive()) {
             if (loopTime.time(TimeUnit.MILLISECONDS) >= 1000) {
@@ -180,13 +176,25 @@ public class MainTeleOp extends LinearOpMode {
                 firstRun = false;
             }
 
+            double botHeading = robot.otos.getPosition().h;
+            double rotX = -gamepad1.left_stick_x * Math.cos(botHeading) - -gamepad1.left_stick_y * Math.sin(botHeading);
+            double rotY = -gamepad1.left_stick_x * Math.sin(botHeading) + -gamepad1.left_stick_y * Math.cos(botHeading);
+
             if (slowMode) {
-                follower.setTeleOpMovementVectors(-gamepad1.left_stick_y * params.SLOWMODE_XY_MULT, -gamepad1.left_stick_x * params.SLOWMODE_XY_MULT, -gamepad1.right_stick_x * params.SLOWMODE_TURN_MULT, false);
+//                MecanumDrive.driveFieldCentric(-gamepad1.left_stick_x * params.SLOWMODE_XY_MULT, gamepad1.left_stick_y * params.SLOWMODE_XY_MULT, -gamepad1.right_stick_x * params.SLOWMODE_TURN_MULT, robot.imu.getRobotYawPitchRollAngles().getYaw() + params.AUTO_END_HEADING, true);
+//                mecDrive.driveFieldCentric(-gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x, robot.imu.getRobotYawPitchRollAngles().getYaw() + params.AUTO_END_HEADING, true);
+//                follower.setTeleOpMovementVectors(-gamepad1.left_stick_y * params.SLOWMODE_XY_MULT, -gamepad1.left_stick_x * params.SLOWMODE_XY_MULT, -gamepad1.right_stick_x * params.SLOWMODE_TURN_MULT, false);
+
+                mecDrive.setDrivePowers(new PoseVelocity2d(new Vector2d(rotY, rotX), -gamepad1.right_stick_x));
             } else {
-                follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, false);
+//                mecDrive.driveRobotCentric(-gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x, false);
+//                follower.setTeleOpMovementVectors(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x, false);
+//                mecDrive.driveFieldCentric(-gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x, robot.imu.getRobotYawPitchRollAngles().getYaw() + params.AUTO_END_HEADING, true);
+
+                mecDrive.setDrivePowers(new PoseVelocity2d(new Vector2d(rotY, rotX), -gamepad1.right_stick_x));
             }
 
-            follower.update();
+            mecDrive.updatePoseEstimate();
 
             /* *******************INTAKE******************* */
 
@@ -442,10 +450,10 @@ public class MainTeleOp extends LinearOpMode {
                 teleopMode = TeleopMode.SPECIMEN_SCORE;
                 arm.setTeleopMode(teleopMode);
                 intake.intake();
-//                intake.looseGrab();
+                intake.looseGrab();
 
                 wristAngle = WristAngle.SPECIMEN_SCORE_1;
-                grabAngle = GrabAngle.INVERTED;
+//                grabAngle = GrabAngle.INVERTED;
                 intake.setWristAngle(wristAngle);
                 intake.setGrabAngle(grabAngle);
                 specimenInScorePos = false;
@@ -472,8 +480,8 @@ public class MainTeleOp extends LinearOpMode {
                     if (specimenInScorePos) {
                         intake.intake();
                     } else {
-                        intake.intake();
-//                        intake.looseGrab();
+//                        intake.intake();
+                        intake.looseGrab();
                     }
                 }
 
@@ -502,15 +510,11 @@ public class MainTeleOp extends LinearOpMode {
 //                follower.resetIMU();
 //                robot.imu.resetYaw();
 //                follower.resetIMU();
-                follower.setPose(new Pose(follower.getPose().getX(), follower.getPose().getY(), 0));
+//                follower.setPose(new Pose(follower.getPose().getX(), follower.getPose().getY(), 0));
+                mecDrive.setPose(new Pose2d(0, 0, 0));
+                robot.otos.resetTracking();
                 params.AUTO_END_HEADING = 0;
                 gamepad1.rumble(500);
-            }
-
-            if (gamepad1.share) {
-                gamepad1.rumble(500);
-
-                follower.setPose(new Pose(0, 0, follower.getTotalHeading()));
             }
 
             if (!gamepad1.right_bumper) rBumperCooldown = false;
@@ -638,39 +642,41 @@ public class MainTeleOp extends LinearOpMode {
 
             if (!gamepad2.a) g2ACooldown = false;
 
+            mTelemetry.addData("slides 1 current: ", robot.slidesMotor1.getCurrent(CurrentUnit.AMPS));
+            mTelemetry.addData("slides 2 current: ", robot.slidesMotor2.getCurrent(CurrentUnit.AMPS));
             mTelemetry.addData("hertz: ", lastLoopHertz);
             mTelemetry.addData("loop: ", loopTime.time(TimeUnit.MILLISECONDS));
-//            mTelemetry.addData("arm abs position: ", arm.getArmPosition());
-            mTelemetry.addData("arm target position: ", arm.getArmTargetPosition());
-//            mTelemetry.addData("arm at position: ", arm.armAtPosition());
-//            mTelemetry.addData("slides out: ", arm.slidesOut);
-//            mTelemetry.addData("slides at position: ", arm.slidesAtPosition());
-//            mTelemetry.addData("slides target pos: ", arm.getSlidesTargetPos());
-//            mTelemetry.addData("slides pos: ", arm.getSlidesPosition());
-            mTelemetry.addData("diffyLeft: ", robot.diffyLeft.getAngle());
-            mTelemetry.addData("diffyRight: ", robot.diffyRight.getAngle());
-            mTelemetry.addData("slides current: ", robot.slidesMotor.getCurrent(CurrentUnit.AMPS));
-            mTelemetry.addData("arm abs position: ", arm.getArmPosition());
+            mTelemetry.addData("slides pos: ", arm.getSlidesPosition());
+
             //            mTelemetry.addData("pivot angle: ", intake.getGrabAngle());
 //            mTelemetry.addData("arm out: ", arm.out);
 
             if (telemetryDebug) {
+                mTelemetry.addData("arm abs position: ", arm.getArmPosition());
+                mTelemetry.addData("arm target position: ", arm.getArmTargetPosition());
+                mTelemetry.addData("arm at position: ", arm.armAtPosition());
+                mTelemetry.addData("slides out: ", arm.slidesOut);
+                mTelemetry.addData("slides at position: ", arm.slidesAtPosition());
+                mTelemetry.addData("slides target pos: ", arm.getSlidesTargetPos());
+                mTelemetry.addData("diffyLeft: ", robot.diffyLeft.getAngle());
+                mTelemetry.addData("diffyRight: ", robot.diffyRight.getAngle());
+                mTelemetry.addData("arm abs position: ", arm.getArmPosition());
+                mTelemetry.addData("heading: ", Math.toDegrees(botHeading));
                 mTelemetry.addData("arm out: ", arm.out);
                 mTelemetry.addData("wristAngle: ", intake.getWristAngle());
                 mTelemetry.addData("auto pathing enabled: ", autoPathingEnabled);
-                mTelemetry.addData("robot x: ", follower.getPose().getX());
-                mTelemetry.addData("robot y: ", follower.getPose().getX());
+//                mTelemetry.addData("robot x: ", follower.getPose().getX());
+//                mTelemetry.addData("robot y: ", follower.getPose().getX());
                 mTelemetry.addData("auto end heading: ", params.AUTO_END_HEADING);
                 mTelemetry.addData("slow mode: ", slowMode);
-                mTelemetry.addData("heading: ", Math.toDegrees(follower.getPose().getHeading()));
                 mTelemetry.addData("arm transistion: ", arm.armTransistionStage);
                 mTelemetry.addData("teleop mode start: ", arm.teleopModeStart);
-                mTelemetry.addData("slides raw pos: ", robot.slidesMotor.getCurrentPosition());
+                mTelemetry.addData("slides raw pos: ", robot.slidesMotor1.getCurrentPosition());
                 mTelemetry.addData("intake position: ", arm.getIntakePosition());
                 mTelemetry.addData("arm intake pos: ", arm.getIntakePosition());
                 mTelemetry.addData("arm intake grab: ", arm.getIntakeDownMode());
                 mTelemetry.addData("arm at position: ", arm.armAtPosition());
-                mTelemetry.addData("slides current: ", robot.slidesMotor.getCurrent(CurrentUnit.AMPS));
+                mTelemetry.addData("slides current: ", robot.slidesMotor1.getCurrent(CurrentUnit.AMPS));
             }
             mTelemetry.update();
         }

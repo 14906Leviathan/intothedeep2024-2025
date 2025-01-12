@@ -12,6 +12,7 @@ import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -26,14 +27,15 @@ import org.firstinspires.ftc.teamcode.messages.TwoDeadWheelInputsMessage;
 @Config
 public final class TwoDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double parYTicks = -2199.746727200531; // -2190.839318035915 y position of the parallel encoder (in tick units)
-        public double perpXTicks = -1798.5343024409704; // -1678.3218430716286 x position of the perpendicular encoder (in tick units)
+        public double parYTicks = -413.7175357358126; // -2190.839318035915 y position of the parallel encoder (in tick units)
+        public double perpXTicks = -452.58635839024345; // -1678.3218430716286 x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
 
     public final Encoder par, perp;
-    public final IMU imu;
+//    public final IMU imu;
+    private SparkFunOTOS otos;
 
     private int lastParPos, lastPerpPos;
     private Rotation2d lastHeading;
@@ -47,14 +49,18 @@ public final class TwoDeadWheelLocalizer implements Localizer {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "par")));
-        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "perp")));
+        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "motorLF")));
+        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "motorRR")));
+        otos = hardwareMap.get(SparkFunOTOS.class, "otos");
+        otos.calibrateImu();
+        otos.resetTracking();
+        otos.setAngularUnit(AngleUnit.RADIANS);
 
         // TODO: reverse encoder directions if needed
         perp.setDirection(DcMotorSimple.Direction.FORWARD);
         par.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        this.imu = imu;
+//        this.imu = imu;
 
         this.inPerTick = inPerTick;
 
@@ -65,20 +71,23 @@ public final class TwoDeadWheelLocalizer implements Localizer {
         PositionVelocityPair parPosVel = par.getPositionAndVelocity();
         PositionVelocityPair perpPosVel = perp.getPositionAndVelocity();
 
-        YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
+//        YawPitchRollAngles angles = otos.getRobotYawPitchRollAngles();
+
         // Use degrees here to work around https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/1070
-        AngularVelocity angularVelocityDegrees = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
+        SparkFunOTOS.Pose2D velo = otos.getVelocity();
+        double yaw = otos.getPosition().h;
+
         AngularVelocity angularVelocity = new AngularVelocity(
                 UnnormalizedAngleUnit.RADIANS,
-                (float) Math.toRadians(angularVelocityDegrees.xRotationRate),
-                (float) Math.toRadians(angularVelocityDegrees.yRotationRate),
-                (float) Math.toRadians(angularVelocityDegrees.zRotationRate),
-                angularVelocityDegrees.acquisitionTime
+                (float) velo.x,
+                (float) velo.y,
+                (float) velo.h,
+                0
         );
 
-        FlightRecorder.write("TWO_DEAD_WHEEL_INPUTS", new TwoDeadWheelInputsMessage(parPosVel, perpPosVel, angles, angularVelocity));
+//        FlightRecorder.write("TWO_DEAD_WHEEL_INPUTS", new TwoDeadWheelInputsMessage(parPosVel, perpPosVel, new YawPitchRollAngles(AngleUnit.RADIANS,0,0,0,0), angularVelocity));
 
-        Rotation2d heading = Rotation2d.exp(angles.getYaw(AngleUnit.RADIANS));
+        Rotation2d heading = Rotation2d.exp(yaw);
 
         // see https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/617
         double rawHeadingVel = angularVelocity.zRotationRate;

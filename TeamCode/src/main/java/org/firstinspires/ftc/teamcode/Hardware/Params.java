@@ -8,12 +8,12 @@ import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 
 @Config
 public class Params {
-    public static double ARM_INTAKE_POS = 2;
-    public static double LOOSE_GRAB = 62;
+    public static double ARM_INTAKE_POS = 1.5;
+    public static double LOOSE_GRAB = 80;
     public static double PIVOT_INVERTED = -90;
-    public static double WRIST_SPECIMEN_SCORE_1_ANGLE = 100;
-    public static double WRIST_SPECIMEN_SCORE_2_ANGLE = 100;
-    public static double WRIST_SPECIMEN_INTAKE_ANGLE = 90;
+    public static double WRIST_SPECIMEN_SCORE_1_ANGLE = 170;
+    public static double WRIST_SPECIMEN_SCORE_2_ANGLE = WRIST_SPECIMEN_SCORE_1_ANGLE;
+    public static double WRIST_SPECIMEN_INTAKE_ANGLE = 70;
     public static double WRIST_INTAKE_ANGLE = 0;
     public static double WRIST_IDLE_ANGLE = 90;
     public static double WRIST_SCORE_ANGLE = 120;
@@ -26,24 +26,24 @@ public class Params {
     public static double ARM_CLIMB_DOWN_POS = 8; //143
     public static double ARM_TOUCH_POLE_AUTO_DOWN = 58; //143
     public static double ARM_TOUCH_POLE_AUTO_UP = 80; //143
-    public static double ARM_SPECIMEN_POLE_2_SCORE = 105; //143.195
+    public static double ARM_SPECIMEN_POLE_2_SCORE = 90; //143.195
     public static double ARM_SPECIMEN_POLE_2_START = ARM_SPECIMEN_POLE_2_SCORE; //143
     //    public static double ARM_SPECIMEN_POLE_2_MIN_CLAW = 131; //143
-    public static double ARM_ZERO = 1.885;
+    public static double ARM_ZERO = 1.899;
     public static boolean ARM_ENCODER_INVERTED = true;
     public static double ARM_ABS_TICK_PER_DEG = 360/3.22;
     public static double ARM_TICK_PER_DEG = 5_281/360;
     public static double SLIDE_GROUND_POS = 13;
     public static double SLIDES_BUCKET_2_SCORE_LEN = 37;
-    public static double SLIDES_BUCKET_2_SCORE_LEN_CLAW = 51;
+    public static double SLIDES_BUCKET_2_SCORE_LEN_CLAW = 42;
     public static double SLIDES_BUCKET_2_SCORE_LEN_CLAW_AUTO = 42.25;
     public static double SLIDES_BUCKET_1_SCORE_LEN = 35;
     public static double SLIDES_BUCKET_1_SCORE_LEN_CLAW = 33;
     public static double SLIDES_TOUCH_POLE_AUTO = 15;
-    public static double SLIDES_SPECIMEN_POLE_2_SCORE_CLAW = 15;
-    public static double SLIDES_SPECIMEN_POLE_2_START = 0;
-    public static double SLIDES_SPECIMEN_POLE_2_START_AUTO = 0;
-    public static float SLIDES_TICKS_PER_INCH = 1825/43;
+    public static double SLIDES_SPECIMEN_POLE_2_SCORE_CLAW = 23;
+    public static double SLIDES_SPECIMEN_POLE_2_START = 10;
+    public static double SLIDES_SPECIMEN_POLE_2_START_AUTO = SLIDES_SPECIMEN_POLE_2_START;
+    public static float SLIDES_TICKS_PER_INCH = 820/42;
     public static double SLIDES_TRANSITION_LEN = 6;
     public static double SLIDES_MAX_POS = 55;
     public static double SLIDES_MIN_POS = 0;
@@ -85,14 +85,14 @@ public class Params {
     public static double PIVOT_HORIZONTAL_ANG = 0;
     public static double ARM_ERROR_TOLERANCE = 9;
     public static double ARM_ERROR_TOLERANCE_AUTO = 4;
-    public static double ARM_TELEOP_SPECIMEN_INTAKE = 30;
-    public static double ARM_AUTO_SPECIMEN_INTAKE = 30;
+    public static double ARM_TELEOP_SPECIMEN_INTAKE = 20;
+    public static double ARM_AUTO_SPECIMEN_INTAKE = ARM_TELEOP_SPECIMEN_INTAKE;
     public static double ARM_SPECIMEN_INTAKE_OFFSET = 7;
     public static double SLIDES_AUTO_SPECIMEN_INTAKE = 0;
     public static double SLIDES_TELEOP_SPECIMEN_INTAKE = 0;
     public static double SLIDES_ERROR_TOLERANCE = 7;
     public static double SLIDES_ERROR_TOLERANCE_AUTO = 4;
-    public static double AUTO_DEFAULT_SPEED = .9;
+    public static double AUTO_DEFAULT_SPEED = 1;
     public static double AUTO_INTAKE_SPEED = .45;
     public static double AUTO_PARK_SPEED = .75;
     public static double AUTO_OUTTAKE_SPEED = .6;

@@ -68,13 +68,13 @@ public class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
 
         // drive model parameters
-        public double inPerTick = 0.002952465;
-        public double lateralInPerTick = 0.0021564282413397;
-        public double trackWidthTicks = 3980.1716579306194; //4069.1133742132733
+        public double inPerTick = .001975972178;
+        public double lateralInPerTick = 0.0013034093127193029;
+        public double trackWidthTicks = 6060.039890321857; //4069.1133742132733
 
         // feedforward parameters (in tick units)
-        public double kS = 1.2112461839670488;
-        public double kV = 0.00039037075941011136;
+        public double kS = 1.950373851769383;
+        public double kV = 0.00023239385344030344;
         public double kA = .00005;
 
         // path profile parameters (in inches)
@@ -201,10 +201,10 @@ public class MecanumDrive {
             imu = lazyImu.get();
 
             // TODO: reverse encoders if needed
-            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
-            rightBack.setDirection(DcMotorSimple.Direction.FORWARD);
-            rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
+            leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
+            leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
+            rightBack.setDirection(DcMotorSimple.Direction.REVERSE);
+            rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
         }
 
         @Override
@@ -293,10 +293,10 @@ public class MecanumDrive {
             rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
             rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
-            rightBack.setDirection(DcMotorSimple.Direction.FORWARD);
-            rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
+            leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
+            leftBack.setDirection(DcMotorSimple.Direction.FORWARD);
+            rightBack.setDirection(DcMotorSimple.Direction.REVERSE);
+            rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
         }
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)

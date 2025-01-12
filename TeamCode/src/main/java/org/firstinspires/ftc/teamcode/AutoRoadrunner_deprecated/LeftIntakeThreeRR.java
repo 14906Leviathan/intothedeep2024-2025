@@ -131,7 +131,7 @@
 //        drive.updatePoseEstimate();
 //
 //        autoManager.setDrive(drive);
-//        robot.slidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        robot.slidesMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 //
 //        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 //        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -144,7 +144,7 @@
 //        while (!opMode.opModeIsActive()) {
 //            arm.update();
 //            telemetry.addData("X:", drive.pose.position.x);
-//            telemetry.addData("slides raw enc:", robot.slidesMotor.getCurrentPosition());
+//            telemetry.addData("slides raw enc:", robot.slidesMotor1.getCurrentPosition());
 //            telemetry.addData("Y:", drive.pose.position.y);
 //            telemetry.addData("heading:", Math.toDegrees(drive.pose.heading.toDouble()));
 //            telemetry.update();

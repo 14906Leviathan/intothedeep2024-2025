@@ -17,12 +17,12 @@ public class ResetSlideEncoder extends LinearOpMode {
 
 
         while (opModeIsActive()) {
-            telemetry.addData("P: ", robot.slidesMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).p);
-            telemetry.addData("I: ", robot.slidesMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).i);
-            telemetry.addData("D: ", robot.slidesMotor.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).d);
+            telemetry.addData("P: ", robot.slidesMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).p);
+            telemetry.addData("I: ", robot.slidesMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).i);
+            telemetry.addData("D: ", robot.slidesMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION).d);
             telemetry.update();
 
-            robot.slidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.slidesMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         }
     }
 }

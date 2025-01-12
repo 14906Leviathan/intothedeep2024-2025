@@ -81,20 +81,20 @@ public class BrokenBot extends LinearOpMode {
 
 //            arm.update();
 
-            robot.slidesMotor.setPower(0);
+            robot.slidesMotor1.setPower(0);
             robot.armMotor.setPower(0);
 
             telemetry.addData("VSensor: ", voltageSensor.getVoltage());
             telemetry.addData("arm encoder: ", robot.armEncoder.getVoltage());
-            telemetry.addData("slides encoder: ", robot.slidesMotor.getCurrentPosition());
+            telemetry.addData("slides encoder: ", robot.slidesMotor1.getCurrentPosition());
             telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
             telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());
             telemetry.addData("motorRR", robot.motorRR.getCurrentPosition());
             telemetry.addData("motorRF", robot.motorRF.getCurrentPosition());
-//            telemetry.addData("slides motor pos", robot.slidesMotor.getCurrentPosition());
+//            telemetry.addData("slides motor pos", robot.slidesMotor1.getCurrentPosition());
 //            telemetry.addData("arm abs encoder", robot.armEncoder.getVoltage());
 //            telemetry.addData("arm encoder", ((double) robot.armMotor.getCurrentPosition()) / params.ARM_TICK_PER_DEG);
-//            telemetry.addData("slides extension", robot.slidesMotor.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH);
+//            telemetry.addData("slides extension", robot.slidesMotor1.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH);
             telemetry.update();
         }
     }

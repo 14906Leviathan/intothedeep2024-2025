@@ -150,7 +150,7 @@
 //            telemetry.addLine();
 //            follower.setPose(autoManager.start_4_0_V1);
 //            telemetry.addData("limelight fps: ", robot.limelight.getStatus().getFps());
-//            telemetry.addData("slides raw enc:", robot.slidesMotor.getCurrentPosition());
+//            telemetry.addData("slides raw enc:", robot.slidesMotor1.getCurrentPosition());
 //            telemetry.addData("x: ", follower.getPose().getX());
 //            telemetry.addData("y: ", follower.getPose().getY());
 //

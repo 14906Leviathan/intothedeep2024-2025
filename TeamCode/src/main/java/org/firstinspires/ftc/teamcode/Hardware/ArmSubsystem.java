@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Abstracts.Subsystem;
 import org.firstinspires.ftc.teamcode.Enums.AnimationType;
 import org.firstinspires.ftc.teamcode.Enums.IntakeType;
@@ -30,14 +31,14 @@ public class ArmSubsystem extends Subsystem {
     D: if you’re getting close to where you want to be, slow down.
      */
 //    public static double Kp = 70;
-    public static double Kp = .015;
+    public static double Kp = .1;
     public static double KpScore = .02;
     public static double Ki = 0;
     public static double Kd = 0.0013;
     public static double KdScore = 0;
 
-    public static double Kp_Intake = .1;
-    public static double Ki_Intake = 0.1;
+    public static double Kp_Intake = .2;
+    public static double Ki_Intake = 0.25;
     public static double Kd_Intake = 0;
 
     public static double SlidesKp = .0025;
@@ -76,6 +77,7 @@ public class ArmSubsystem extends Subsystem {
     private double climbPos = 0;
     private boolean autoLastSample = false;
     private boolean useMotionProfile = false;
+    private boolean scoreProtectSlideMotors  = false;
     private AnimationType animationType = AnimationType.NORMAL;
     private double armCustomPos = 0;
     private double slidesCustomPos = 0;
@@ -287,13 +289,13 @@ public class ArmSubsystem extends Subsystem {
 
     public void resetSlidesPosition() {
 //        robot.pinpoint.resetPosAndIMU();
-        robot.slidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.slidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.slidesMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.slidesMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
 
     public double getSlidesPosition() {
-        return (double) robot.slidesMotor.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH;
+        return (double) robot.slidesMotor1.getCurrentPosition() / params.SLIDES_TICKS_PER_INCH;
 //        return robot.pinpoint.getEncoderX() / params.SLIDES_TICKS_PER_INCH;
     }
 
@@ -367,6 +369,14 @@ public class ArmSubsystem extends Subsystem {
 //        return armPID.atSetPoint();
     }
 
+    public boolean armAtPosition(double tolerance) {
+        double armPos = getArmPosition();
+
+
+        return (armPos + tolerance > armTargetPos && armPos - tolerance < armTargetPos);
+//        return armPID.atSetPoint();
+    }
+
     public boolean slidesAtPosition() {
         double slidesPos = getSlidesPosition();
 
@@ -379,6 +389,12 @@ public class ArmSubsystem extends Subsystem {
         double slidesPos = getSlidesPosition();
 
         return (slidesPos + error > slidesTargetPos && slidesPos - error < slidesTargetPos);
+    }
+
+    public boolean slidesAtPosition(double error, double pos) {
+        double slidesPos = getSlidesPosition();
+
+        return (slidesPos + error > pos && slidesPos - error < pos);
     }
 
     public void setBucket(int bucket) {
@@ -451,9 +467,12 @@ public class ArmSubsystem extends Subsystem {
             }
         } else if (currentMode == TeleopMode.BUCKET_SCORE) {
 //            setSlidesPower(params.SLIDE_MOTOR_POWER_OUTTAKE);
+            if(teleopModeStart) scoreProtectSlideMotors = false;
 
             if (bucketScore == 2) {
                 if (outtakeSlidesRetracted && armTransistionStage == 3) {
+                    scoreProtectSlideMotors = false;
+
                     setTargetSlidesPosition(params.SLIDES_MIN_POS);
                 } else {
                     if (armTipBucketScore) {
@@ -469,7 +488,13 @@ public class ArmSubsystem extends Subsystem {
                             setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW_AUTO);
                             setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG_AUTO);
                         } else {
-                            setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
+                            if((robot.slidesMotor1.getCurrent(CurrentUnit.AMPS) * robot.slidesMotor1.getCurrent(CurrentUnit.AMPS) / 2) >= 4.5 && slidesAtPosition(2, params.SLIDES_BUCKET_2_SCORE_LEN_CLAW) && !scoreProtectSlideMotors) {
+                                scoreProtectSlideMotors = true;
+                                setTargetSlidesPosition(getSlidesPosition());
+                            }
+
+                            if(!scoreProtectSlideMotors) setTargetSlidesPosition(params.SLIDES_BUCKET_2_SCORE_LEN_CLAW);
+
                             setArmTargetPosition(params.ARM_BUCKET2_SCORE_DEG);
                         }
                     }
@@ -549,7 +574,7 @@ public class ArmSubsystem extends Subsystem {
 
         setArmPosition();
 
-        if (armTransistionStage == 3 && (currentMode == TeleopMode.INTAKE && !intakeSpecimen) && !autoMode) {
+        if (armTransistionStage == 3 && (currentMode == TeleopMode.INTAKE && !intakeSpecimen && !intakeDownMode) && !autoMode) {
             armPID.setP(Kp_Intake);
             armPID.setI(Ki_Intake);
             armPID.setD(Kd_Intake);
@@ -568,7 +593,7 @@ public class ArmSubsystem extends Subsystem {
 
         voltage = robot.voltageSensor.getVoltage();
 
-        double slidesRawPos = robot.slidesMotor.getCurrentPosition();
+        double slidesRawPos = robot.slidesMotor1.getCurrentPosition();
 
 //        if(slidesRawPos < 0) resetSlidesPosition();
 
@@ -576,7 +601,7 @@ public class ArmSubsystem extends Subsystem {
         slidesPID.setTolerance(params.SLIDES_ERROR_TOLERANCE);
         slidesPID.setPID(SlidesKp, SlidesKi, SlidesKd);
         out = armPID.calculate(getArmPosition()) * armPower * (12.0 / voltage);
-        slidesOut = slidesPID.calculate(robot.slidesMotor.getCurrentPosition()) * slidesPower;
+        slidesOut = slidesPID.calculate(robot.slidesMotor1.getCurrentPosition()) * slidesPower;
 
 //        opMode.telemetry.addData("mp x: ", pState.x);
 //        opMode.telemetry.addData("mp a: ", pState.a);
@@ -597,7 +622,8 @@ public class ArmSubsystem extends Subsystem {
             armPidThread.interrupt();
         }
 
-        robot.slidesMotor.setPower(slidesOut);
+        robot.slidesMotor1.setPower(slidesOut);
+        robot.slidesMotor2.setPower(slidesOut);
 
         teleopModeStart = false;
 
