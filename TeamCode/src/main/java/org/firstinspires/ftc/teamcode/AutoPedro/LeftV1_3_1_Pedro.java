@@ -138,7 +138,7 @@
 //
 //        autoManager.safeSleep(350);
 //
-//        arm.setSlidesPower(1);
+//        arm.setSlidesMultiplier(1);
 //
 ////        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 ////        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -416,7 +416,7 @@
 //            }
 //        }
 //
-//        arm.setSlidesPower(1);
+//        arm.setSlidesMultiplier(1);
 //        arm.extendSlidesOuttake();
 //        arm.update(opModeIsActive());
 //

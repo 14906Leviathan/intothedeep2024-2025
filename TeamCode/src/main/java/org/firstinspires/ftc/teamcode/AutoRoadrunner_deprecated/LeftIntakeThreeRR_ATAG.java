@@ -133,7 +133,7 @@
 //
 //    public void intakePath(double intakePosition, boolean quickArm) {
 //        arm.setArmPower(params.ARM_POWER_DEFAULT);
-//        arm.setSlidesPower(1);
+//        arm.setSlidesMultiplier(1);
 ////        autoManager.updatePose(drive.pose);
 ////        autoManager.buildPaths(autoLocation);
 ////        autoManager.backupPath = autoManager.backupPath
@@ -310,7 +310,7 @@
 //        autoManager.updatePose(drive.pose);
 //        autoManager.buildPaths(autoLocation);
 //
-//        arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
+//        arm.setSlidesMultiplier(params.SLIDE_MOTOR_POWER);
 //        autoManager.disablePathing(debug);
 //        arm.update();
 //

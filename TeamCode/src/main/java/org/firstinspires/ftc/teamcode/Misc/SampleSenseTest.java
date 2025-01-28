@@ -119,7 +119,7 @@ public class SampleSenseTest extends LinearOpMode {
 //        arm.setAutoMode(true);
 //        arm.setPedroAuto(true);
 //        arm.setArmPower(1);
-//        arm.setSlidesPower(1);
+//        arm.setSlidesMultiplier(1);
 //
 //        arm.setTeleopMode(TeleopMode.INTAKE);
 //        arm.setIntakePosition(new Params().PEDRO_AUTO_INTAKE_Y1_POS);

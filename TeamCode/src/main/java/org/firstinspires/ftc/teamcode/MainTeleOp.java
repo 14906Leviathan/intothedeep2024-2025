@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -27,6 +28,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.PathChain;
 import org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "0: Main TeleOp", group = "0")
@@ -97,6 +99,12 @@ public class MainTeleOp extends LinearOpMode {
 //        follower = new Follower(hardwareMap);
         mecDrive = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), false);
 
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+
+        for(LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         robot = new HWProfile();
         robot.init(hardwareMap, false, false);
         params = new Params();
@@ -122,38 +130,38 @@ public class MainTeleOp extends LinearOpMode {
 
         mTelemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-
         waitForStart();
 
         robot.slidesMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setAutoMode(false);
+        arm.setSlidesMultiplier(params.SLIDE_MOTOR_POWER);
+
 
         loopTime.reset();
         timer.reset();
         timerSec.reset();
 
-        if (arm.getArmPosition() > 90) {
-            teleopMode = TeleopMode.BUCKET_SCORE;
-        } else {
-            teleopMode = params.TELEOP_START_MODE;
+        if (arm.getArmPosition() >= 50) {
+            if(arm.getSlidesPosition() < 30) {
+                teleopMode = TeleopMode.SPECIMEN_SCORE;
+                arm.setArmPositionSpecimen(params.SLIDES_SPECIMEN_POLE_2_START);
+            } else {
+                teleopMode = TeleopMode.BUCKET_SCORE;
+                arm.setBucket(2);
+            }
         }
+
         arm.setTeleopMode(teleopMode);
         arm.update(opModeIsActive());
         arm.setAnimationType(AnimationType.NONE);
         arm.update(opModeIsActive());
 
+        params.TELEOP_START_MODE = TeleopMode.IDLE;
+
         if (teleopMode == TeleopMode.TOUCH_POLE_AUTO) {
             arm.setParkArmUp(true);
         }
 
-        if (teleopMode != TeleopMode.IDLE) {
-            if (teleopMode == TeleopMode.INTAKE) {
-                arm.update(opModeIsActive());
-                arm.setIntakePosition(params.INTAKE_MIN_POS);
-            }
-        }
-
-        arm.update(opModeIsActive());
         if (params.INTAKE_TYPE == IntakeType.CLAW) {
             intake.setGrabStyle(GrabStyle.OUTSIDE_GRAB);
             intake.setGrabAngle(GrabAngle.VERTICAL_GRAB);
@@ -198,12 +206,15 @@ public class MainTeleOp extends LinearOpMode {
 
             /* *******************INTAKE******************* */
 
-
             if (gamepad1.dpad_right && !autoPathingEnabled || (teleopMode == TeleopMode.SPECIMEN_SCORE && gamepad1.left_bumper && arm.getArmTransistionStage() == 3)) {
                 teleopMode = TeleopMode.INTAKE;
+                grabAngle = GrabAngle.VERTICAL_GRAB;
+
+                intake.setGrabAngle(grabAngle);
                 arm.setTeleopMode(teleopMode);
                 arm.intakeSpecimen = true;
                 intake.outtake();
+                intake.update(opModeIsActive());
             }
 
             if (teleopMode == TeleopMode.INTAKE && arm.intakeSpecimen) {
@@ -257,7 +268,9 @@ public class MainTeleOp extends LinearOpMode {
 
             if (gamepad1.a && !aCooldown) {
                 aCooldown = true;
+                grabAngle = GrabAngle.VERTICAL_GRAB;
 
+                intake.setGrabAngle(grabAngle);
                 wristAngle = WristAngle.DOWN;
                 intake.setWristAngle(wristAngle);
                 teleopMode = TeleopMode.INTAKE;
@@ -337,6 +350,7 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad1.y) {
                 teleopMode = TeleopMode.BUCKET_SCORE;
                 arm.setTeleopMode(teleopMode);
+                intake.looseGrab();
 //                arm.setAnimationType(AnimationType.FAST);
                 arm.setBucket(2);
             }
@@ -347,7 +361,7 @@ public class MainTeleOp extends LinearOpMode {
             }
 
             if (teleopMode == TeleopMode.BUCKET_SCORE) {
-                grabAngle = GrabAngle.VERTICAL_GRAB;
+                grabAngle = GrabAngle.INVERTED;
                 if (arm.getArmTransistionStage() == 3) {
                     if (gamepad1.left_bumper) {
                         wristAngle = WristAngle.IDLE;
@@ -355,8 +369,14 @@ public class MainTeleOp extends LinearOpMode {
                         wristAngle = WristAngle.BUCKET_SCORE;
                     }
                 } else {
-                    wristAngle = WristAngle.IDLE;
-                    intake.setWristAngle(wristAngle);
+                    if(arm.getArmTransistionStage() == 1) {
+                        wristAngle = WristAngle.IDLE;
+                        intake.setWristAngle(wristAngle);
+                    } else {
+                        wristAngle = WristAngle.CUSTOM;
+                        intake.setWristAngle(wristAngle);
+                        intake.setCustomWristAngle(params.WRIST_OUTTAKE_DURING_ANIMATION);
+                    }
                 }
 
                 intake.setWristAngle(wristAngle);
@@ -365,7 +385,17 @@ public class MainTeleOp extends LinearOpMode {
                 if (gamepad1.right_bumper && !rBumperCooldown) {
                     rBumperCooldown = true;
 
-                    intake.toggle();
+                    intake.closed = !intake.closed;
+                }
+
+                if(intake.closed) {
+                    if(arm.armTransistionStage == 2) {
+                        intake.looseGrab();
+                    } else {
+                        intake.intake();
+                    }
+                } else {
+                    intake.outtake();
                 }
 
                 if (gamepad1.left_trigger > .1) {
@@ -387,8 +417,10 @@ public class MainTeleOp extends LinearOpMode {
                 } else {
                     wristAngle = WristAngle.DOWN;
                 }
+                grabAngle = GrabAngle.VERTICAL_GRAB;
 
                 intake.setWristAngle(wristAngle);
+                intake.setGrabAngle(grabAngle);
 
                 teleopMode = TeleopMode.IDLE;
                 arm.setTeleopMode(teleopMode);
@@ -522,8 +554,7 @@ public class MainTeleOp extends LinearOpMode {
             if (!gamepad1.left_stick_button) LSB_cooldown = false;
             if (!gamepad1.right_stick_button) RSB_cooldown = false;
 
-//            arm.setSlidesPower(0);
-            arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
+//            arm.setSlidesMultiplier(0);
             arm.setArmPower(params.ARM_POWER_DEFAULT);
 
             if (teleopMode == TeleopMode.INTAKE && arm.getIntakeDownMode()) {
@@ -642,11 +673,24 @@ public class MainTeleOp extends LinearOpMode {
 
             if (!gamepad2.a) g2ACooldown = false;
 
+
             mTelemetry.addData("slides 1 current: ", robot.slidesMotor1.getCurrent(CurrentUnit.AMPS));
             mTelemetry.addData("slides 2 current: ", robot.slidesMotor2.getCurrent(CurrentUnit.AMPS));
+//            mTelemetry.addData("slides 1 power", robot.slidesMotor1.getPower());
+//            mTelemetry.addData("slides 2 power", robot.slidesMotor2.getPower());
+//            mTelemetry.addData("arm current: ", robot.armMotor.getCurrent(CurrentUnit.AMPS));
             mTelemetry.addData("hertz: ", lastLoopHertz);
             mTelemetry.addData("loop: ", loopTime.time(TimeUnit.MILLISECONDS));
+            mTelemetry.addData("arm abs position: ", arm.getArmPosition());
             mTelemetry.addData("slides pos: ", arm.getSlidesPosition());
+            mTelemetry.addData("slides out: ", arm.slidesOut);
+            mTelemetry.addData("slides mult: ", arm.slidesMultPower);
+            mTelemetry.addData("slides power: ", arm.slidesPower);
+            mTelemetry.addData("slides at position: ", arm.slidesAtPosition());
+//            mTelemetry.addData("motorLR", leftRear.getCurrent(CurrentUnit.AMPS));
+//            mTelemetry.addData("motorLF", leftFront.getCurrent(CurrentUnit.AMPS));
+//            mTelemetry.addData("motorRR", rightRear.getCurrent(CurrentUnit.AMPS));
+//            mTelemetry.addData("motorRF", rightFront.getCurrent(CurrentUnit.AMPS));
 
             //            mTelemetry.addData("pivot angle: ", intake.getGrabAngle());
 //            mTelemetry.addData("arm out: ", arm.out);
@@ -656,7 +700,6 @@ public class MainTeleOp extends LinearOpMode {
                 mTelemetry.addData("arm target position: ", arm.getArmTargetPosition());
                 mTelemetry.addData("arm at position: ", arm.armAtPosition());
                 mTelemetry.addData("slides out: ", arm.slidesOut);
-                mTelemetry.addData("slides at position: ", arm.slidesAtPosition());
                 mTelemetry.addData("slides target pos: ", arm.getSlidesTargetPos());
                 mTelemetry.addData("diffyLeft: ", robot.diffyLeft.getAngle());
                 mTelemetry.addData("diffyRight: ", robot.diffyRight.getAngle());

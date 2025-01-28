@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.Enums.TeleopMode;
 
 @TeleOp(name = "4: Broken Bot", group = "4")
@@ -87,10 +88,10 @@ public class BrokenBot extends LinearOpMode {
             telemetry.addData("VSensor: ", voltageSensor.getVoltage());
             telemetry.addData("arm encoder: ", robot.armEncoder.getVoltage());
             telemetry.addData("slides encoder: ", robot.slidesMotor1.getCurrentPosition());
-            telemetry.addData("motorLR", robot.motorLR.getCurrentPosition());
-            telemetry.addData("motorLF", robot.motorLF.getCurrentPosition());
-            telemetry.addData("motorRR", robot.motorRR.getCurrentPosition());
-            telemetry.addData("motorRF", robot.motorRF.getCurrentPosition());
+            telemetry.addData("motorLR", robot.motorLR.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("motorLF", robot.motorLF.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("motorRR", robot.motorRR.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("motorRF", robot.motorRF.getCurrent(CurrentUnit.AMPS));
 //            telemetry.addData("slides motor pos", robot.slidesMotor1.getCurrentPosition());
 //            telemetry.addData("arm abs encoder", robot.armEncoder.getVoltage());
 //            telemetry.addData("arm encoder", ((double) robot.armMotor.getCurrentPosition()) / params.ARM_TICK_PER_DEG);

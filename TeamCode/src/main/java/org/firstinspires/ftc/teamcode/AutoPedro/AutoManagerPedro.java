@@ -67,7 +67,7 @@ public class AutoManagerPedro {
     // zero is two tiles from bucket to the leftmost of the tile
     public Pose start_4_0_V1 = new Pose(.399, -.48, Math.toRadians(90));
     public Pose start_3_1_V1 = new Pose(0, -23.6, Math.toRadians(0));
-    public Pose start_0_4_V1 = new Pose(3, -49.9, Math.toRadians(180));
+    public Pose start_0_4_V1 = new Pose(4.3, -49.9, Math.toRadians(180));
     private Point leftScoreLocation = new Point(19, 109, Point.CARTESIAN);
     private Runnable updateAction;
     private MultipleTelemetry telemetry;
@@ -474,7 +474,7 @@ public class AutoManagerPedro {
 
             double looseGrabP1 = .2;
             double looseGrabP2 = 1;
-            double scoreX = 35;
+            double scoreX = 32.5;
             double initalScoreY = -40;
 
             specScore1 = new PathBuilder()
@@ -511,8 +511,8 @@ public class AutoManagerPedro {
             int sample2Y = -100;
             int sample3Y = -105;
             int sampleOffset = 10;
-            int stopX = 20;
-            int stopS1X = 25;
+            int stopX = 22;
+            int stopS1X = 22;
             int afterSampleX = 50;
             int midZPM = 10;
             double pushSamplesHeading = 180;
@@ -1079,11 +1079,16 @@ public class AutoManagerPedro {
     public void waitForSlides(double pos, double error) {
         double position = pos;
 
-        while (!(arm.getSlidesPosition() + error > position && arm.getSlidesPosition() - error < position)) {
-            update();
+        if(arm.slidesDisabled) {
+            safeSleep(500);
+        } else {
 
-            if (opMode.isStopRequested()) break;
-            if (!opMode.opModeIsActive()) break;
+            while (!(arm.getSlidesPosition() + error > position && arm.getSlidesPosition() - error < position)) {
+                update();
+
+                if (opMode.isStopRequested()) break;
+                if (!opMode.opModeIsActive()) break;
+            }
         }
     }
 

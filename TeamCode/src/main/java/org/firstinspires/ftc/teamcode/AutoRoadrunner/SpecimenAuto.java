@@ -367,7 +367,7 @@
 //        autoManager.updatePose(drive.pose);
 //        autoManager.buildPaths(autoLocation);
 //
-//        arm.setSlidesPower(params.SLIDE_MOTOR_POWER);
+//        arm.setSlidesMultiplier(params.SLIDE_MOTOR_POWER);
 //        autoManager.disablePathing(debug);
 //        arm.update();
 //

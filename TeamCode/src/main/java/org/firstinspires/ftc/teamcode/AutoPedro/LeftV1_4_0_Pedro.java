@@ -133,7 +133,7 @@
 //
 //        autoManager.safeSleep(350);
 //
-//        arm.setSlidesPower(1);
+//        arm.setSlidesMultiplier(1);
 //
 //        while (!opModeIsActive()) {
 //            arm.update(opModeIsActive());
